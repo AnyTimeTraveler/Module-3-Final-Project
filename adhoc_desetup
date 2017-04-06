@@ -1,0 +1,92 @@
+#!/bin/bash
+
+# CHANGE VARIABLES HERE!
+
+WIRELESS_DEVICE=wlp3s0
+
+# DO NOT CHANGE BELOW THIS LINE!
+
+# Make sure only root can run our script
+if [ "$(id -u)" != "0" ]; then
+   echo "This script must be run as root" 1>&2
+   echo "Example: sudo ./adhoc_desetup"
+   exit 1
+fi
+
+echo "/***************************\\"
+echo " *   adhoc_desetup script  *"
+echo " *      Kevin Alberts      *"
+echo "\***************************/"
+echo ""
+echo "Current settings: (edit the script with 'nano adhoc_desetup' to change) "
+echo "Wireless device: "$WIRELESS_DEVICE
+echo ""
+
+echo -ne "Bringing down the wireless interface..."
+ifconfig $WIRELESS_DEVICE down
+tput cuf $(($(tput cols)-48))
+echo -ne "["
+tput setaf 2
+echo -ne "OK"
+tput sgr0
+echo "]     "
+echo -ne "Changing interface back to managed networks..."
+iwconfig $WIRELESS_DEVICE mode Managed
+tput cuf $(($(tput cols)-55))
+echo -ne "["
+tput setaf 2
+echo -ne "OK"
+tput sgr0
+echo "]     "
+if [ -e /usr/bin/systemctl ] || [ -e /bin/systemctl ]; then
+	if [ -e /usr/bin/NetworkManager ] || [ -e /usr/sbin/NetworkManager ]; then
+		echo -ne "Starting NetworkManager..."
+		systemctl start network-manager &> /dev/null
+		systemctl start NetworkManager &> /dev/null
+	else
+		echo -ne "Starting netctl..."
+		systemctl start netctl &> /dev/null
+	fi
+else
+	if [ -e /usr/bin/NetworkManager ] || [ -e /usr/sbin/NetworkManager ]; then
+		echo -ne "Starting NetworkManager..."
+		service network-manager start &> /dev/null
+		service NetworkManager start &> /dev/null
+	else
+		echo -ne "Starting netctl..."
+		service netctl start &> /dev/null
+	fi
+fi
+tput cuf $(($(tput cols)-35))
+echo -ne "["
+tput setaf 2
+echo -ne "OK"
+tput sgr0
+echo "]     "
+sleep 1
+if [ -e /usr/bin/systemctl ] || [ -e /bin/systemctl ]; then
+	if [ -e /usr/bin/NetworkManager ]; then
+		echo -ne "Restarting NetworkManager to reconnect..."
+		systemctl restart network-manager &> /dev/null
+		systemctl restart NetworkManager &> /dev/null
+	else
+		echo -ne "Restarting netctl to reconnect..."
+		systemctl restart netctl &> /dev/null
+	fi
+else
+	if [ -e /usr/bin/NetworkManager ]; then
+		echo -ne "Restarting NetworkManager to reconnect..."
+		service network-manager restart &> /dev/null
+		service NetworkManager restart &> /dev/null
+	else
+		echo -ne "Restarting NetworkManager to reconnect..."
+		service netctl restart &> /dev/null
+	fi
+fi
+tput cuf $(($(tput cols)-50))
+echo -ne "["
+tput setaf 2
+echo -ne "OK"
+tput sgr0
+echo -ne "]     "
+echo "You should now be reconnected to normal wireless communications."
