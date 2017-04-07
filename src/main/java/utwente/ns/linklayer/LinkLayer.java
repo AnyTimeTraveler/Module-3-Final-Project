@@ -1,6 +1,7 @@
 package utwente.ns.linklayer;
 
 import utwente.ns.IReceiveListener;
+import utwente.ns.ip.HIP4Packet;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +17,7 @@ public class LinkLayer {
         packetListeners = new ArrayList<>();
     }
 
-    public void send() {
+    public void send(HIP4Packet packet) {
 
     }
 

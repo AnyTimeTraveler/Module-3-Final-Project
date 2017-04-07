@@ -1,7 +1,6 @@
 package utwente.ns.ip;
 
 import utwente.ns.PacketMalformedException;
-import utwente.ns.Util;
 
 import java.nio.ByteBuffer;
 
@@ -79,6 +78,14 @@ public class HIP4Packet {
         out[16] = this.TTL;
         System.arraycopy(this.data, 0, out, 20, this.data.length);
         return out;
+    }
+
+    private byte[] intToByteArr(int in) {
+        return ByteBuffer.allocate(4).putInt(in).array();
+    }
+
+    private byte[] shortToByteArr(short in) {
+        return ByteBuffer.allocate(2).putShort(in).array();
     }
 }
 
