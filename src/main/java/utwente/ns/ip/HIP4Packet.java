@@ -1,5 +1,6 @@
 package utwente.ns.ip;
 
+import utwente.ns.IPacket;
 import utwente.ns.PacketMalformedException;
 
 import java.nio.ByteBuffer;
@@ -9,7 +10,7 @@ import java.nio.ByteBuffer;
  *         Created on 4/7/17
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
-public class HIP4Packet {
+public class HIP4Packet implements IPacket {
 
     int srcAddr, dstAddr;
     short srcPort, dstPort;
@@ -59,6 +60,11 @@ public class HIP4Packet {
 
     private byte[] shortToByteArr(short in) {
         return ByteBuffer.allocate(2).putShort(in).array();
+    }
+
+    @Override
+    public byte[] getData() {
+        return new byte[0];
     }
 }
 
