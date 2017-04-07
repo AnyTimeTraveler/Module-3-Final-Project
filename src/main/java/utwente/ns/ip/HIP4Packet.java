@@ -34,7 +34,8 @@ public class HIP4Packet implements IPacket {
         this.srcPort = buf.getShort();
         this.dstPort = buf.getShort();
         this.TTL = buf.get();
-        buf.getShort();buf.get();
+        buf.getShort();
+        buf.get();
         data = new byte[buf.remaining()];
         buf.get(data);
     }
