@@ -13,7 +13,7 @@ import java.nio.ByteBuffer;
  * @author rhbvkleef
  *         Created on 4/7/17
  */
-@SuppressWarnings({"unused", "WeakerAccess"})
+@SuppressWarnings({"unused"})
 @Data
 public class HIP4Packet implements IPacket {
     /**

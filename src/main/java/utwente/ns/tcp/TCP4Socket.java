@@ -6,7 +6,7 @@ import utwente.ns.chatlayer.ChatPacket;
 /**
  * Created by simon on 07.04.17.
  */
-public class TCPLayer {
+public class TCP4Socket {
     public void send(ChatPacket packet) {
 
     }
