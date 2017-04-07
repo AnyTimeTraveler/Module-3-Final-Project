@@ -1,3 +1,16 @@
+# For intelliJ configs
 .idea/
 Module-3-Final-Project.iml
+
+# For documentation
 /javadoc/
+
+# For binaries
+/target/
+
+# For the custom setup-files
+/adhoc_desetup_linux
+/adhoc_setup_linux
+/adhoc_join_windows.bat
+/adhoc_leave_windows.bat
+/adhoc_remove_windows.bat

@@ -13,9 +13,9 @@ import java.util.BitSet;
  * @author nielsoverkamp
  *         Created on 4/7/17
  */
-@SuppressWarnings({"unused", "WeakerAccess"})
+@SuppressWarnings({"unused"})
 @Data
-public class TCP4Packet implements IPacket {
+public class TCP4Packet implements IPacket{
     /**
      * The HIP4 header's length in bytes
      */
