@@ -21,32 +21,32 @@ public class HIP4Packet {
     /**
      * Source address: sender's address.
      */
-    int srcAddr;
+    public int srcAddr;
 
     /**
      * Destination address: recipient's address.
      */
-    int dstAddr;
+    public int dstAddr;
 
     /**
      * Source port: Port mapped to process on sender's host
      */
-    short srcPort;
+    public short srcPort;
 
     /**
      * Destination port: Port mapped to process on recipient's host
      */
-    short dstPort;
+    public short dstPort;
 
     /**
      * Time to live: Maximum remaining hops for the current packet
      */
-    byte TTL;
+    public byte TTL;
 
     /**
      * Data that composes the next layer up
      */
-    byte[] data;
+    public byte[] data;
 
     /**
      * Construct a HIP4Packet from raw data
