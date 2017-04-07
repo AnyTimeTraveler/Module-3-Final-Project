@@ -1,13 +1,13 @@
 package utwente.ns.chatlayer;
 
-import lombok.Getter;
+import lombok.Data;
 import utwente.ns.IPacket;
 
 /**
  * Created by simon on 07.04.17.
  */
+@Data
 public class ChatPacket implements IPacket {
-    @Getter
     private byte[] data;
 
     @Override
