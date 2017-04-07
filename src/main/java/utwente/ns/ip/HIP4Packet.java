@@ -6,16 +6,46 @@ import utwente.ns.Util;
 import java.nio.ByteBuffer;
 
 /**
+ * (De)Marshaller class for the HIP4 (transport) layer
+ *
  * @author rhbvkleef
  *         Created on 4/7/17
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class HIP4Packet {
+    /**
+     * The HIP4 header's length in bytes
+     */
     private static final int HEADER_LENGTH = 20; //bytes
 
-    int srcAddr, dstAddr;
-    short srcPort, dstPort;
+    /**
+     * Source address: sender's address.
+     */
+    int srcAddr;
+
+    /**
+     * Destination address: recipient's address.
+     */
+    int dstAddr;
+
+    /**
+     * Source port: Port mapped to process on sender's host
+     */
+    short srcPort;
+
+    /**
+     * Destination port: Port mapped to process on recipient's host
+     */
+    short dstPort;
+
+    /**
+     * Time to live: Maximum remaining hops for the current packet
+     */
     byte TTL;
+
+    /**
+     * Data that composes the next layer up
+     */
     byte[] data;
 
     /**
