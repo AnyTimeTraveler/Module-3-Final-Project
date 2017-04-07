@@ -1,5 +1,7 @@
 package utwente.ns.ip;
 
+import lombok.Data;
+import utwente.ns.IPacket;
 import utwente.ns.PacketMalformedException;
 import utwente.ns.Util;
 
@@ -12,7 +14,8 @@ import java.nio.ByteBuffer;
  *         Created on 4/7/17
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
-public class HIP4Packet {
+@Data
+public class HIP4Packet implements IPacket {
     /**
      * The HIP4 header's length in bytes
      */
@@ -21,32 +24,32 @@ public class HIP4Packet {
     /**
      * Source address: sender's address.
      */
-    public int srcAddr;
+    private int srcAddr;
 
     /**
      * Destination address: recipient's address.
      */
-    public int dstAddr;
+    private int dstAddr;
 
     /**
      * Source port: Port mapped to process on sender's host
      */
-    public short srcPort;
+    private short srcPort;
 
     /**
      * Destination port: Port mapped to process on recipient's host
      */
-    public short dstPort;
+    private short dstPort;
 
     /**
      * Time to live: Maximum remaining hops for the current packet
      */
-    public byte TTL;
+    private byte TTL;
 
     /**
-     * Data that composes the next layer up
+     * Data that composes the next layer up (payload)
      */
-    public byte[] data;
+    private byte[] data;
 
     /**
      * Construct a HIP4Packet from raw data
