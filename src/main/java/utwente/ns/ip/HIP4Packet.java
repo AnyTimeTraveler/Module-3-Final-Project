@@ -1,6 +1,7 @@
 package utwente.ns.ip;
 
 import utwente.ns.PacketMalformedException;
+import utwente.ns.Util;
 
 import java.nio.ByteBuffer;
 
