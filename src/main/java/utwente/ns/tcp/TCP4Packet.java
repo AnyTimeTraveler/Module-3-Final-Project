@@ -1,5 +1,6 @@
 package utwente.ns.tcp;
 
+import lombok.Data;
 import utwente.ns.IPacket;
 import utwente.ns.PacketMalformedException;
 
@@ -13,10 +14,8 @@ import java.util.BitSet;
  *         Created on 4/7/17
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
-
-
-
-public class TCP4Packet implements IPacket{
+@Data
+public class TCP4Packet implements IPacket {
     /**
      * The HIP4 header's length in bytes
      */
@@ -112,7 +111,7 @@ public class TCP4Packet implements IPacket{
      * Convert the current layer to a byte[] to be passed to one layer down
      * @return binary representation of the current packet
      */
-    public byte[] marshall() {
+    public byte[] marshal() {
         byte[] out = new byte[data.length + TCP4Packet.HEADER_LENGTH];
         out[0] = 'T';
         out[1] = 'C';
@@ -130,7 +129,6 @@ public class TCP4Packet implements IPacket{
         System.arraycopy(this.data, 0, out, TCP4Packet.HEADER_LENGTH, this.data.length);
         return out;
     }
-
 
     private byte[] intToByteArr(int in) {
         return ByteBuffer.allocate(4).putInt(in).array();

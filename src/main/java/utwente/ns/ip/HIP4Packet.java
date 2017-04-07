@@ -82,7 +82,7 @@ public class HIP4Packet implements IPacket {
 
         ByteBuffer buf = ByteBuffer.wrap(raw);
         if (buf.getInt() != (('H' << 24) | ('I' << 16) | ('P' << 8) | '4')) {
-            throw new PacketMalformedException("Invalid packet");
+            throw new PacketMalformedException("Invalid packet identifier");
         }
 
         this.srcAddr = buf.getInt();
@@ -100,7 +100,7 @@ public class HIP4Packet implements IPacket {
      * @return binary representation of the current packet
      */
     @Override
-    public byte[] marshall() {
+    public byte[] marshal() {
         byte[] out = new byte[data.length + HEADER_LENGTH];
         out[0] = 'H';
         out[1] = 'I';

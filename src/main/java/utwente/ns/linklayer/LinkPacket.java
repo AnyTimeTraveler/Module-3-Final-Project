@@ -22,7 +22,7 @@ public class LinkPacket implements IPacket{
     }
 
     @Override
-    public byte[] marshall() {
+    public byte[] marshal() {
         return new byte[0];
     }
 }

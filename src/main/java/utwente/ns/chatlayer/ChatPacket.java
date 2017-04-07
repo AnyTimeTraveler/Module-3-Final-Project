@@ -11,7 +11,7 @@ public class ChatPacket implements IPacket {
     private byte[] data;
 
     @Override
-    public byte[] marshall() {
+    public byte[] marshal() {
         return new byte[0];
     }
 }
