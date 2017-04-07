@@ -16,7 +16,7 @@ import java.util.BitSet;
 
 
 
-public class TCPPacket implements IPacket{
+public class TCP4Packet implements IPacket{
     /**
      * The HIP4 header's length in bytes
      */
@@ -74,8 +74,8 @@ public class TCPPacket implements IPacket{
      * @param windowSize: Sliding window size
      * @param data: Data that will be passed to/came from the next layer up
      */
-    public TCPPacket(int seqNum, int ackNum,
-                     boolean syn, boolean ack, boolean fin, boolean rst, short windowSize, byte[] data) {
+    public TCP4Packet(int seqNum, int ackNum,
+                      boolean syn, boolean ack, boolean fin, boolean rst, short windowSize, byte[] data) {
         this.seqNum = seqNum;
         this.ackNum = ackNum;
         this.syn = syn;
@@ -92,7 +92,7 @@ public class TCPPacket implements IPacket{
      * @param raw; Raw data passed from one layer down
      * @throws PacketMalformedException when packet is too short or contains invalid data
      */
-    public TCPPacket(byte[] raw) throws PacketMalformedException {
+    public TCP4Packet(byte[] raw) throws PacketMalformedException {
         ByteBuffer buf = ByteBuffer.wrap(raw);
         buf.getInt();
         this.seqNum = buf.getInt();
@@ -113,7 +113,7 @@ public class TCPPacket implements IPacket{
      * @return binary representation of the current packet
      */
     public byte[] marshall() {
-        byte[] out = new byte[data.length + TCPPacket.HEADER_LENGTH];
+        byte[] out = new byte[data.length + TCP4Packet.HEADER_LENGTH];
         out[0] = 'T';
         out[1] = 'C';
         out[2] = 'P';
@@ -127,7 +127,7 @@ public class TCPPacket implements IPacket{
         flags.set(3,this.rst);
         System.arraycopy(flags.toByteArray(), 0, out, 12, 1);
         System.arraycopy(shortToByteArr(this.windowSize), 0, out, 14, 2);
-        System.arraycopy(this.data, 0, out, TCPPacket.HEADER_LENGTH, this.data.length);
+        System.arraycopy(this.data, 0, out, TCP4Packet.HEADER_LENGTH, this.data.length);
         return out;
     }
 
