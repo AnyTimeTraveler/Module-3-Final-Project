@@ -10,11 +10,14 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * Created by simon on 07.04.17.
  */
 public class LinkLayer implements Closeable {
+
+    private static Properties properties;
 
     private List<IReceiveListener> packetListeners;
     private InetAddress address;
@@ -24,20 +27,26 @@ public class LinkLayer implements Closeable {
     private int maxSegmentSize;
 
     public LinkLayer(int maxSegmentSize) throws IOException {
+        properties = new Properties();
+        properties.load(getClass().getClassLoader().getResourceAsStream("network.properties"));
         this.maxSegmentSize = maxSegmentSize;
         packetListeners = new ArrayList<>();
-        address = InetAddress.getByName("228.0.0.1");
-        socket = new MulticastSocket(1337);
+        address = InetAddress.getByName(properties.getProperty("linkstate.address", "228.0.0.1"));
+        socket = new MulticastSocket(Integer.parseInt(properties.getProperty("linkstate.port", "1337")));
         receiver = new Thread(this::waitForIncomingPackets);
         receiver.setDaemon(true);
         receiver.setName("LinkLayerReceiver");
         receiver.start();
     }
 
-
     public void send(HIP4Packet packet) throws IOException {
-        byte[] data = packet.getData();
-        DatagramPacket sendPacket = new DatagramPacket(data, data.length, address, 1337);
+        byte[] data = packet.marshal();
+        DatagramPacket sendPacket = new DatagramPacket(data, data.length, address, Integer.parseInt(properties.getProperty("linkstate.port", "1337")));
+        socket.send(sendPacket);
+    }
+
+    public void send(byte[] data) throws IOException {
+        DatagramPacket sendPacket = new DatagramPacket(data, data.length, address, Integer.parseInt(properties.getProperty("linkstate.port", "1337")));
         socket.send(sendPacket);
     }
 
@@ -71,6 +80,6 @@ public class LinkLayer implements Closeable {
 
     @Override
     public void close() throws IOException {
-
+        closed = true;
     }
 }
