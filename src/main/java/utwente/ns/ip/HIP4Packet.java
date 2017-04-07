@@ -99,6 +99,7 @@ public class HIP4Packet implements IPacket {
      * Convert the current layer to a byte[] to be passed to one layer down
      * @return binary representation of the current packet
      */
+    @Override
     public byte[] marshall() {
         byte[] out = new byte[data.length + HEADER_LENGTH];
         out[0] = 'H';
