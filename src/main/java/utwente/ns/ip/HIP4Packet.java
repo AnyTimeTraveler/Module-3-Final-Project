@@ -1,6 +1,7 @@
 package utwente.ns.ip;
 
 import utwente.ns.PacketMalformedException;
+import utwente.ns.Util;
 
 import java.nio.ByteBuffer;
 
@@ -10,12 +11,23 @@ import java.nio.ByteBuffer;
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class HIP4Packet {
+    private static final int HEADER_LENGTH = 20; //bytes
 
     int srcAddr, dstAddr;
     short srcPort, dstPort;
     byte TTL;
     byte[] data;
 
+    /**
+     * Construct a HIP4Packet from raw data
+     *
+     * @param srcAddr: Source address
+     * @param dstAddr: Destination address
+     * @param srcPort: Source port
+     * @param dstPort: Destination port
+     * @param TTL: Time to live
+     * @param data: Data that will be passed to/came from the next layer up
+     */
     public HIP4Packet(int srcAddr, int dstAddr, short srcPort, short dstPort, byte TTL, byte[] data) {
         this.srcAddr = srcAddr;
         this.dstAddr = dstAddr;
@@ -25,9 +37,21 @@ public class HIP4Packet {
         this.data = data;
     }
 
+    /**
+     * Construct a HIP4Packet with data passed from one layer down (this also unmarshalls)
+     * @param raw; Raw data passed from one layer down
+     * @throws PacketMalformedException when packet is too short or contains invalid data
+     */
     public HIP4Packet(byte[] raw) throws PacketMalformedException {
+        if (raw.length < HEADER_LENGTH) {
+            throw new PacketMalformedException("Packet too short");
+        }
+
         ByteBuffer buf = ByteBuffer.wrap(raw);
-        buf.getInt();
+        if (buf.getInt() != (('H' << 24) | ('I' << 16) | ('P' << 8) | '4')) {
+            throw new PacketMalformedException("Invalid packet");
+        }
+
         this.srcAddr = buf.getInt();
         this.dstAddr = buf.getInt();
         this.srcPort = buf.getShort();
@@ -38,27 +62,23 @@ public class HIP4Packet {
         buf.get(data);
     }
 
+    /**
+     * Convert the current layer to a byte[] to be passed to one layer down
+     * @return binary representation of the current packet
+     */
     public byte[] marshall() {
-        byte[] out = new byte[data.length + 20];
+        byte[] out = new byte[data.length + HEADER_LENGTH];
         out[0] = 'H';
         out[1] = 'I';
         out[2] = 'P';
         out[3] = '4';
-        System.arraycopy(intToByteArr(this.srcAddr), 0, out, 4, 4);
-        System.arraycopy(intToByteArr(this.dstAddr), 0, out, 8, 4);
-        System.arraycopy(shortToByteArr(this.srcPort), 0, out, 12, 2);
-        System.arraycopy(shortToByteArr(this.dstPort), 0, out, 14, 2);
+        System.arraycopy(Util.intToByteArr(this.srcAddr), 0, out, 4, 4);
+        System.arraycopy(Util.intToByteArr(this.dstAddr), 0, out, 8, 4);
+        System.arraycopy(Util.shortToByteArr(this.srcPort), 0, out, 12, 2);
+        System.arraycopy(Util.shortToByteArr(this.dstPort), 0, out, 14, 2);
         out[16] = this.TTL;
         System.arraycopy(this.data, 0, out, 20, this.data.length);
         return out;
-    }
-
-    private byte[] intToByteArr(int in) {
-        return ByteBuffer.allocate(4).putInt(in).array();
-    }
-
-    private byte[] shortToByteArr(short in) {
-        return ByteBuffer.allocate(2).putShort(in).array();
     }
 }
 
