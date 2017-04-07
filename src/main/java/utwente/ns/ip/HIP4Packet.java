@@ -1,4 +1,6 @@
-package ns.utwente.networking;
+package utwente.ns.ip;
+
+import utwente.ns.PacketMalformedException;
 
 import java.nio.ByteBuffer;
 
@@ -23,7 +25,7 @@ public class HIP4Packet {
         this.data = data;
     }
 
-    public HIP4Packet(byte[] raw) {
+    public HIP4Packet(byte[] raw) throws PacketMalformedException {
         ByteBuffer buf = ByteBuffer.wrap(raw);
         buf.getInt();
         this.srcAddr = buf.getInt();
