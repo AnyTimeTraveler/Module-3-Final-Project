@@ -97,11 +97,6 @@ public class HRP4Packet implements IPacket {
         System.arraycopy(this.data, 0, out, 20, this.data.length);
         return out;
     }
-
-    @Override
-    public String getIdent() {
-        return "HIP4";
-    }
 }
 
 //         _____ ___ _   _

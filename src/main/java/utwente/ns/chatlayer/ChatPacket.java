@@ -16,9 +16,4 @@ public class ChatPacket implements IPacket {
     public byte[] marshal() {
         return new byte[0];
     }
-
-    @Override
-    public String getIdent() {
-        return "CHT0";
-    }
 }

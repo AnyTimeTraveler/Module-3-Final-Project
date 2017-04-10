@@ -24,9 +24,4 @@ public class SimluatedLinkPacket implements IPacket {
     public byte[] marshal() {
         return new byte[0];
     }
-
-    @Override
-    public String getIdent() {
-        return "LNK0";
-    }
 }

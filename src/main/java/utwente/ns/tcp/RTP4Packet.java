@@ -107,11 +107,6 @@ public class RTP4Packet implements IPacket {
         System.arraycopy(this.data, 0, out, RTP4Packet.HEADER_LENGTH, this.data.length);
         return out;
     }
-
-    @Override
-    public String getIdent() {
-        return "TCP4";
-    }
 }
 
 //         _____ ___ _   _

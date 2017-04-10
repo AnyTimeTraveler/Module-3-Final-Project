@@ -8,7 +8,6 @@ import utwente.ns.config.Config;
 import utwente.ns.linklayer.ILinkLayer;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -20,6 +19,8 @@ public class HRP4Layer implements IReceiveListener {
      */
     @Getter
     private final ILinkLayer lowerLayer;
+
+    private HRP4Router router = new HRP4Router(this);
     
     /**
      * @param linkLayer
@@ -41,8 +42,7 @@ public class HRP4Layer implements IReceiveListener {
      */
     private void sendBeaconPacket() {
         try {
-            List<BCN4Packet.RoutingEntry> routingEntries = new ArrayList<>();
-            routingEntries.add(new BCN4Packet.RoutingEntry((byte) 0, Config.getInstance().getBaconPacketTTL(), Util.addressStringToInt(Config.getInstance().getMyAddress()), 0));
+            List<BCN4Packet.RoutingEntry> routingEntries = this.router.getRoutingEntries();
             HRP4Packet packet = new HRP4Packet(
                     Util.addressToInt(this.lowerLayer.getLocalAddress()),
                     0,
@@ -65,7 +65,7 @@ public class HRP4Layer implements IReceiveListener {
         lowerLayer.send(packet);
     }
     
-    public void addReceiveListener(IReceiveListener receiver) {
+    public void addReceiveListdener(IReceiveListener receiver) {
     
     }
     

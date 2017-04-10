@@ -26,6 +26,12 @@ public class HRP4Router {
         this.ipLayer = ipLayer;
     }
 
+    public List<BCN4Packet.RoutingEntry> getRoutingEntries() {
+        List<BCN4Packet.RoutingEntry> entries = new ArrayList<>();
+        linkTable.forEach((m, n) -> n.forEach((o, p) -> entries.add(p.getBcn4Entry())));
+        return entries;
+    }
+
     @SuppressWarnings("Duplicates")
     public synchronized void update(BCN4Packet packet) throws UnknownHostException {
         // Get the address of this node

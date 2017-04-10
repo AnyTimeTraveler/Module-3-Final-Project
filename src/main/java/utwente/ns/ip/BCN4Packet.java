@@ -69,11 +69,6 @@ public class BCN4Packet implements IPacket {
         throw new UnsupportedOperationException("BCN4Packet does not contain data");
     }
 
-    @Override
-    public String getIdent() {
-        return "BCN4";
-    }
-
     @Data
     public static class RoutingEntry {
 
