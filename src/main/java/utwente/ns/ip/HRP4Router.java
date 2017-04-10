@@ -22,7 +22,7 @@ public class HRP4Router {
     private Set<Integer> neighbors = new HashSet<>();
 
     public HRP4Router(HRP4Layer ipLayer) {
-
+        this.ipLayer = ipLayer;
     }
 
     @SuppressWarnings("Duplicates")
@@ -35,14 +35,13 @@ public class HRP4Router {
         neighbors.add(neighbour);
 
         // Update cost to neighbour
-        updateNeighbor(neighbour, (byte) linkcost);
+        updateNeighbor(myAddress, neighbour, (byte) linkcost);
 
         List<BCN4Packet.RoutingEntry> routingEntries = packet.getRoutingTable();
         processDataTable(routingEntries);
     }
 
-    private void updateNeighbor(int addr, byte cost) {
-        int myAddress = Util.addressToInt(this.ipLayer.getLowerLayer().getLocalAddress());
+    private void updateNeighbor(int myAddress, int addr, byte cost) {
         processEntry(myAddress, addr, cost, DEFAULT_TTL);
         processEntry(addr, myAddress, cost, DEFAULT_TTL);
     }
@@ -64,6 +63,7 @@ public class HRP4Router {
         if (routes.containsKey(addr2)) {
             BCNRoutingEntryAlternative route = routes.get(addr2);
             if (route.getBcn4Entry().getTTL() < ttl) {
+                route.setTimeSince(System.currentTimeMillis());
                 route.getBcn4Entry().setLinkCost(weight);
                 route.getBcn4Entry().setTTL(ttl);
             }
@@ -76,8 +76,7 @@ public class HRP4Router {
         for (Map.Entry<Integer, Map<Integer, BCNRoutingEntryAlternative>> node: linkTable.entrySet()) {
             List<Integer> toRemove = new LinkedList<>();
             for (Map.Entry<Integer, BCNRoutingEntryAlternative> entry: node.getValue().entrySet()) {
-                entry.getValue().getBcn4Entry().setTTL((byte) (entry.getValue().getBcn4Entry().getTTL() - 1));
-                if (entry.getValue().getBcn4Entry().getTTL() == 0) {
+                if (entry.getValue().getIsExpired()) {
                     toRemove.add(entry.getKey());
                 }
             }
@@ -85,21 +84,6 @@ public class HRP4Router {
                 node.getValue().remove(rem);
             }
         }
-    }
-
-    private List<BCN4Packet.RoutingEntry> getDataTable() {
-        List<BCN4Packet.RoutingEntry> routingEntries = new ArrayList<>();
-        for (Map.Entry<Integer, Map<Integer, BCNRoutingEntryAlternative>> node : linkTable.entrySet()) {
-            for (Map.Entry<Integer, BCNRoutingEntryAlternative> entry : node.getValue().entrySet()) {
-                routingEntries.add(new BCN4Packet.RoutingEntry(
-                        entry.getValue().getBcn4Entry().getLinkCost(),
-                        entry.getValue().getBcn4Entry().getTTL(),
-                        node.getKey(),
-                        entry.getKey()
-                ));
-            }
-        }
-        return routingEntries;
     }
 
     private HashMap<Integer, Integer> dijkstra() {
