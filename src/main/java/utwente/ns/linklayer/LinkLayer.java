@@ -74,6 +74,10 @@ public class LinkLayer implements Closeable {
         return 1;
     }
     
+    public InetAddress getLocalAddress(){
+        return socket.getLocalAddress();
+    }
+    
     @Override
     public void close() throws IOException {
         closed = true;

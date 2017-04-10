@@ -16,24 +16,23 @@ import java.util.TimerTask;
  * Created by simon on 07.04.17.
  */
 public class HIP4Layer {
-
+    
     /**
      *
      */
     private final LinkLayer lowerLayer;
-
+    
     /**
      *
      */
     private List<Node> knownNodes;
-
+    
     /**
      *
      */
     private List<Edge> knownEdges;
-
+    
     /**
-     *
      * @param linkLayer
      */
     public HIP4Layer(LinkLayer linkLayer) {
@@ -46,9 +45,9 @@ public class HIP4Layer {
             }
         }, (long) Config.getInstance().getBaconInterval(), (long) Config.getInstance().getBaconInterval());
     }
-
+    
     /**
-     * 
+     *
      */
     private void sendBeaconPacket() {
         try {
@@ -61,24 +60,24 @@ public class HIP4Layer {
             e.printStackTrace();
         }
     }
-
+    
     public void send(TCP4Packet packet) {
-
+    
     }
-
+    
     public void send(BCN4Packet packet) throws IOException {
-        lowerLayer.send(packet.marshal());
+        lowerLayer.send(new HIP4Packet(Util.addressToInt(lowerLayer.getLocalAddress()), (short) 0, (short) 0, (byte) 0, (byte) 4, packet.marshal()));
     }
-
+    
     public void addReceiveListener(IReceiveListener receiver) {
-
+    
     }
-
+    
     // For Dijkstra
     private class Node {
         private String address;
     }
-
+    
     private class Edge {
         private String address;
     }
