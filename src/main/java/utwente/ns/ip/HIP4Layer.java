@@ -5,6 +5,7 @@ import utwente.ns.IReceiveListener;
 import utwente.ns.Util;
 import utwente.ns.config.Config;
 import utwente.ns.linklayer.LinkLayer;
+import utwente.ns.tcp.TCP4Packet;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -71,6 +72,11 @@ public class HIP4Layer implements IReceiveListener {
     }
     
     public void addReceiveListener(IReceiveListener receiver) {
+    
+    }
+    
+    @Override
+    public void receive(IPacket packet) {
     
     }
     
