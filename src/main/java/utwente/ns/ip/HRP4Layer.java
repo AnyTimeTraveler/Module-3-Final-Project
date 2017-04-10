@@ -61,7 +61,7 @@ public class HRP4Layer implements IReceiveListener {
     }
 
 
-    public void send(HRP4Packet packet) throws IOException {
+    public void send(IPacket packet) throws IOException {
         lowerLayer.send(packet);
     }
     

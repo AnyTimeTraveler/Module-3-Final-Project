@@ -3,6 +3,7 @@ package utwente.ns.ip;
 import utwente.ns.IPacket;
 import utwente.ns.IReceiveListener;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,7 +36,7 @@ public class HRP4Socket implements IReceiveListener {
         listeners.parallelStream().forEach(listener -> listener.receive(packet));
     }
 
-    public void send(IPacket packet) {
+    public void send(IPacket packet) throws IOException {
         ipLayer.send(packet);
     }
 

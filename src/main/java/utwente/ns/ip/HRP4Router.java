@@ -2,6 +2,7 @@ package utwente.ns.ip;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import utwente.ns.Util;
 
 import java.net.InetAddress;
@@ -76,7 +77,7 @@ public class HRP4Router {
         for (Map.Entry<Integer, Map<Integer, BCNRoutingEntryAlternative>> node: linkTable.entrySet()) {
             List<Integer> toRemove = new LinkedList<>();
             for (Map.Entry<Integer, BCNRoutingEntryAlternative> entry: node.getValue().entrySet()) {
-                if (entry.getValue().getIsExpired()) {
+                if (entry.getValue().isExpired()) {
                     toRemove.add(entry.getKey());
                 }
             }
@@ -160,15 +161,12 @@ public class HRP4Router {
     }
 
     @Data
+    @RequiredArgsConstructor
     public static class BCNRoutingEntryAlternative {
-        private BCN4Packet.RoutingEntry bcn4Entry;
-        private long timeSince;
-        public BCNRoutingEntryAlternative(BCN4Packet.RoutingEntry bcn4Entry) {
-            this.bcn4Entry = bcn4Entry;
-            this.timeSince = System.currentTimeMillis();
-        }
+        private final BCN4Packet.RoutingEntry bcn4Entry;
+        private long timeSince = System.currentTimeMillis();
 
-        public boolean getIsExpired() {
+        public boolean isExpired() {
             return bcn4Entry.getTTL() + timeSince >= System.currentTimeMillis();
         }
     }
