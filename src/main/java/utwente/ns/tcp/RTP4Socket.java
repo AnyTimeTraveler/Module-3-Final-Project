@@ -3,12 +3,12 @@ package utwente.ns.tcp;
 /**
  * Created by simon on 07.04.17.
  */
-public class TCP4Socket {
+public class RTP4Socket {
 
-    public TCP4Socket() {
+    public RTP4Socket() {
     }
 
-    public TCP4Connection listen() {
+    public RTP4Connection listen() {
         return null;
     }
 }

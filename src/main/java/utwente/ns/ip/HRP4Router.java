@@ -12,16 +12,16 @@ import java.util.*;
  * @author rhbvkleef
  *         Created on 4/10/17
  */
-public class HIP4Router {
+public class HRP4Router {
 
     private static final byte DEFAULT_TTL = 6;
 
-    private HIP4Layer ipLayer;
+    private HRP4Layer ipLayer;
 
     private Map<Integer, Map<Integer, BCNRoutingEntryAlternative>> linkTable = new HashMap<>();
     private Set<Integer> neighbors = new HashSet<>();
 
-    public HIP4Router(HIP4Layer ipLayer) {
+    public HRP4Router(HRP4Layer ipLayer) {
 
     }
 

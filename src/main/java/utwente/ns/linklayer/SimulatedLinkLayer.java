@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * Created by simon on 07.04.17.
  */
-public class LinkLayer implements Closeable {
+public class SimulatedLinkLayer implements Closeable {
     
     private List<IReceiveListener> packetListeners;
     private InetAddress address;
@@ -24,7 +24,7 @@ public class LinkLayer implements Closeable {
     private boolean closed;
     private int maxSegmentSize;
     
-    public LinkLayer(int maxSegmentSize) throws IOException {
+    public SimulatedLinkLayer(int maxSegmentSize) throws IOException {
         this.maxSegmentSize = maxSegmentSize;
         packetListeners = new ArrayList<>();
         address = InetAddress.getByName(Config.getInstance().getMulticastAddress());
@@ -60,7 +60,7 @@ public class LinkLayer implements Closeable {
             try {
                 socket.receive(receivedPacket);
                 for (IReceiveListener listener : packetListeners) {
-                    listener.receive(new LinkPacket(receivedPacket));
+                    listener.receive(new SimluatedLinkPacket(receivedPacket));
                 }
             } catch (IOException e) {
                 e.printStackTrace();

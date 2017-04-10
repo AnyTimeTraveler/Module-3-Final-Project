@@ -5,7 +5,7 @@ import utwente.ns.IPacket;
 import utwente.ns.IReceiveListener;
 import utwente.ns.Util;
 import utwente.ns.config.Config;
-import utwente.ns.linklayer.LinkLayer;
+import utwente.ns.linklayer.SimulatedLinkLayer;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -13,18 +13,18 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class HIP4Layer implements IReceiveListener {
+public class HRP4Layer implements IReceiveListener {
 
     /**
      *
      */
     @Getter
-    private final LinkLayer lowerLayer;
+    private final SimulatedLinkLayer lowerLayer;
     
     /**
      * @param linkLayer
      */
-    public HIP4Layer(LinkLayer linkLayer) {
+    public HRP4Layer(SimulatedLinkLayer linkLayer) {
         lowerLayer = linkLayer;
         lowerLayer.addReceiveListener(this);
         Timer beaconTimer = new Timer();
@@ -43,7 +43,7 @@ public class HIP4Layer implements IReceiveListener {
         try {
             List<BCN4Packet.RoutingEntry> routingEntries = new ArrayList<>();
             routingEntries.add(new BCN4Packet.RoutingEntry((byte) 0, Config.getInstance().getBaconPacketTTL(), Util.addressStringToInt(Config.getInstance().getMyAddress()), 0));
-            HIP4Packet packet = new HIP4Packet(
+            HRP4Packet packet = new HRP4Packet(
                     Util.addressToInt(this.lowerLayer.getLocalAddress()),
                     0,
                     (short) 0,
@@ -61,7 +61,7 @@ public class HIP4Layer implements IReceiveListener {
     }
 
 
-    public void send(HIP4Packet packet) throws IOException {
+    public void send(HRP4Packet packet) throws IOException {
         lowerLayer.send(packet);
     }
     

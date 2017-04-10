@@ -20,9 +20,9 @@ public class BCN4Packet implements IPacket {
 
     private List<RoutingEntry> routingTable;
     @Getter
-    private HIP4Packet hip4Packet;
+    private HRP4Packet hip4Packet;
 
-    public BCN4Packet(HIP4Packet hip4Packet, byte[] data) throws PacketMalformedException {
+    public BCN4Packet(HRP4Packet hip4Packet, byte[] data) throws PacketMalformedException {
         this.hip4Packet = hip4Packet;
 
         routingTable = new ArrayList<>();
@@ -40,7 +40,7 @@ public class BCN4Packet implements IPacket {
         }
     }
 
-    public BCN4Packet(HIP4Packet hip4Packet, List<RoutingEntry> routingEntries) {
+    public BCN4Packet(HRP4Packet hip4Packet, List<RoutingEntry> routingEntries) {
         this.hip4Packet = hip4Packet;
         this.routingTable = routingEntries;
     }
