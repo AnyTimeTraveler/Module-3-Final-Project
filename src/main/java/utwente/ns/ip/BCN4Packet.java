@@ -15,7 +15,7 @@ import java.util.List;
 @Data
 public class BCN4Packet {
 
-    public List<RoutingEntry> routingTable;
+    private List<RoutingEntry> routingTable;
 
     public BCN4Packet(byte[] data) throws PacketMalformedException {
         routingTable = new ArrayList<>();
