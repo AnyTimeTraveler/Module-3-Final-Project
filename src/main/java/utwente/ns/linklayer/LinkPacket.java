@@ -1,6 +1,6 @@
 package utwente.ns.linklayer;
 
-import lombok.Getter;
+import lombok.Data;
 import utwente.ns.IPacket;
 
 import java.net.DatagramPacket;
@@ -9,11 +9,10 @@ import java.net.InetAddress;
 /**
  * Created by simon on 07.04.17.
  */
+@Data
 public class LinkPacket implements IPacket{
 
-    @Getter
     private final byte[] data;
-    @Getter
     private final InetAddress receivedPacketAddress;
 
     public LinkPacket(DatagramPacket receivedPacket) {

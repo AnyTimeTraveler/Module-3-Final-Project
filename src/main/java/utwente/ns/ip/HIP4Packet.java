@@ -1,5 +1,6 @@
 package utwente.ns.ip;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import utwente.ns.IPacket;
 import utwente.ns.PacketMalformedException;
@@ -15,6 +16,7 @@ import java.nio.ByteBuffer;
  */
 @SuppressWarnings({"unused"})
 @Data
+@AllArgsConstructor
 public class HIP4Packet implements IPacket {
     /**
      * The HIP4 header's length in bytes
@@ -50,25 +52,6 @@ public class HIP4Packet implements IPacket {
      * Data that composes the next layer up (payload)
      */
     private byte[] data;
-
-    /**
-     * Construct a HIP4Packet from raw data
-     *
-     * @param srcAddr: Source address
-     * @param dstAddr: Destination address
-     * @param srcPort: Source port
-     * @param dstPort: Destination port
-     * @param TTL: Time to live
-     * @param data: Data that will be passed to/came from the next layer up
-     */
-    public HIP4Packet(int srcAddr, int dstAddr, short srcPort, short dstPort, byte TTL, byte[] data) {
-        this.srcAddr = srcAddr;
-        this.dstAddr = dstAddr;
-        this.srcPort = srcPort;
-        this.dstPort = dstPort;
-        this.TTL = TTL;
-        this.data = data;
-    }
 
     /**
      * Construct a HIP4Packet with data passed from one layer down (this also unmarshalls)
