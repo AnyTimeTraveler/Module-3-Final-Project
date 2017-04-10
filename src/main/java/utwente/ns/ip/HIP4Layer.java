@@ -1,10 +1,10 @@
 package utwente.ns.ip;
 
+import utwente.ns.IPacket;
 import utwente.ns.IReceiveListener;
 import utwente.ns.Util;
 import utwente.ns.config.Config;
 import utwente.ns.linklayer.LinkLayer;
-import utwente.ns.tcp.TCP4Packet;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,8 +15,8 @@ import java.util.TimerTask;
 /**
  * Created by simon on 07.04.17.
  */
-public class HIP4Layer {
-    
+public class HIP4Layer implements IReceiveListener {
+
     /**
      *
      */
@@ -37,6 +37,7 @@ public class HIP4Layer {
      */
     public HIP4Layer(LinkLayer linkLayer) {
         lowerLayer = linkLayer;
+        lowerLayer.addReceiveListener(this);
         Timer beaconTimer = new Timer();
         beaconTimer.scheduleAtFixedRate(new TimerTask() {
             @Override

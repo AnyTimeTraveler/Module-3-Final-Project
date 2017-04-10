@@ -1,6 +1,7 @@
 package utwente.ns.ip;
 
 import lombok.Data;
+import utwente.ns.IPacket;
 import utwente.ns.PacketMalformedException;
 
 import java.nio.ByteBuffer;
@@ -12,8 +13,9 @@ import java.util.List;
  * @author rhbvkleef
  *         Created on 4/7/17
  */
+@SuppressWarnings("unused")
 @Data
-public class BCN4Packet {
+public class BCN4Packet implements IPacket {
 
     private List<RoutingEntry> routingTable;
 
@@ -52,6 +54,15 @@ public class BCN4Packet {
         return retv;
     }
 
+    /**
+     *
+     * @return
+     */
+    @Override
+    public byte[] getData() {
+        throw new UnsupportedOperationException("BCN4Packet does not contain data");
+    }
+
     @Data
     public static class RoutingEntry {
 
@@ -59,6 +70,7 @@ public class BCN4Packet {
         private byte linkCost;
         private byte TTL;
 
+        @SuppressWarnings("WeakerAccess")
         public RoutingEntry(byte[] data) {
             ByteBuffer buff = ByteBuffer.wrap(data);
             this.linkCost = buff.get();
@@ -75,6 +87,7 @@ public class BCN4Packet {
             this.addresses[1] = addr1;
         }
 
+        @SuppressWarnings("WeakerAccess")
         public byte[] marshal() {
             ByteBuffer raw = ByteBuffer.allocate(12);
             raw.put(linkCost);

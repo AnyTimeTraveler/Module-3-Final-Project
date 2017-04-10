@@ -1,8 +1,10 @@
 package utwente.ns.tcp;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import utwente.ns.IPacket;
 import utwente.ns.PacketMalformedException;
+import utwente.ns.Util;
 
 import java.nio.ByteBuffer;
 import java.util.BitSet;
@@ -13,8 +15,8 @@ import java.util.BitSet;
  * @author nielsoverkamp
  *         Created on 4/7/17
  */
-@SuppressWarnings({"unused"})
 @Data
+@AllArgsConstructor
 public class TCP4Packet implements IPacket{
     /**
      * The HIP4 header's length in bytes
@@ -24,73 +26,49 @@ public class TCP4Packet implements IPacket{
     /**
      * Sequence number: the sequence number of the first byte of the data
      */
-    int seqNum;
+    private int seqNum;
 
     /**
      * Acknowledge number: the sequence number expected next
      */
-    int ackNum;
+    private int ackNum;
 
     /**
      * Synchronise flag: indicates setup of the connection
      */
-    boolean syn;
+    private boolean syn;
 
     /**
      * Acknowledge flag: indicates an acknowledgement
      */
-    boolean ack;
+    private boolean ack;
 
     /**
      * Final flag: indicates the closing of the connection
      */
-    boolean fin;
+    private boolean fin;
 
     /**
      * Reset flag: indicates the resetting of the connection
      */
-    boolean rst;
+    private boolean rst;
 
     /**
      * The size of the sliding window
      */
-    short windowSize;
+    private short windowSize;
 
     /**
      * Data that composes the next layer up
      */
-    byte[] data;
+    private byte[] data;
 
     /**
-     * Constructs a TCP4Packet from raw data
-     *
-     * @param seqNum: Sequence number
-     * @param ackNum: Acknowledgement number
-     * @param syn: Synchronise flag
-     * @param ack: Acknowledgement flag
-     * @param fin: Final flag
-     * @param rst: Reset flag
-     * @param windowSize: Sliding window size
-     * @param data: Data that will be passed to/came from the next layer up
-     */
-    public TCP4Packet(int seqNum, int ackNum,
-                      boolean syn, boolean ack, boolean fin, boolean rst, short windowSize, byte[] data) {
-        this.seqNum = seqNum;
-        this.ackNum = ackNum;
-        this.syn = syn;
-        this.ack = ack;
-        this.fin = fin;
-        this.rst = rst;
-        this.windowSize = windowSize;
-        this.data = data;
-    }
-
-
-    /**
-     * Construct a TCP4Packet with data passed from one layer down (this also unmarshalls)
+     * Construct a TCP4Packet with data passed from one layer down (this also decodes the data)
      * @param raw; Raw data passed from one layer down
      * @throws PacketMalformedException when packet is too short or contains invalid data
      */
+    @SuppressWarnings("unused")
     public TCP4Packet(byte[] raw) throws PacketMalformedException {
         ByteBuffer buf = ByteBuffer.wrap(raw);
         buf.getInt();
@@ -117,25 +95,17 @@ public class TCP4Packet implements IPacket{
         out[1] = 'C';
         out[2] = 'P';
         out[3] = '4';
-        System.arraycopy(intToByteArr(this.seqNum), 0, out, 4, 4);
-        System.arraycopy(intToByteArr(this.ackNum), 0, out, 8, 4);
+        System.arraycopy(Util.intToByteArr(this.seqNum), 0, out, 4, 4);
+        System.arraycopy(Util.intToByteArr(this.ackNum), 0, out, 8, 4);
         BitSet flags = new BitSet(8);
         flags.set(0,this.syn);
         flags.set(1,this.ack);
         flags.set(2,this.fin);
         flags.set(3,this.rst);
         System.arraycopy(flags.toByteArray(), 0, out, 12, 1);
-        System.arraycopy(shortToByteArr(this.windowSize), 0, out, 14, 2);
+        System.arraycopy(Util.shortToByteArr(this.windowSize), 0, out, 14, 2);
         System.arraycopy(this.data, 0, out, TCP4Packet.HEADER_LENGTH, this.data.length);
         return out;
-    }
-
-    private byte[] intToByteArr(int in) {
-        return ByteBuffer.allocate(4).putInt(in).array();
-    }
-
-    private byte[] shortToByteArr(short in) {
-        return ByteBuffer.allocate(2).putShort(in).array();
     }
 }
 
