@@ -4,7 +4,6 @@ import utwente.ns.IPacket;
 import utwente.ns.IReceiveListener;
 import utwente.ns.config.Config;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
@@ -15,7 +14,7 @@ import java.util.List;
 /**
  * Created by simon on 07.04.17.
  */
-public class SimulatedLinkLayer implements Closeable {
+public class SimulatedLinkLayer implements ILinkLayer {
     
     private List<IReceiveListener> packetListeners;
     private InetAddress address;
@@ -35,19 +34,23 @@ public class SimulatedLinkLayer implements Closeable {
         receiver.start();
     }
     
+    @Override
     public void send(IPacket packet) throws IOException {
         send(packet.marshal());
     }
     
+    @Override
     public void send(byte[] data) throws IOException {
         DatagramPacket sendPacket = new DatagramPacket(data, data.length, address, Config.getInstance().getMulticastPort());
         socket.send(sendPacket);
     }
     
+    @Override
     public void addReceiveListener(IReceiveListener receiver) {
         packetListeners.add(receiver);
     }
     
+    @Override
     public void removeReceiveListener(IReceiveListener receiver) {
         packetListeners.remove(receiver);
     }
@@ -68,14 +71,17 @@ public class SimulatedLinkLayer implements Closeable {
         }
     }
     
+    @Override
     public int getLinkCost(String address) {
         return 1;
     }
     
+    @Override
     public int getLinkCost(InetAddress address) {
         return 1;
     }
     
+    @Override
     public InetAddress getLocalAddress() {
         return socket.getLocalAddress();
     }

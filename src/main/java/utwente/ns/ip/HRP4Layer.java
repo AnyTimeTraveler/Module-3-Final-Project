@@ -5,7 +5,7 @@ import utwente.ns.IPacket;
 import utwente.ns.IReceiveListener;
 import utwente.ns.Util;
 import utwente.ns.config.Config;
-import utwente.ns.linklayer.SimulatedLinkLayer;
+import utwente.ns.linklayer.ILinkLayer;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -19,12 +19,12 @@ public class HRP4Layer implements IReceiveListener {
      *
      */
     @Getter
-    private final SimulatedLinkLayer lowerLayer;
+    private final ILinkLayer lowerLayer;
     
     /**
      * @param linkLayer
      */
-    public HRP4Layer(SimulatedLinkLayer linkLayer) {
+    public HRP4Layer(ILinkLayer linkLayer) {
         lowerLayer = linkLayer;
         lowerLayer.addReceiveListener(this);
         Timer beaconTimer = new Timer();
