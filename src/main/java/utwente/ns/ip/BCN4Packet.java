@@ -20,7 +20,7 @@ public class BCN4Packet {
     public BCN4Packet(byte[] data) throws PacketMalformedException {
         routingTable = new ArrayList<>();
 
-        if (data.length < 4 || (data.length - 4) % 12 != 0 ) {
+        if (data.length < 4 || (data.length - 4) % 12 != 0) {
             throw new PacketMalformedException("Invalid packet size");
         }
 
@@ -28,7 +28,7 @@ public class BCN4Packet {
             throw new PacketMalformedException("Invalid packet identifier");
         }
 
-        for (int i = 4; i < data.length; i+= 12) {
+        for (int i = 4; i < data.length; i += 12) {
             routingTable.add(new RoutingEntry(Arrays.copyOfRange(data, i, i + 12)));
         }
     }
@@ -43,7 +43,7 @@ public class BCN4Packet {
         buf.put((byte) 'C');
         buf.put((byte) 'N');
         buf.put((byte) '4');
-        for(RoutingEntry entry : this.routingTable) {
+        for (RoutingEntry entry : this.routingTable) {
             buf.put(entry.marshal());
         }
 
@@ -55,9 +55,9 @@ public class BCN4Packet {
     @Data
     public static class RoutingEntry {
 
+        private final int[] addresses = new int[2];
         private byte linkCost;
         private byte TTL;
-        private final int[] addresses = new int[2];
 
         public RoutingEntry(byte[] data) {
             ByteBuffer buff = ByteBuffer.wrap(data);

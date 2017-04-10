@@ -114,14 +114,6 @@ public class HIP4Packet implements IPacket {
         System.arraycopy(this.data, 0, out, 20, this.data.length);
         return out;
     }
-
-    private byte[] intToByteArr(int in) {
-        return ByteBuffer.allocate(4).putInt(in).array();
-    }
-
-    private byte[] shortToByteArr(short in) {
-        return ByteBuffer.allocate(2).putShort(in).array();
-    }
 }
 
 //         _____ ___ _   _

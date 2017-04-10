@@ -1,6 +1,7 @@
 package utwente.ns.linklayer;
 
 import utwente.ns.IReceiveListener;
+import utwente.ns.config.Config;
 import utwente.ns.ip.HIP4Packet;
 
 import java.io.Closeable;
@@ -10,54 +11,49 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 /**
  * Created by simon on 07.04.17.
  */
 public class LinkLayer implements Closeable {
-
-    private static Properties properties;
-
+    
     private List<IReceiveListener> packetListeners;
     private InetAddress address;
     private MulticastSocket socket;
     private Thread receiver;
     private boolean closed;
     private int maxSegmentSize;
-
+    
     public LinkLayer(int maxSegmentSize) throws IOException {
-        properties = new Properties();
-        properties.load(getClass().getClassLoader().getResourceAsStream("network.properties"));
         this.maxSegmentSize = maxSegmentSize;
         packetListeners = new ArrayList<>();
-        address = InetAddress.getByName(properties.getProperty("linkstate.address", "228.0.0.1"));
-        socket = new MulticastSocket(Integer.parseInt(properties.getProperty("linkstate.port", "1337")));
+        address = InetAddress.getByName(Config.getInstance().getMulticastAddress());
+        socket = new MulticastSocket(Config.getInstance().getMulticastPort());
         receiver = new Thread(this::waitForIncomingPackets);
         receiver.setDaemon(true);
         receiver.setName("LinkLayerReceiver");
         receiver.start();
     }
-
+    
     public void send(HIP4Packet packet) throws IOException {
         byte[] data = packet.marshal();
-        DatagramPacket sendPacket = new DatagramPacket(data, data.length, address, Integer.parseInt(properties.getProperty("linkstate.port", "1337")));
+        DatagramPacket sendPacket = new DatagramPacket(data, data.length, address, Config.getInstance().getMulticastPort());
         socket.send(sendPacket);
     }
-
+    
     public void send(byte[] data) throws IOException {
-        DatagramPacket sendPacket = new DatagramPacket(data, data.length, address, Integer.parseInt(properties.getProperty("linkstate.port", "1337")));
+        DatagramPacket sendPacket = new DatagramPacket(data, data.length, address, Config.getInstance().getMulticastPort());
         socket.send(sendPacket);
     }
-
+    
     public void addReceiveListener(IReceiveListener receiver) {
         packetListeners.add(receiver);
     }
-
+    
     public void removeReceiveListener(IReceiveListener receiver) {
         packetListeners.remove(receiver);
     }
-
+    
     private void waitForIncomingPackets() {
         closed = false;
         while (!closed) {
@@ -73,11 +69,11 @@ public class LinkLayer implements Closeable {
             }
         }
     }
-
+    
     public int getLinkCost(String address) {
         return 1;
     }
-
+    
     @Override
     public void close() throws IOException {
         closed = true;
