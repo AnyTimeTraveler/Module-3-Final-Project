@@ -17,7 +17,7 @@ import java.util.BitSet;
  */
 @Data
 @AllArgsConstructor
-public class TCP4Packet implements IPacket{
+public class RTP4Packet implements IPacket {
     /**
      * The HIP4 header's length in bytes
      */
@@ -64,12 +64,12 @@ public class TCP4Packet implements IPacket{
     private byte[] data;
 
     /**
-     * Construct a TCP4Packet with data passed from one layer down (this also decodes the data)
+     * Construct a RTP4Packet with data passed from one layer down (this also decodes the data)
      * @param raw; Raw data passed from one layer down
      * @throws PacketMalformedException when packet is too short or contains invalid data
      */
     @SuppressWarnings("unused")
-    public TCP4Packet(byte[] raw) throws PacketMalformedException {
+    public RTP4Packet(byte[] raw) throws PacketMalformedException {
         ByteBuffer buf = ByteBuffer.wrap(raw);
         buf.getInt();
         this.seqNum = buf.getInt();
@@ -90,7 +90,7 @@ public class TCP4Packet implements IPacket{
      * @return binary representation of the current packet
      */
     public byte[] marshal() {
-        byte[] out = new byte[data.length + TCP4Packet.HEADER_LENGTH];
+        byte[] out = new byte[data.length + RTP4Packet.HEADER_LENGTH];
         out[0] = 'T';
         out[1] = 'C';
         out[2] = 'P';
@@ -104,7 +104,7 @@ public class TCP4Packet implements IPacket{
         flags.set(3,this.rst);
         System.arraycopy(flags.toByteArray(), 0, out, 12, 1);
         System.arraycopy(Util.shortToByteArr(this.windowSize), 0, out, 14, 2);
-        System.arraycopy(this.data, 0, out, TCP4Packet.HEADER_LENGTH, this.data.length);
+        System.arraycopy(this.data, 0, out, RTP4Packet.HEADER_LENGTH, this.data.length);
         return out;
     }
 }

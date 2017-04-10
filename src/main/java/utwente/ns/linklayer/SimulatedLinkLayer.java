@@ -4,7 +4,6 @@ import utwente.ns.IPacket;
 import utwente.ns.IReceiveListener;
 import utwente.ns.config.Config;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
@@ -15,16 +14,16 @@ import java.util.List;
 /**
  * Created by simon on 07.04.17.
  */
-public class LinkLayer implements Closeable {
-
+public class SimulatedLinkLayer implements ILinkLayer {
+    
     private List<IReceiveListener> packetListeners;
     private InetAddress address;
     private MulticastSocket socket;
     private Thread receiver;
     private boolean closed;
     private int maxSegmentSize;
-
-    public LinkLayer(int maxSegmentSize) throws IOException {
+    
+    public SimulatedLinkLayer(int maxSegmentSize) throws IOException {
         this.maxSegmentSize = maxSegmentSize;
         packetListeners = new ArrayList<>();
         address = InetAddress.getByName(Config.getInstance().getMulticastAddress());
@@ -34,24 +33,28 @@ public class LinkLayer implements Closeable {
         receiver.setName("LinkLayerReceiver");
         receiver.start();
     }
-
+    
+    @Override
     public void send(IPacket packet) throws IOException {
         send(packet.marshal());
     }
-
+    
+    @Override
     public void send(byte[] data) throws IOException {
         DatagramPacket sendPacket = new DatagramPacket(data, data.length, address, Config.getInstance().getMulticastPort());
         socket.send(sendPacket);
     }
-
+    
+    @Override
     public void addReceiveListener(IReceiveListener receiver) {
         packetListeners.add(receiver);
     }
-
+    
+    @Override
     public void removeReceiveListener(IReceiveListener receiver) {
         packetListeners.remove(receiver);
     }
-
+    
     private void waitForIncomingPackets() {
         closed = false;
         while (!closed) {
@@ -60,19 +63,26 @@ public class LinkLayer implements Closeable {
             try {
                 socket.receive(receivedPacket);
                 for (IReceiveListener listener : packetListeners) {
-                    listener.receive(new LinkPacket(receivedPacket));
+                    listener.receive(new SimluatedLinkPacket(receivedPacket));
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
-
+    
+    @Override
     public int getLinkCost(String address) {
         return 1;
     }
     
-    public InetAddress getLocalAddress(){
+    @Override
+    public int getLinkCost(InetAddress address) {
+        return 1;
+    }
+    
+    @Override
+    public InetAddress getLocalAddress() {
         return socket.getLocalAddress();
     }
     

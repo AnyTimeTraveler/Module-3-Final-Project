@@ -9,13 +9,13 @@ import java.io.IOException;
 /**
  * Created by simon on 07.04.17.
  */
-public class LinkLayerTest {
-    private LinkLayer linkLayer;
+public class SimulatedLinkLayerTest {
+    private SimulatedLinkLayer linkLayer;
     private boolean sent;
 
     @Before
     public void setUp() throws Exception {
-        linkLayer = new LinkLayer(2048);
+        linkLayer = new SimulatedLinkLayer(2048);
         sent = false;
     }
 

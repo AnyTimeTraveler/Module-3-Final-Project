@@ -17,7 +17,7 @@ import java.nio.ByteBuffer;
 @SuppressWarnings({"unused"})
 @Data
 @AllArgsConstructor
-public class HIP4Packet implements IPacket {
+public class HRP4Packet implements IPacket {
     /**
      * The HIP4 header's length in bytes
      */
@@ -54,11 +54,11 @@ public class HIP4Packet implements IPacket {
     private byte[] data;
 
     /**
-     * Construct a HIP4Packet with data passed from one layer down (this also unmarshalls)
+     * Construct a HRP4Packet with data passed from one layer down (this also unmarshalls)
      * @param raw; Raw data passed from one layer down
      * @throws PacketMalformedException when packet is too short or contains invalid data
      */
-    public HIP4Packet(byte[] raw) throws PacketMalformedException {
+    public HRP4Packet(byte[] raw) throws PacketMalformedException {
         if (raw.length < HEADER_LENGTH) {
             throw new PacketMalformedException("Packet too short");
         }

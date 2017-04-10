@@ -10,12 +10,12 @@ import java.net.InetAddress;
  * Created by simon on 07.04.17.
  */
 @Data
-public class LinkPacket implements IPacket{
+public class SimluatedLinkPacket implements IPacket {
 
     private final byte[] data;
     private final InetAddress receivedPacketAddress;
 
-    public LinkPacket(DatagramPacket receivedPacket) {
+    public SimluatedLinkPacket(DatagramPacket receivedPacket) {
         data = receivedPacket.getData();
         receivedPacketAddress = receivedPacket.getAddress();
     }

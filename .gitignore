@@ -14,3 +14,6 @@ Module-3-Final-Project.iml
 /adhoc_join_windows.bat
 /adhoc_leave_windows.bat
 /adhoc_remove_windows.bat
+
+# For program configs (different user configs)
+config.json
