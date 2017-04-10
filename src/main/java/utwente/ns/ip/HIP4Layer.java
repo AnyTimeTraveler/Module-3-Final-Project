@@ -1,11 +1,11 @@
 package utwente.ns.ip;
 
+import lombok.Getter;
 import utwente.ns.IPacket;
 import utwente.ns.IReceiveListener;
 import utwente.ns.Util;
 import utwente.ns.config.Config;
 import utwente.ns.linklayer.LinkLayer;
-import utwente.ns.tcp.TCP4Packet;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -13,25 +13,13 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-/**
- * Created by simon on 07.04.17.
- */
 public class HIP4Layer implements IReceiveListener {
 
     /**
      *
      */
+    @Getter
     private final LinkLayer lowerLayer;
-    
-    /**
-     *
-     */
-    private List<Node> knownNodes;
-    
-    /**
-     *
-     */
-    private List<Edge> knownEdges;
     
     /**
      * @param linkLayer
@@ -55,20 +43,26 @@ public class HIP4Layer implements IReceiveListener {
         try {
             List<BCN4Packet.RoutingEntry> routingEntries = new ArrayList<>();
             routingEntries.add(new BCN4Packet.RoutingEntry((byte) 0, Config.getInstance().getBaconPacketTTL(), Util.addressStringToInt(Config.getInstance().getMyAddress()), 0));
-            BCN4Packet beaconPacket = new BCN4Packet(routingEntries);
-            send(beaconPacket);
+            HIP4Packet packet = new HIP4Packet(
+                    Util.addressToInt(this.lowerLayer.getLocalAddress()),
+                    0,
+                    (short) 0,
+                    (short) 0,
+                    Config.getInstance().getBaconPacketTTL(),
+                    new byte[0]
+            );
+            BCN4Packet beaconPacket = new BCN4Packet(packet, routingEntries);
+            packet.setData(beaconPacket.marshal());
+            send(packet);
         } catch (IOException e) {
             System.err.println("Sending a beacon-packet failed. This shouldn't happen...");
             e.printStackTrace();
         }
     }
-    
-    public void send(TCP4Packet packet) {
-    
-    }
-    
-    public void send(BCN4Packet packet) throws IOException {
-        lowerLayer.send(new HIP4Packet(Util.addressToInt(lowerLayer.getLocalAddress()), (short) 0, (short) 0, (byte) 0, (byte) 4, packet.marshal()));
+
+
+    public void send(HIP4Packet packet) throws IOException {
+        lowerLayer.send(packet);
     }
     
     public void addReceiveListener(IReceiveListener receiver) {
@@ -77,15 +71,6 @@ public class HIP4Layer implements IReceiveListener {
     
     @Override
     public void receive(IPacket packet) {
-    
-    }
-    
-    // For Dijkstra
-    private class Node {
-        private String address;
-    }
-    
-    private class Edge {
-        private String address;
+        // TODO: Deal with unmarshalling crap
     }
 }

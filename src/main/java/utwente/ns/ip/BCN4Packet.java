@@ -1,6 +1,7 @@
 package utwente.ns.ip;
 
 import lombok.Data;
+import lombok.Getter;
 import utwente.ns.IPacket;
 import utwente.ns.PacketMalformedException;
 
@@ -18,8 +19,12 @@ import java.util.List;
 public class BCN4Packet implements IPacket {
 
     private List<RoutingEntry> routingTable;
+    @Getter
+    private HIP4Packet hip4Packet;
 
-    public BCN4Packet(byte[] data) throws PacketMalformedException {
+    public BCN4Packet(HIP4Packet hip4Packet, byte[] data) throws PacketMalformedException {
+        this.hip4Packet = hip4Packet;
+
         routingTable = new ArrayList<>();
 
         if (data.length < 4 || (data.length - 4) % 12 != 0) {
@@ -35,7 +40,8 @@ public class BCN4Packet implements IPacket {
         }
     }
 
-    public BCN4Packet(List<RoutingEntry> routingEntries) {
+    public BCN4Packet(HIP4Packet hip4Packet, List<RoutingEntry> routingEntries) {
+        this.hip4Packet = hip4Packet;
         this.routingTable = routingEntries;
     }
 
@@ -61,6 +67,11 @@ public class BCN4Packet implements IPacket {
     @Override
     public byte[] getData() {
         throw new UnsupportedOperationException("BCN4Packet does not contain data");
+    }
+
+    @Override
+    public String getIdent() {
+        return "BCN4";
     }
 
     @Data

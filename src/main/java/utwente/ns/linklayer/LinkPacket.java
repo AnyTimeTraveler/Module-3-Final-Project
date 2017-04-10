@@ -10,7 +10,7 @@ import java.net.InetAddress;
  * Created by simon on 07.04.17.
  */
 @Data
-public class LinkPacket implements IPacket{
+public class LinkPacket implements IPacket {
 
     private final byte[] data;
     private final InetAddress receivedPacketAddress;
@@ -23,5 +23,10 @@ public class LinkPacket implements IPacket{
     @Override
     public byte[] marshal() {
         return new byte[0];
+    }
+
+    @Override
+    public String getIdent() {
+        return "LNK0";
     }
 }

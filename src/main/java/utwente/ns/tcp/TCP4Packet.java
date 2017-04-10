@@ -17,7 +17,7 @@ import java.util.BitSet;
  */
 @Data
 @AllArgsConstructor
-public class TCP4Packet implements IPacket{
+public class TCP4Packet implements IPacket {
     /**
      * The HIP4 header's length in bytes
      */
@@ -106,6 +106,11 @@ public class TCP4Packet implements IPacket{
         System.arraycopy(Util.shortToByteArr(this.windowSize), 0, out, 14, 2);
         System.arraycopy(this.data, 0, out, TCP4Packet.HEADER_LENGTH, this.data.length);
         return out;
+    }
+
+    @Override
+    public String getIdent() {
+        return "TCP4";
     }
 }
 
