@@ -8,6 +8,7 @@ import utwente.ns.config.Config;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,7 +50,7 @@ public class HRP4Socket implements IReceiveListener, Closeable {
 
     public void send(byte[] data, int dstAddress, short dstPort) throws IOException {
         HRP4Packet hrp4Packet = new HRP4Packet(
-                Util.addressToInt(this.ipLayer.getLowerLayer().getLocalAddress()),
+                Util.addressToInt(InetAddress.getByName(Config.getInstance().getMyAddress())),
                 dstAddress,
                 this.dstPort,
                 dstPort,
