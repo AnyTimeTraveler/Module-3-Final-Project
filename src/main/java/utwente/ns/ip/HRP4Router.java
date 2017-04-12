@@ -59,9 +59,18 @@ public class HRP4Router {
     }
 
     private void processDataTable(List<BCN4Packet.RoutingEntry> table) {
+
+        int myAddress;
+        try {
+            myAddress = Util.addressToInt(InetAddress.getByName(Config.getInstance().getMyAddress()));
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+            return;
+        }
+
         for (int i = 0; i < table.size(); i++) {
             BCN4Packet.RoutingEntry entry = table.get(i);
-
+            if (entry.getAddresses()[0] ==  myAddress || entry.getAddresses()[1] == myAddress) continue;
             processEntry(entry.getAddresses()[0], entry.getAddresses()[1], entry.getLinkCost(), entry.getTTL());
             processEntry(entry.getAddresses()[1], entry.getAddresses()[0], entry.getLinkCost(), entry.getTTL());
         }

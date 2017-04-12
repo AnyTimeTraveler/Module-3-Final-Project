@@ -1,7 +1,9 @@
 package utwente.ns.chatlayer;
 
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.extern.java.Log;
+import utwente.ns.tcp.RTP4Connection;
 import utwente.ns.tcp.RTP4Layer;
 import utwente.ns.tcp.RTP4Socket;
 
@@ -23,6 +25,7 @@ public class ChatClient {
     
     public static final int MAX_AVAILABLE_PEER_COUNT = 10;
     public static final int BROADCAST_PORT = 1024;
+    public static final int MESSAGE_PORT = 1025;
     
     private final RTP4Layer rtp4Layer;
     private final String name;
@@ -104,10 +107,18 @@ public class ChatClient {
     
     @AllArgsConstructor
     private class PeerInfo {
-        private String id;
-        private String name;
-        private String address;
-        private Key peerSharedKey;
-        private PublicKey publicKey;
+        public final String id;
+        public final String name;
+        public final String address;
+        public final Key peerSharedKey;
+        public final PublicKey publicKey;
+    }
+
+    public void sendChatMessage(ChatMessage message) {
+        PeerInfo recipient = this.connectedPeers.get(message.getRecipientId());
+        message.encryptContent(recipient.peerSharedKey);
+        message.sign(this.keyPair.getPrivate());
+        // RTP4Connection conn = this.rtp4Layer.connect(recipient.address, MESSAGE_PORT);
+        // TODO: send message
     }
 }

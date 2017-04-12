@@ -1,5 +1,6 @@
 package utwente.ns.chatlayer;
 
+import lombok.Getter;
 import lombok.extern.java.Log;
 
 import java.nio.ByteBuffer;
@@ -16,12 +17,19 @@ public class ChatMessage {
     public transient static final String CONTENT_TYPE_TEXT = "text";
     public transient static final String CONTENT_TYPE_IMAGE = "image";
 
+    @Getter
     private String senderId;
+    @Getter
     private String messageId;
+    @Getter
     private String recipientId;
+    @Getter
     private String groupId;
+    @Getter
     private long timestamp;
+    @Getter
     private String type;
+    @Getter
     private String data;
     private String signature;
 
