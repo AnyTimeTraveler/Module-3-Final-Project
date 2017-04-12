@@ -3,14 +3,14 @@ package utwente.ns.ip;
 import lombok.Getter;
 import utwente.ns.IPacket;
 import utwente.ns.IReceiveListener;
+import utwente.ns.PacketMalformedException;
 import utwente.ns.Util;
 import utwente.ns.config.Config;
 import utwente.ns.linklayer.ILinkLayer;
+import utwente.ns.linklayer.SimluatedLinkPacket;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 public class HRP4Layer implements IReceiveListener {
 
@@ -21,11 +21,14 @@ public class HRP4Layer implements IReceiveListener {
     private final ILinkLayer lowerLayer;
 
     private HRP4Router router = new HRP4Router(this);
+
+    private List<IReceiveListener> receiveListeners;
     
     /**
      * @param linkLayer
      */
     public HRP4Layer(ILinkLayer linkLayer) {
+        receiveListeners = new ArrayList<>();
         lowerLayer = linkLayer;
         lowerLayer.addReceiveListener(this);
         Timer beaconTimer = new Timer();
@@ -65,12 +68,63 @@ public class HRP4Layer implements IReceiveListener {
         lowerLayer.send(packet);
     }
     
-    public void addReceiveListdener(IReceiveListener receiver) {
-    
+    public void addReceiveListener(IReceiveListener receiver) {
+        receiveListeners.add(receiver);
     }
-    
+
+    public HRP4Socket open(short port) throws IOException {
+        if (this.receiveListeners.parallelStream().filter(listener -> listener instanceof HRP4Socket)
+                .map(listener -> (HRP4Socket) listener).anyMatch(listener -> listener.getDstPort() == port)) {
+            throw new IOException("Port already opened");
+        }
+
+        HRP4Socket socket = new HRP4Socket(this, port);
+        this.addReceiveListener(socket);
+        return socket;
+    }
+
+    void close(HRP4Socket socket) {
+        this.receiveListeners.remove(socket);
+    }
+
     @Override
     public void receive(IPacket packet) {
-        // TODO: Deal with unmarshalling crap
+        if (!(packet instanceof SimluatedLinkPacket)) {
+            return;
+        }
+
+        byte[] data = packet.getData();
+        if (data.length < 4 + HRP4Packet.HEADER_LENGTH) return;
+        String ident = getIdent(data);
+
+        if (!ident.equals("HRP4")) {
+            return;
+        }
+
+        try {
+            HRP4Packet hrp4Packet = new HRP4Packet(data);
+
+            if (getIdent(hrp4Packet.getData()).equals("BCN4")) {
+                int origin = Util.addressToInt(((SimluatedLinkPacket) packet).getReceivedPacketAddress());
+
+                Map<Integer, Integer> forwardingTable = this.router.getForwardingTable(origin);
+
+                if (forwardingTable.get(hrp4Packet.getDstAddr()) != Util.addressToInt(this.lowerLayer.getLocalAddress())) {
+                    return;
+                }
+
+                hrp4Packet.setTTL((byte) (hrp4Packet.getTTL() - 1));
+
+                this.send(hrp4Packet);
+            } else {
+                receiveListeners.forEach(listener -> listener.receive(hrp4Packet));
+            }
+
+        } catch (PacketMalformedException | IOException ignored) { }
+    }
+
+    private static String getIdent(byte[] data) {
+        if (data.length < 4) return "";
+        return new StringBuilder().append((char) data[0]).append((char) data[1]).append((char) data[2]).append((char) data[3]).toString();
     }
 }

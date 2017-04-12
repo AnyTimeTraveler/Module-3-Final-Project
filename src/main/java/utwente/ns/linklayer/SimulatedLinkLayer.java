@@ -44,7 +44,7 @@ public class SimulatedLinkLayer implements ILinkLayer {
         DatagramPacket sendPacket = new DatagramPacket(data, data.length, address, Config.getInstance().getMulticastPort());
         socket.send(sendPacket);
     }
-    
+
     @Override
     public void addReceiveListener(IReceiveListener receiver) {
         packetListeners.add(receiver);

@@ -92,15 +92,12 @@ public class HRP4Router {
         }
     }
 
-    private HashMap<Integer, Integer> dijkstra() {
-
-        int myAddress = Util.addressToInt(this.ipLayer.getLowerLayer().getLocalAddress());
-
+    private HashMap<Integer, Integer> dijkstra(int sourceAddress) {
         List<RoutingEntry> closed = new ArrayList<>();
         List<RoutingEntry> open = new ArrayList<>();
         Set<Integer> visited = new HashSet<>();
 
-        open.add(new RoutingEntry(myAddress, -1, 0));
+        open.add(new RoutingEntry(sourceAddress, -1, 0));
 
         while(open.size() > 0) {
             RoutingEntry lowest = null;
@@ -152,9 +149,9 @@ public class HRP4Router {
         return result;
     }
 
-    public HashMap<Integer, Integer> getForwardingTable() {
+    public HashMap<Integer, Integer> getForwardingTable(int sourceAddress) {
         updateTTL();
-        return dijkstra();
+        return dijkstra(sourceAddress);
     }
 
     @Data

@@ -18,13 +18,15 @@ public class Config {
     private int baconInterval;
     private byte baconPacketTTL;
     private String myAddress;
+    private byte defaultHRP4TTL;
 
     private Config() {
         multicastAddress = "130.89.239.255";
         multicastPort = 1337;
         baconInterval = 1000;
         baconPacketTTL = 4;
-        myAddress = "CHANGE ME, I'M DEFINITLY NOT CONFIGURED YET!";
+        defaultHRP4TTL = 6;
+        myAddress = "CHANGE ME, I'M DEFINITELY NOT CONFIGURED YET!";
     }
 
     public static Config getInstance() {
