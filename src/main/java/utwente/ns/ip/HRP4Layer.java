@@ -109,7 +109,11 @@ public class HRP4Layer implements IReceiveListener {
 
                 Map<Integer, Integer> forwardingTable = this.router.getForwardingTable(origin);
 
-                if (forwardingTable.get(hrp4Packet.getDstAddr()) == Util.addressToInt(this.lowerLayer.getLocalAddress()) || hrp4Packet.getDstAddr() == 0) {
+                if ((
+                        forwardingTable.get(hrp4Packet.getDstAddr()) != null &&
+                        forwardingTable.get(hrp4Packet.getDstAddr()) == Util.addressToInt(this.lowerLayer.getLocalAddress())) ||
+                      hrp4Packet.getDstAddr() == 0) {
+
                     hrp4Packet.setTTL((byte) (hrp4Packet.getTTL() - 1));
 
                     this.send(hrp4Packet);
