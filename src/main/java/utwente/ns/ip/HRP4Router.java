@@ -38,7 +38,7 @@ public class HRP4Router {
         int myAddress = Util.addressToInt(InetAddress.getByName(Config.getInstance().getMyAddress()));
 
         int neighbour = packet.getHip4Packet().getSrcAddr();
-        int linkcost = this.ipLayer.getLowerLayer().getLinkCost(InetAddress.getByAddress(Util.intToByteArr(neighbour)));
+        int linkcost = 1;
         neighbors.add(neighbour);
 
         // Update cost to neighbour
