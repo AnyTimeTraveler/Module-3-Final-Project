@@ -10,6 +10,7 @@ import utwente.ns.linklayer.ILinkLayer;
 import utwente.ns.linklayer.SimulatedLinkPacket;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.*;
 
 public class HRP4Layer implements IReceiveListener {
@@ -47,7 +48,7 @@ public class HRP4Layer implements IReceiveListener {
         try {
             List<BCN4Packet.RoutingEntry> routingEntries = this.router.getRoutingEntries();
             HRP4Packet packet = new HRP4Packet(
-                    Util.addressToInt(this.lowerLayer.getLocalAddress()),
+                    Util.addressToInt(InetAddress.getByName(Config.getInstance().getMyAddress())),
                     0,
                     (short) 0,
                     (short) 0,
@@ -94,7 +95,8 @@ public class HRP4Layer implements IReceiveListener {
         try {
             HRP4Packet hrp4Packet = new HRP4Packet(packet.getData());
 
-            if (hrp4Packet.getDstAddr() == Util.addressToInt(this.lowerLayer.getLocalAddress()) || hrp4Packet.getDstAddr() == 0) {
+            if (hrp4Packet.getDstAddr() == Util.addressToInt(InetAddress.getByName(Config.getInstance().getMyAddress())) ||
+                    hrp4Packet.getDstAddr() == 0) {
                 try {
                     BCN4Packet p = new BCN4Packet(hrp4Packet, hrp4Packet.getData());
                     router.update(p);
@@ -110,7 +112,7 @@ public class HRP4Layer implements IReceiveListener {
 
                 if ((
                         forwardingTable.get(hrp4Packet.getDstAddr()) != null &&
-                        forwardingTable.get(hrp4Packet.getDstAddr()) == Util.addressToInt(this.lowerLayer.getLocalAddress())) ||
+                        forwardingTable.get(hrp4Packet.getDstAddr()) == Util.addressToInt(InetAddress.getByName(Config.getInstance().getMyAddress()))) ||
                       hrp4Packet.getDstAddr() == 0) {
 
                     hrp4Packet.setTTL((byte) (hrp4Packet.getTTL() - 1));
