@@ -39,12 +39,6 @@ public class HRP4Layer implements IReceiveListener {
             }
         }, (long) Config.getInstance().getBaconInterval(), (long) Config.getInstance().getBaconInterval());
     }
-    
-    private static String getIdent(byte[] data) {
-        if (data.length < 4)
-            return "";
-        return new StringBuilder().append((char) data[0]).append((char) data[1]).append((char) data[2]).append((char) data[3]).toString();
-    }
 
     /**
      *
@@ -101,7 +95,12 @@ public class HRP4Layer implements IReceiveListener {
             HRP4Packet hrp4Packet = new HRP4Packet(packet.getData());
 
             if (hrp4Packet.getDstAddr() == Util.addressToInt(this.lowerLayer.getLocalAddress()) || hrp4Packet.getDstAddr() == 0) {
-                receiveListeners.forEach(listener -> listener.receive(hrp4Packet));
+                try {
+                    BCN4Packet p = new BCN4Packet(hrp4Packet, hrp4Packet.getData());
+                    router.update(p);
+                } catch (PacketMalformedException e) {
+                    receiveListeners.forEach(listener -> listener.receive(hrp4Packet));
+                }
             }
 
             if (hrp4Packet.getTTL() >= 1) {
