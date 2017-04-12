@@ -1,6 +1,5 @@
 package utwente.ns.tcp;
 
-import javafx.util.Pair;
 import utwente.ns.IPacket;
 import utwente.ns.IReceiveListener;
 import utwente.ns.PacketMalformedException;
@@ -9,6 +8,7 @@ import utwente.ns.ip.HRP4Packet;
 import utwente.ns.ip.HRP4Socket;
 
 import java.io.IOException;
+import java.util.AbstractMap;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
@@ -38,7 +38,7 @@ public class RTP4Socket implements IReceiveListener{
 
     Queue<HRP4Packet> receivedPacketQueue;
     BlockingQueue<HRP4Packet> receivedSynQueue;
-    Queue<Pair<RTP4Packet,Long>> unacknowledgedQueue;
+    Queue<AbstractMap.Entry<RTP4Packet,Long>> unacknowledgedQueue;
 
     private TCPBlock tcpBlock = new TCPBlock();
 
@@ -226,7 +226,7 @@ public class RTP4Socket implements IReceiveListener{
     private void send(RTP4Packet packet) {
         try {
             ipSocket.send(packet.marshal(), dstAddr, dstPort);
-            unacknowledgedQueue.add(new Pair<RTP4Packet,Long>(packet,System.currentTimeMillis()));
+            unacknowledgedQueue.add(new AbstractMap.SimpleEntry<>(packet,System.currentTimeMillis()));
         } catch (IOException e) {
             e.printStackTrace();
         }
