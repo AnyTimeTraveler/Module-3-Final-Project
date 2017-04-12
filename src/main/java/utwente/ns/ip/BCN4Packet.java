@@ -83,6 +83,7 @@ public class BCN4Packet implements IPacket {
             this.addresses[1] = buff.getInt();
         }
 
+        @SuppressWarnings("WeakerAccess")
         public RoutingEntry(byte linkCost, byte TTL, int addr0, int addr1) {
             this.linkCost = linkCost;
             this.TTL = TTL;
