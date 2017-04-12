@@ -20,9 +20,7 @@ function hrp4_proto.dissector(buffer, pinfo, tree)
     -- Destination Port
     subtree:add(buffer(14, 2), "Destination Port: " .. buffer(14, 2):uint())
     -- TTL
-    subtree:add(buffer(16, 1), "TTL: " .. buffer(15, 1):uint())
-    -- Reserved
-    subtree:add(buffer(17, 3), "Reserved: " .. buffer(16, 3):uint())
+    subtree:add(buffer(16, 1), "TTL: " .. buffer(16, 1):uint())
 
     -- Switch according to datatype.
     datatype = buffer(20, 4):string()
@@ -44,10 +42,10 @@ function hrp4_proto.dissector(buffer, pinfo, tree)
         end
     elseif datatype == "RTP4" then
         pinfo.cols.info = sVersion .. "RTP4 Packet"
-        local inner = subtree:add(hrp4_proto, buffer(), "RTP4 Packet")
+        local inner = subtree:add(hrp4_proto, buffer(20), "RTP4 Packet")
 
     else
-        local inner = subtree:add(hrp4_proto, buffer(), "Unknown Packet")
+        local inner = subtree:add(hrp4_proto, buffer(20), "Unknown Packet")
     end
 
     -- if datatype == 0 then
