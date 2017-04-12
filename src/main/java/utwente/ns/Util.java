@@ -29,6 +29,14 @@ public class Util {
         return ByteBuffer.wrap(localAddress.getAddress()).getInt(0);
     }
 
+    public static String intToAddressString(int integer) throws UnknownHostException {
+        return intToAddress(integer).getHostAddress();
+    }
+
+    public static InetAddress intToAddress(int integer) throws UnknownHostException {
+        return InetAddress.getByAddress(ByteBuffer.allocate(4).putInt(integer).array());
+    }
+
     public static String figlet(String text) {
         try {
             ProcessBuilder builder = new ProcessBuilder("bash", "-c", text);
