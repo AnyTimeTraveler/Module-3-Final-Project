@@ -38,6 +38,11 @@ public class HRP4Router {
         int myAddress = Util.addressToInt(InetAddress.getByName(Config.getInstance().getMyAddress()));
 
         int neighbour = packet.getHip4Packet().getSrcAddr();
+
+        if (neighbour == myAddress) {
+            return;
+        }
+
         int linkcost = 1;
         neighbors.add(neighbour);
 
@@ -152,7 +157,10 @@ public class HRP4Router {
 
     public HashMap<Integer, Integer> getForwardingTable(int sourceAddress) {
         updateTTL();
-        return dijkstra(sourceAddress);
+        System.out.println(linkTable);
+        HashMap<Integer, Integer> table = dijkstra(sourceAddress);
+        System.out.println(table);
+        return table;
     }
 
     @Data
