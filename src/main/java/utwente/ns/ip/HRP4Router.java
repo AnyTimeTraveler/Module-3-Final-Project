@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import utwente.ns.Util;
+import utwente.ns.config.Config;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -34,7 +35,7 @@ public class HRP4Router {
 
     public synchronized void update(BCN4Packet packet) throws UnknownHostException {
         // Get the address of this node
-        int myAddress = Util.addressToInt(this.ipLayer.getLowerLayer().getLocalAddress());
+        int myAddress = Util.addressToInt(InetAddress.getByName(Config.getInstance().getMyAddress()));
 
         int neighbour = packet.getHip4Packet().getSrcAddr();
         int linkcost = this.ipLayer.getLowerLayer().getLinkCost(InetAddress.getByAddress(Util.intToByteArr(neighbour)));
