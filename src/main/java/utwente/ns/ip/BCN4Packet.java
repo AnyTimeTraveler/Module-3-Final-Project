@@ -100,9 +100,7 @@ public class BCN4Packet implements IPacket {
             raw.putInt(addresses[0]);
             raw.putInt(addresses[1]);
 
-            byte[] data = new byte[12];
-            raw.get(data);
-            return data;
+            return raw.array();
         }
     }
 }

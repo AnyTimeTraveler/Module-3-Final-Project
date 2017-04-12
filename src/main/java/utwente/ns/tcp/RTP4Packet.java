@@ -91,8 +91,8 @@ public class RTP4Packet implements IPacket {
      */
     public byte[] marshal() {
         byte[] out = new byte[data.length + RTP4Packet.HEADER_LENGTH];
-        out[0] = 'T';
-        out[1] = 'C';
+        out[0] = 'R';
+        out[1] = 'T';
         out[2] = 'P';
         out[3] = '4';
         System.arraycopy(Util.intToByteArr(this.seqNum), 0, out, 4, 4);
