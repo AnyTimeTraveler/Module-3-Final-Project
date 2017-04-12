@@ -32,8 +32,8 @@ public class Chat implements IApplication {
             try {
                 String message = line.split(";")[1];
                 String destination = line.split(";")[0];
-                InetAddress ip = InetAddress.getByName(destination.split(":")[0]);
-                short port = Short.parseShort(destination.split(":")[1]);
+                InetAddress ip = InetAddress.getByName(destination);
+                short port = 25565;
                 socket.send(message.getBytes(), Util.addressToInt(ip), port);
             } catch (ArrayIndexOutOfBoundsException | IOException e) {
                 e.printStackTrace();

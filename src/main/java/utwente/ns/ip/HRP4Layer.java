@@ -51,7 +51,7 @@ public class HRP4Layer implements IReceiveListener {
                     0,
                     (short) 0,
                     (short) 0,
-                    Config.getInstance().getBaconPacketTTL(),
+                    (byte) 0,
                     new byte[0]
             );
             BCN4Packet beaconPacket = new BCN4Packet(packet, routingEntries);
@@ -89,37 +89,24 @@ public class HRP4Layer implements IReceiveListener {
 
     @Override
     public void receive(IPacket packet) {
-        if (!(packet instanceof SimulatedLinkPacket)) {
-            return;
-        }
-
-        byte[] data = packet.getData();
-        if (data.length < 4 + HRP4Packet.HEADER_LENGTH) return;
-        String ident = getIdent(data);
-
-        if (!ident.equals("HRP4")) {
-            return;
-        }
-
         try {
-            HRP4Packet hrp4Packet = new HRP4Packet(data);
+            HRP4Packet hrp4Packet = new HRP4Packet(packet.getData());
 
-            if (getIdent(hrp4Packet.getData()).equals("BCN4")) {
+            if (hrp4Packet.getDstAddr() == Util.addressToInt(this.lowerLayer.getLocalAddress()) || hrp4Packet.getDstAddr() == 0) {
+                receiveListeners.forEach(listener -> listener.receive(hrp4Packet));
+            }
+
+            if (hrp4Packet.getTTL() >= 1) {
                 int origin = Util.addressToInt(((SimulatedLinkPacket) packet).getReceivedPacketAddress());
 
                 Map<Integer, Integer> forwardingTable = this.router.getForwardingTable(origin);
 
-                if (forwardingTable.get(hrp4Packet.getDstAddr()) != Util.addressToInt(this.lowerLayer.getLocalAddress())) {
-                    return;
+                if (forwardingTable.get(hrp4Packet.getDstAddr()) == Util.addressToInt(this.lowerLayer.getLocalAddress()) || hrp4Packet.getDstAddr() == 0) {
+                    hrp4Packet.setTTL((byte) (hrp4Packet.getTTL() - 1));
+
+                    this.send(hrp4Packet);
                 }
-
-                hrp4Packet.setTTL((byte) (hrp4Packet.getTTL() - 1));
-
-                this.send(hrp4Packet);
-            } else {
-                receiveListeners.forEach(listener -> listener.receive(hrp4Packet));
             }
-
         } catch (PacketMalformedException | IOException ignored) { }
     }
 
