@@ -16,7 +16,8 @@ public class SimulatedLinkPacket implements IPacket {
     private final InetAddress receivedPacketAddress;
 
     SimulatedLinkPacket(DatagramPacket receivedPacket) {
-        data = receivedPacket.getData();
+        data = new byte[receivedPacket.getLength()];
+        System.arraycopy(receivedPacket.getData(),0,data,0,receivedPacket.getLength());
         receivedPacketAddress = receivedPacket.getAddress();
     }
 

@@ -37,6 +37,7 @@ public class SimulatedLinkLayer implements ILinkLayer {
         this.maxSegmentSize = maxSegmentSize;
         addresses = new InetAddress[1];
         addresses[0] = InetAddress.getByName(Config.getInstance().getMulticastAddress());
+        socket.joinGroup(addresses[0]);
         
     }
     
@@ -44,6 +45,9 @@ public class SimulatedLinkLayer implements ILinkLayer {
         this();
         this.maxSegmentSize = maxSegmentSize;
         this.addresses = multicastAddresses;
+        for (InetAddress address : addresses) {
+            socket.joinGroup(address);
+        }
     }
     
     @Override

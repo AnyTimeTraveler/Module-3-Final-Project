@@ -40,6 +40,12 @@ public class HRP4Layer implements IReceiveListener {
         }, (long) Config.getInstance().getBaconInterval(), (long) Config.getInstance().getBaconInterval());
     }
     
+    private static String getIdent(byte[] data) {
+        if (data.length < 4)
+            return "";
+        return new StringBuilder().append((char) data[0]).append((char) data[1]).append((char) data[2]).append((char) data[3]).toString();
+    }
+
     /**
      *
      */
@@ -73,8 +79,10 @@ public class HRP4Layer implements IReceiveListener {
     }
 
     public HRP4Socket open(short port) throws IOException {
-        if (this.receiveListeners.parallelStream().filter(listener -> listener instanceof HRP4Socket)
-                .map(listener -> (HRP4Socket) listener).anyMatch(listener -> listener.getDstPort() == port)) {
+        if (this.receiveListeners.parallelStream()
+                                 .filter(listener -> listener instanceof HRP4Socket)
+                                 .map(listener -> (HRP4Socket) listener)
+                                 .anyMatch(listener -> listener.getDstPort() == port)) {
             throw new IOException("Port already opened");
         }
 
@@ -108,10 +116,5 @@ public class HRP4Layer implements IReceiveListener {
                 }
             }
         } catch (PacketMalformedException | IOException ignored) { }
-    }
-
-    private static String getIdent(byte[] data) {
-        if (data.length < 4) return "";
-        return new StringBuilder().append((char) data[0]).append((char) data[1]).append((char) data[2]).append((char) data[3]).toString();
     }
 }
