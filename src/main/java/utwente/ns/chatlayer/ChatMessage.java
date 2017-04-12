@@ -12,25 +12,54 @@ import java.util.logging.Level;
  */
 @Log
 public class ChatMessage {
+
+    public transient static final String CONTENT_TYPE_TEXT = "text";
+    public transient static final String CONTENT_TYPE_IMAGE = "image";
+
     private String senderId;
     private String messageId;
     private String recipientId;
     private String groupId;
     private long timestamp;
     private String type;
-    private String content;
+    private String data;
     private String signature;
 
-    public ChatMessage(String senderId, String messageId, String groupId, String type) {
+    private transient ChatMessageContent content;
+
+    public ChatMessage(String senderId, String messageId, String recipientId, String groupId, String type) {
         this.senderId = senderId;
         this.messageId = messageId;
+        this.recipientId = recipientId;
         this.groupId = groupId;
         this.timestamp = System.currentTimeMillis();
         this.type = type;
     }
 
+    public ChatMessage(String senderId, String messageId, String recipientId, String groupId, String type, String text) {
+        this(senderId, messageId, recipientId, groupId, type);
+        this.content = new TextMessageContent(text);
+    }
+
     public ChatMessage() {
         // do nothing
+    }
+
+    public void encryptContent(Key key) {
+        this.data = this.content.getEncryptedContent(key);
+    }
+
+    public void decryptContent(Key key) throws InvalidMessageException, UnsupportedMessageTypeException {
+        ChatMessageContent content;
+        switch (this.type) {
+            case CONTENT_TYPE_TEXT:
+                this.content = new TextMessageContent();
+                this.content.setContent(key, this.data);
+            case CONTENT_TYPE_IMAGE:
+                throw new UnsupportedMessageTypeException();
+            default:
+                throw new InvalidMessageException();
+        }
     }
 
     public void sign(PrivateKey key) {
@@ -65,7 +94,7 @@ public class ChatMessage {
         signature.update(groupId.getBytes());
         signature.update(ByteBuffer.allocate(Long.BYTES).putLong(timestamp).array());
         signature.update(type.getBytes());
-        signature.update(content.getBytes());
+        signature.update(data.getBytes());
     }
 
 }
