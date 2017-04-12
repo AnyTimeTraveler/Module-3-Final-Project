@@ -73,6 +73,8 @@ public class BCN4Packet implements IPacket {
         private byte linkCost;
         private byte TTL;
 
+
+
         @SuppressWarnings("WeakerAccess")
         public RoutingEntry(byte[] data) {
             ByteBuffer buff = ByteBuffer.wrap(data);
@@ -102,6 +104,14 @@ public class BCN4Packet implements IPacket {
             raw.putInt(addresses[1]);
 
             return raw.array();
+        }
+
+        public void decrementTTL(int by) {
+            if (this.TTL < by) {
+                this.TTL = 0;
+            } else {
+                this.TTL -= by;
+            }
         }
     }
 }
