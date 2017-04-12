@@ -54,10 +54,7 @@ public class BCN4Packet implements IPacket {
         for (RoutingEntry entry : this.routingTable) {
             buf.put(entry.marshal());
         }
-
-        byte[] retv = new byte[4 + (12 * routingTable.size())];
-        buf.get(retv);
-        return retv;
+        return buf.array();
     }
 
     /**

@@ -16,24 +16,29 @@ public class Start {
     public static void main(String[] args) {
         Reflections applications = new Reflections("utwente.ns.applications");
         List<Class<? extends IApplication>> applicationClasses = new ArrayList<>(applications.getSubTypesOf(IApplication.class));
-
-        System.out.println("Select the program thy wishes to allow to interfere with your life and take some of it away.\n");
-
-        for (int i = 0; i < applicationClasses.size(); i++) {
-            System.out.printf("%2d: %s\n", i, applicationClasses.get(i).getCanonicalName());
-        }
-
-        System.out.printf("\nThou shallth enter a number in tween of %d and %d, excluding %d: ",
-                0, applicationClasses.size(), applicationClasses.size());
-
-        int n = new Scanner(System.in).nextInt();
-        if (n >= applicationClasses.size()) {
-            System.out.println(Util.figlet(new String(Base64.getDecoder().decode("ZmlnbGV0IC13IDcwIFRob3Ugc2hhbGx0aCBiZSB0ZXJtaW5hdGVk"))));
+        int n;
+        if (args.length == 1) {
+            n = Integer.parseInt(args[0]);
             return;
+        } else {
+            
+            System.out.println("Select the program thy wishes to allow to interfere with your life and take some of it away.\n");
+            
+            for (int i = 0; i < applicationClasses.size(); i++) {
+                System.out.printf("%2d: %s\n", i, applicationClasses.get(i).getCanonicalName());
+            }
+            
+            System.out.printf("\nThou shallth enter a number in tween of %d and %d, excluding %d: ", 0, applicationClasses.size(), applicationClasses.size());
+            
+            n = new Scanner(System.in).nextInt();
+            if (n >= applicationClasses.size()) {
+                System.out.println(Util.figlet(new String(Base64.getDecoder().decode("ZmlnbGV0IC13IDcwIFRob3Ugc2hhbGx0aCBiZSB0ZXJtaW5hdGVk"))));
+                return;
+            }
         }
-
+        
         Class<? extends IApplication> application = applicationClasses.get(n);
-
+        
         try {
             application.newInstance().start();
         } catch (InstantiationException | IllegalAccessException e) {
