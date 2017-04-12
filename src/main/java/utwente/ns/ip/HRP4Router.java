@@ -15,7 +15,7 @@ import java.util.*;
  */
 public class HRP4Router {
 
-    private static final byte DEFAULT_TTL = 6;
+    private static final byte DEFAULT_TTL = 100;
 
     private HRP4Layer ipLayer;
 
@@ -32,7 +32,6 @@ public class HRP4Router {
         return entries;
     }
 
-    @SuppressWarnings("Duplicates")
     public synchronized void update(BCN4Packet packet) throws UnknownHostException {
         // Get the address of this node
         int myAddress = Util.addressToInt(this.ipLayer.getLowerLayer().getLocalAddress());
@@ -69,7 +68,7 @@ public class HRP4Router {
         Map<Integer, BCNRoutingEntryAlternative> routes = linkTable.get(addr1);
         if (routes.containsKey(addr2)) {
             BCNRoutingEntryAlternative route = routes.get(addr2);
-            if (route.getBcn4Entry().getTTL() < ttl) {
+            if (route.getRemaining() < 8 * ((int) ttl)) {
                 route.setTimeSince(System.currentTimeMillis());
                 route.getBcn4Entry().setLinkCost(weight);
                 route.getBcn4Entry().setTTL(ttl);
@@ -93,15 +92,12 @@ public class HRP4Router {
         }
     }
 
-    private HashMap<Integer, Integer> dijkstra() {
-
-        int myAddress = Util.addressToInt(this.ipLayer.getLowerLayer().getLocalAddress());
-
+    private HashMap<Integer, Integer> dijkstra(int sourceAddress) {
         List<RoutingEntry> closed = new ArrayList<>();
         List<RoutingEntry> open = new ArrayList<>();
         Set<Integer> visited = new HashSet<>();
 
-        open.add(new RoutingEntry(myAddress, -1, 0));
+        open.add(new RoutingEntry(sourceAddress, -1, 0));
 
         while(open.size() > 0) {
             RoutingEntry lowest = null;
@@ -153,9 +149,9 @@ public class HRP4Router {
         return result;
     }
 
-    public HashMap<Integer, Integer> getForwardingTable() {
+    public HashMap<Integer, Integer> getForwardingTable(int sourceAddress) {
         updateTTL();
-        return dijkstra();
+        return dijkstra(sourceAddress);
     }
 
     @Data
@@ -172,8 +168,12 @@ public class HRP4Router {
         private final BCN4Packet.RoutingEntry bcn4Entry;
         private long timeSince = System.currentTimeMillis();
 
+        public long getRemaining() {
+            return System.currentTimeMillis() - timeSince - (8 * bcn4Entry.getTTL());
+        }
+
         public boolean isExpired() {
-            return bcn4Entry.getTTL() + timeSince >= System.currentTimeMillis();
+            return (8 * ((int) bcn4Entry.getTTL())) + timeSince >= System.currentTimeMillis();
         }
     }
 }

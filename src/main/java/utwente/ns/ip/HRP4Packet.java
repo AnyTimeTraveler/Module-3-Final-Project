@@ -21,7 +21,7 @@ public class HRP4Packet implements IPacket {
     /**
      * The HIP4 header's length in bytes
      */
-    private static final int HEADER_LENGTH = 20; //bytes
+    public static final int HEADER_LENGTH = 20; //bytes
 
     /**
      * Source address: sender's address.
@@ -64,7 +64,7 @@ public class HRP4Packet implements IPacket {
         }
 
         ByteBuffer buf = ByteBuffer.wrap(raw);
-        if (buf.getInt() != (('H' << 24) | ('I' << 16) | ('P' << 8) | '4')) {
+        if (buf.getInt() != (('H' << 24) | ('R' << 16) | ('P' << 8) | '4')) {
             throw new PacketMalformedException("Invalid packet identifier");
         }
 
@@ -86,7 +86,7 @@ public class HRP4Packet implements IPacket {
     public byte[] marshal() {
         byte[] out = new byte[data.length + HEADER_LENGTH];
         out[0] = 'H';
-        out[1] = 'I';
+        out[1] = 'R';
         out[2] = 'P';
         out[3] = '4';
         System.arraycopy(Util.intToByteArr(this.srcAddr), 0, out, 4, 4);
