@@ -7,7 +7,7 @@ import utwente.ns.PacketMalformedException;
 import utwente.ns.Util;
 import utwente.ns.config.Config;
 import utwente.ns.linklayer.ILinkLayer;
-import utwente.ns.linklayer.SimluatedLinkPacket;
+import utwente.ns.linklayer.SimulatedLinkPacket;
 
 import java.io.IOException;
 import java.util.*;
@@ -89,7 +89,7 @@ public class HRP4Layer implements IReceiveListener {
 
     @Override
     public void receive(IPacket packet) {
-        if (!(packet instanceof SimluatedLinkPacket)) {
+        if (!(packet instanceof SimulatedLinkPacket)) {
             return;
         }
 
@@ -105,7 +105,7 @@ public class HRP4Layer implements IReceiveListener {
             HRP4Packet hrp4Packet = new HRP4Packet(data);
 
             if (getIdent(hrp4Packet.getData()).equals("BCN4")) {
-                int origin = Util.addressToInt(((SimluatedLinkPacket) packet).getReceivedPacketAddress());
+                int origin = Util.addressToInt(((SimulatedLinkPacket) packet).getReceivedPacketAddress());
 
                 Map<Integer, Integer> forwardingTable = this.router.getForwardingTable(origin);
 

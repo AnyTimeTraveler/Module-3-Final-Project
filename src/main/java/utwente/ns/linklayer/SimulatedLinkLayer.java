@@ -63,7 +63,7 @@ public class SimulatedLinkLayer implements ILinkLayer {
             try {
                 socket.receive(receivedPacket);
                 for (IReceiveListener listener : packetListeners) {
-                    listener.receive(new SimluatedLinkPacket(receivedPacket));
+                    listener.receive(new SimulatedLinkPacket(receivedPacket));
                 }
             } catch (IOException e) {
                 e.printStackTrace();
