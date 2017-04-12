@@ -10,7 +10,7 @@ import java.nio.ByteBuffer;
 import java.util.BitSet;
 
 /**
- * (De)Marshaller class for the TCP4 layer
+ * (De)Marshaller class for the RTP4 layer
  *
  * @author nielsoverkamp
  *         Created on 4/7/17
@@ -71,7 +71,9 @@ public class RTP4Packet implements IPacket {
     @SuppressWarnings("unused")
     public RTP4Packet(byte[] raw) throws PacketMalformedException {
         ByteBuffer buf = ByteBuffer.wrap(raw);
-        buf.getInt();
+        if (buf.getInt() != (('R' << 24) | ('T' << 16) | ('P' << 8) | '4')) {
+            throw new PacketMalformedException("Invalid packet identifier");
+        }
         this.seqNum = buf.getInt();
         this.ackNum = buf.getInt();
         BitSet flagByte = BitSet.valueOf(new byte[]{buf.get()});
