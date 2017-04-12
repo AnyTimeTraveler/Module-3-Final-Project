@@ -17,21 +17,33 @@ import java.util.List;
 public class SimulatedLinkLayer implements ILinkLayer {
     
     private List<IReceiveListener> packetListeners;
-    private InetAddress address;
+    private InetAddress[] addresses;
     private MulticastSocket socket;
     private Thread receiver;
     private boolean closed;
     private int maxSegmentSize;
     
-    public SimulatedLinkLayer(int maxSegmentSize) throws IOException {
-        this.maxSegmentSize = maxSegmentSize;
+    private SimulatedLinkLayer() throws IOException {
         packetListeners = new ArrayList<>();
-        address = InetAddress.getByName(Config.getInstance().getMulticastAddress());
         socket = new MulticastSocket(Config.getInstance().getMulticastPort());
         receiver = new Thread(this::waitForIncomingPackets);
         receiver.setDaemon(true);
         receiver.setName("LinkLayerReceiver");
         receiver.start();
+    }
+    
+    public SimulatedLinkLayer(int maxSegmentSize) throws IOException {
+        this();
+        this.maxSegmentSize = maxSegmentSize;
+        addresses = new InetAddress[1];
+        addresses[0] = InetAddress.getByName(Config.getInstance().getMulticastAddress());
+        
+    }
+    
+    public SimulatedLinkLayer(int maxSegmentSize, InetAddress... multicastAddresses) throws IOException {
+        this();
+        this.maxSegmentSize = maxSegmentSize;
+        this.addresses = multicastAddresses;
     }
     
     @Override
@@ -41,10 +53,11 @@ public class SimulatedLinkLayer implements ILinkLayer {
     
     @Override
     public void send(byte[] data) throws IOException {
-        DatagramPacket sendPacket = new DatagramPacket(data, data.length, address, Config.getInstance().getMulticastPort());
-        socket.send(sendPacket);
+        for (InetAddress address : addresses) {
+            socket.send(new DatagramPacket(data, data.length, address, Config.getInstance().getMulticastPort()));
+        }
     }
-
+    
     @Override
     public void addReceiveListener(IReceiveListener receiver) {
         packetListeners.add(receiver);
@@ -63,7 +76,7 @@ public class SimulatedLinkLayer implements ILinkLayer {
             try {
                 socket.receive(receivedPacket);
                 for (IReceiveListener listener : packetListeners) {
-                    listener.receive(new SimluatedLinkPacket(receivedPacket));
+                    listener.receive(new SimulatedLinkPacket(receivedPacket));
                 }
             } catch (IOException e) {
                 e.printStackTrace();

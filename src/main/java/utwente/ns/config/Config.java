@@ -8,34 +8,36 @@ import java.io.*;
 
 @Data
 public class Config {
-
+    
     // Configfile name
     private static final String CONFIGFILE = "config.json";
     private static Config instance;
-
+    
     private String multicastAddress;
     private int multicastPort;
     private int baconInterval;
     private byte baconPacketTTL;
     private String myAddress;
     private byte defaultHRP4TTL;
-
+    private int segmentBufferSize;
+    
     private Config() {
         multicastAddress = "130.89.239.255";
         multicastPort = 1337;
         baconInterval = 1000;
         baconPacketTTL = 4;
-        defaultHRP4TTL = 6;
         myAddress = "CHANGE ME, I'M DEFINITELY NOT CONFIGURED YET!";
+        defaultHRP4TTL = 6;
+        segmentBufferSize = 2048;
     }
-
+    
     public static Config getInstance() {
         if (instance == null) {
             load();
         }
         return instance;
     }
-
+    
     private static void load(File file) {
         instance = fromFile(file);
         // no config file found
@@ -45,15 +47,15 @@ public class Config {
             throw new RuntimeException("Set values in config file according to your settings!");
         }
     }
-
+    
     private static void load() {
         load(new File(CONFIGFILE));
     }
-
+    
     private static Config fromDefaults() {
         return new Config();
     }
-
+    
     private static Config fromFile(File configFile) {
         try {
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -64,15 +66,15 @@ public class Config {
             return null;
         }
     }
-
+    
     public void toFile() {
         toFile(new File(CONFIGFILE));
     }
-
+    
     public void toFile(String file) {
         toFile(new File(file));
     }
-
+    
     public void toFile(File file) {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         String jsonConfig = gson.toJson(this);
@@ -86,7 +88,7 @@ public class Config {
             e.printStackTrace();
         }
     }
-
+    
     @Override
     public String toString() {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
