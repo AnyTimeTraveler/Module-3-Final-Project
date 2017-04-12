@@ -5,6 +5,7 @@ import lombok.extern.java.Log;
 import utwente.ns.tcp.RTP4Layer;
 import utwente.ns.tcp.RTP4Socket;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
@@ -94,7 +95,11 @@ public class ChatClient {
     }
     
     public void run() {
-        this.socket = this.rtp4Layer.open(BROADCAST_PORT);
+        try {
+            this.socket = this.rtp4Layer.open(BROADCAST_PORT);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
     
     @AllArgsConstructor
