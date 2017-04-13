@@ -25,7 +25,7 @@ public class Start {
             System.out.println("Select the program thy wishes to allow to interfere with your life and take some of it away.\n");
             
             for (int i = 0; i < applicationClasses.size(); i++) {
-                System.out.printf("%2d: %s\n", i, applicationClasses.get(i).getCanonicalName());
+                System.out.printf("%2d: %s\n", i, applicationClasses.get(i).getSimpleName());
             }
             
             System.out.printf("\nThou shallth enter a number in tween of %d and %d, excluding %d: ", 0, applicationClasses.size(), applicationClasses.size());

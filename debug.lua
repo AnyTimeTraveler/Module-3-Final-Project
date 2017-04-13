@@ -1,6 +1,14 @@
+--
 -- HRP4 protocol
+-- Created by IntelliJ IDEA.
+-- User: simon
+-- Date: 12.04.17
+-- Time: 18:14
+--
 -- Declare protocol
 hrp4_proto = Proto("HRP4", "HRP4 Protocol")
+-- Require JSON parser
+local json = require('json')
 
 -- create function to dissect
 function hrp4_proto.dissector(buffer, pinfo, tree)
