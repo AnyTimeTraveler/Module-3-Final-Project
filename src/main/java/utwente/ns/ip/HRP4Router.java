@@ -99,7 +99,7 @@ public class HRP4Router {
         for (Map.Entry<Integer, Map<Integer, BCNRoutingEntryAlternative>> node: linkTable.entrySet()) {
             List<Integer> toRemove = new LinkedList<>();
             for (Map.Entry<Integer, BCNRoutingEntryAlternative> entry: node.getValue().entrySet()) {
-                entry.getValue().bcn4Entry.decrementTTL((int) (currentTimeMillis - entry.getValue().timeSince));
+                entry.getValue().bcn4Entry.decrementTTL((int) (currentTimeMillis - entry.getValue().timeSince)/TTL_MULTIPLIER);
 
                 if (entry.getValue().isExpired()) {
                     toRemove.add(entry.getKey());
