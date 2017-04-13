@@ -46,7 +46,7 @@ public class BCN4Packet implements IPacket {
         this.routingTable = routingEntries;
     }
 
-    public BCN4Packet(List<HRP4Router.BCNRoutingEntryAlternative> routingEntries, HRP4Packet hip4Packet) {
+    public BCN4Packet(List<HRP4Router.BCN4RoutingEntryWrapper> routingEntries, HRP4Packet hip4Packet) {
         this.hip4Packet = hip4Packet;
         this.routingTable = routingEntries.stream().map(entry -> new RoutingEntry(
                 entry.getBcn4Entry().getLinkCost(),

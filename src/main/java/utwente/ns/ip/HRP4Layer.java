@@ -21,7 +21,7 @@ public class HRP4Layer implements IReceiveListener {
     @Getter
     private final ILinkLayer lowerLayer;
 
-    private HRP4Router router = new HRP4Router(this);
+    private HRP4Router router = new HRP4Router();
 
     private List<IReceiveListener> receiveListeners;
     
@@ -46,7 +46,7 @@ public class HRP4Layer implements IReceiveListener {
      */
     private void sendBeaconPacket() {
         try {
-            List<HRP4Router.BCNRoutingEntryAlternative> routingEntries = this.router.getRoutingEntries();
+            List<HRP4Router.BCN4RoutingEntryWrapper> routingEntries = this.router.getRoutingEntries();
             HRP4Packet packet = new HRP4Packet(
                     Util.addressToInt(InetAddress.getByName(Config.getInstance().getMyAddress())),
                     0,
