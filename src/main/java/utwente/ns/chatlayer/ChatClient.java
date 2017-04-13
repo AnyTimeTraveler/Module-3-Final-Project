@@ -11,10 +11,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Base64;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
 /**
@@ -34,8 +32,8 @@ public class ChatClient {
     
     private KeyPair keyPair;
     
-    private Map<String, PeerInfo> connectedPeers = new HashMap<>();
-    private Map<String, PeerIdentity> availablePeers = new HashMap<>();
+    private Map<String, PeerInfo> connectedPeers = new ConcurrentHashMap<>();
+    private Map<String, PeerIdentity> availablePeers = new ConcurrentHashMap<>();
     
     public ChatClient(String name, RTP4Layer rtp4Layer) {
         
@@ -90,6 +88,10 @@ public class ChatClient {
     
     private void dropOldestPeerIdentity() {
         PeerIdentity[] peers = getAvailablePeers();
+        Arrays.sort(peers);
+        if (peers.length > 1) {
+            this.availablePeers.remove(peers[peers.length - 1].id);
+        }
     }
     
     public PeerIdentity[] getAvailablePeers() {

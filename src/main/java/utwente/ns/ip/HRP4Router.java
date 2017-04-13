@@ -9,6 +9,7 @@ import utwente.ns.config.Config;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author rhbvkleef
@@ -17,10 +18,11 @@ import java.util.*;
 public class HRP4Router {
 
     private static final byte DEFAULT_TTL = 100;
+    private static final int TTL_MULTIPLIER = 16;
 
     private HRP4Layer ipLayer;
 
-    private Map<Integer, Map<Integer, BCNRoutingEntryAlternative>> linkTable = new HashMap<>();
+    private Map<Integer, Map<Integer, BCNRoutingEntryAlternative>> linkTable = new ConcurrentHashMap<>();
     private Set<Integer> neighbors = new HashSet<>();
 
     public HRP4Router(HRP4Layer ipLayer) {
@@ -83,7 +85,7 @@ public class HRP4Router {
         Map<Integer, BCNRoutingEntryAlternative> routes = linkTable.get(addr1);
         if (routes.containsKey(addr2)) {
             BCNRoutingEntryAlternative route = routes.get(addr2);
-            if (route.getRemaining() < 8 * ((int) ttl)) {
+            if (route.getRemaining() < TTL_MULTIPLIER * ((int) ttl)) {
                 route.setTimeSince(System.currentTimeMillis());
                 route.getBcn4Entry().setLinkCost(weight);
                 route.getBcn4Entry().setTTL(ttl);
@@ -98,11 +100,13 @@ public class HRP4Router {
         for (Map.Entry<Integer, Map<Integer, BCNRoutingEntryAlternative>> node: linkTable.entrySet()) {
             List<Integer> toRemove = new LinkedList<>();
             for (Map.Entry<Integer, BCNRoutingEntryAlternative> entry: node.getValue().entrySet()) {
-                entry.getValue().bcn4Entry.decrementTTL((int) (currentTimeMillis - entry.getValue().timeSince));
+                entry.getValue().bcn4Entry.decrementTTL((int) (currentTimeMillis - entry.getValue().timeSince)/TTL_MULTIPLIER);
+
                 if (entry.getValue().isExpired()) {
                     toRemove.add(entry.getKey());
                 }
             }
+            System.out.printf("Removing: %s\n", toRemove.toString());
             for (Integer rem : toRemove) {
                 node.getValue().remove(rem);
             }
@@ -168,10 +172,7 @@ public class HRP4Router {
 
     public HashMap<Integer, Integer> getForwardingTable(int sourceAddress) {
         updateTTL();
-        System.out.println(linkTable);
-        HashMap<Integer, Integer> table = dijkstra(sourceAddress);
-        System.out.println(table);
-        return table;
+        return dijkstra(sourceAddress);
     }
 
     @Data
@@ -189,11 +190,11 @@ public class HRP4Router {
         private long timeSince = System.currentTimeMillis();
 
         public long getRemaining() {
-            return System.currentTimeMillis() - timeSince - (8 * bcn4Entry.getTTL());
+            return System.currentTimeMillis() - timeSince - (TTL_MULTIPLIER * bcn4Entry.getTTL());
         }
 
         public boolean isExpired() {
-            return (8 * ((int) bcn4Entry.getTTL())) + timeSince >= System.currentTimeMillis();
+            return (TTL_MULTIPLIER * ((int) bcn4Entry.getTTL())) + timeSince >= System.currentTimeMillis();
         }
     }
 }
