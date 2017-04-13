@@ -94,6 +94,7 @@ public class HRP4Layer implements IReceiveListener {
     public void receive(IPacket packet) {
         try {
             HRP4Packet hrp4Packet = new HRP4Packet(packet.getData());
+            int myAddr = Util.addressToInt(InetAddress.getByName(Config.getInstance().getMyAddress()));
 
             if (hrp4Packet.getDstAddr() == Util.addressToInt(InetAddress.getByName(Config.getInstance().getMyAddress())) ||
                     hrp4Packet.getDstAddr() == 0) {
@@ -105,9 +106,8 @@ public class HRP4Layer implements IReceiveListener {
                 }
             }
 
-            if (hrp4Packet.getTTL() >= 1) {
+            if (hrp4Packet.getTTL() >= 1 && hrp4Packet.getDstAddr() != myAddr) {
                 int origin = Util.addressToInt(((SimulatedLinkPacket) packet).getReceivedPacketAddress());
-                int myAddr = Util.addressToInt(InetAddress.getByName(Config.getInstance().getMyAddress()));
 
                 Map<Integer, Integer> forwardingTable = this.router.getForwardingTable(origin);
 
