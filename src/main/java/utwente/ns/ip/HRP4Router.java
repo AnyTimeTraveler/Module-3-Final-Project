@@ -9,6 +9,7 @@ import utwente.ns.config.Config;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author rhbvkleef
@@ -21,7 +22,7 @@ public class HRP4Router {
 
     private HRP4Layer ipLayer;
 
-    private Map<Integer, Map<Integer, BCNRoutingEntryAlternative>> linkTable = new HashMap<>();
+    private Map<Integer, Map<Integer, BCNRoutingEntryAlternative>> linkTable = new ConcurrentHashMap<>();
     private Set<Integer> neighbors = new HashSet<>();
 
     public HRP4Router(HRP4Layer ipLayer) {
