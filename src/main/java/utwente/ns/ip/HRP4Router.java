@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class HRP4Router {
 
     private static final byte DEFAULT_TTL = 100;
-    private static final int TTL_MULTIPLIER = 16;
+    private static final int TTL_MULTIPLIER = 32;
 
     private HRP4Layer ipLayer;
 
@@ -107,7 +107,6 @@ public class HRP4Router {
                     toRemove.add(entry.getKey());
                 }
             }
-            System.out.printf("Removing: %s\n", toRemove.toString());
             for (Integer rem : toRemove) {
                 node.getValue().remove(rem);
             }
