@@ -36,6 +36,7 @@ public class HRP4Router {
     }
 
     public synchronized void update(BCN4Packet packet) throws UnknownHostException {
+        updateTTL();
         // Get the address of this node
         int myAddress = Util.addressToInt(InetAddress.getByName(Config.getInstance().getMyAddress()));
 
@@ -194,11 +195,15 @@ public class HRP4Router {
         }
 
         public byte getTTL() {
-            return (byte) (bcn4Entry.getTTL() - ((System.currentTimeMillis() - timeSince) * TTL_MULTIPLIER));
+            if (((System.currentTimeMillis() - timeSince) / TTL_MULTIPLIER) > bcn4Entry.getTTL()) {
+                return 0;
+            }
+            return (byte) (bcn4Entry.getTTL() - ((System.currentTimeMillis() - timeSince) / TTL_MULTIPLIER));
         }
 
         public boolean isExpired() {
-            return (TTL_MULTIPLIER * ((int) bcn4Entry.getTTL())) + timeSince >= System.currentTimeMillis();
+            return this.getTTL() == 0;
+            //return (TTL_MULTIPLIER * ((int) bcn4Entry.getTTL())) + timeSince >= System.currentTimeMillis();
         }
     }
 }
