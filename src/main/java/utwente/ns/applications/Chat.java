@@ -1,6 +1,7 @@
 package utwente.ns.applications;
 
 import utwente.ns.Util;
+import utwente.ns.config.Config;
 import utwente.ns.ip.HRP4Layer;
 import utwente.ns.ip.HRP4Socket;
 import utwente.ns.linklayer.SimulatedLinkLayer;
@@ -31,8 +32,8 @@ public class Chat implements IApplication {
 
         new BufferedReader(new InputStreamReader(System.in)).lines().forEach(line -> {
             try {
-                String message = line.split(";")[1];
-                String destination = line.split(";")[0];
+                String destination = "192.168.1." + line.split(";")[0];
+                String message = Config.getInstance().getMyAddress() + " --> " + destination +" : " + line.split(";")[1];
                 InetAddress ip = InetAddress.getByName(destination);
                 short port = 25565;
                 socket.send(message.getBytes(), Util.addressToInt(ip), port);

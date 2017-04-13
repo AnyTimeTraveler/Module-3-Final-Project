@@ -20,7 +20,6 @@ public class ShittyRouter {
     
     public static void main(String[] args) throws Exception {
         mcastaddr = InetAddress.getByName(Config.getInstance().getMulticastAddress());
-//        mcastaddr = InetAddress.getByName("224.0.0.251");
         port = Config.getInstance().getMulticastPort();
         socket = new DatagramSocket(port, mcastaddr);
         socket.connect(mcastaddr, port);
