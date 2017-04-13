@@ -14,7 +14,7 @@ local json = require('json')
 function hrp4_proto.dissector(buffer, pinfo, tree)
     pinfo.cols.protocol = "HRP4"
     local sVersion = "HRP4 "
-    local subtree = tree:add(hrp4_proto, buffer(), "HRP4 Data")
+    local subtree = tree:add(hrp4_proto, buffer(), buffer(0, 4):string() .. " Packet " .. tostring(buffer(4, 4):ipv4()) .. ":" .. buffer(12, 2):uint() .. " --> " .. tostring(buffer(8, 4):ipv4()) .. ":" .. buffer(14, 2):uint())
 
     -- Source Addr
     subtree:add(buffer(0, 4), "Packet Type: " .. buffer(0, 4):string())
@@ -39,11 +39,8 @@ function hrp4_proto.dissector(buffer, pinfo, tree)
         if buffer:len() > 24 then
             local i = 24
             while buffer:len() - i >= 12 do
-                local entry = inner:add(hrp4_proto, buffer(i, 12), "Routing Entry: " .. tostring(buffer(i + 4, 4):ipv4()) .. " --> " .. tostring(buffer(i + 8, 4):ipv4()))
-                entry:add(buffer(i, 1), "Link Cost: " .. buffer(i, 1):uint())
-                entry:add(buffer(i + 3, 1), "TTL: " .. buffer(i + 3, 1):uint())
-                entry:add(buffer(i + 4, 4), "Address0: " .. tostring(buffer(i + 4, 4):ipv4()))
-                entry:add(buffer(i + 8, 4), "Address1: " .. tostring(buffer(i + 8, 4):ipv4()))
+                inner:add(hrp4_proto, buffer(i, 12), "Routing Entry: " .. tostring(buffer(i + 4, 4):ipv4()) .. " --> " .. tostring(buffer(i + 8, 4):ipv4()) .. " Cost: " ..
+                        buffer(i, 1):uint() .. " TTL: " .. buffer(i + 3, 1):uint())
                 i = i + 12
             end
         end
