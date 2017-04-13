@@ -1,5 +1,7 @@
 package utwente.ns;
 
+import utwente.ns.config.Config;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -17,9 +19,9 @@ public class ShittyRouter {
     private static int port;
     
     public static void main(String[] args) throws Exception {
-        mcastaddr = InetAddress.getByName("0.0.0.0");
+        mcastaddr = InetAddress.getByName(Config.getInstance().getMulticastAddress());
 //        mcastaddr = InetAddress.getByName("224.0.0.251");
-        port = 1337;
+        port = Config.getInstance().getMulticastPort();
         socket = new DatagramSocket(port, mcastaddr);
         socket.connect(mcastaddr, port);
         socket.setBroadcast(true);
