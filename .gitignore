@@ -8,7 +8,7 @@ Module-3-Final-Project.iml
 # For binaries
 /target/
 
-# For the custom setup-files
+# For the custom setup.sh-files
 /adhoc_desetup_linux
 /adhoc_setup_linux
 /adhoc_join_windows.bat

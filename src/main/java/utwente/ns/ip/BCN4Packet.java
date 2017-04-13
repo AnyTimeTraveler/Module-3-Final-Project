@@ -9,6 +9,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author rhbvkleef
@@ -45,6 +46,16 @@ public class BCN4Packet implements IPacket {
         this.routingTable = routingEntries;
     }
 
+    public BCN4Packet(List<HRP4Router.BCNRoutingEntryAlternative> routingEntries, HRP4Packet hip4Packet) {
+        this.hip4Packet = hip4Packet;
+        this.routingTable = routingEntries.stream().map(entry -> new RoutingEntry(
+                entry.getBcn4Entry().getLinkCost(),
+                entry.getTTL(),
+                entry.getBcn4Entry().getAddresses()[0],
+                entry.getBcn4Entry().getAddresses()[1])
+        ).collect(Collectors.toList());
+    }
+
     public byte[] marshal() {
         ByteBuffer buf = ByteBuffer.allocate(4 + (12 * routingTable.size()));
         buf.put((byte) 'B');
@@ -72,8 +83,6 @@ public class BCN4Packet implements IPacket {
         private final int[] addresses = new int[2];
         private byte linkCost;
         private byte TTL;
-
-
 
         @SuppressWarnings("WeakerAccess")
         public RoutingEntry(byte[] data) {

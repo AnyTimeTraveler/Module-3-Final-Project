@@ -29,9 +29,9 @@ public class HRP4Router {
         this.ipLayer = ipLayer;
     }
 
-    public List<BCN4Packet.RoutingEntry> getRoutingEntries() {
-        List<BCN4Packet.RoutingEntry> entries = new ArrayList<>();
-        linkTable.forEach((m, n) -> n.forEach((o, p) -> entries.add(p.getBcn4Entry())));
+    public List<BCNRoutingEntryAlternative> getRoutingEntries() {
+        List<BCNRoutingEntryAlternative> entries = new ArrayList<>();
+        linkTable.forEach((m, n) -> n.forEach((o, p) -> entries.add(p)));
         return entries;
     }
 
@@ -100,7 +100,7 @@ public class HRP4Router {
         for (Map.Entry<Integer, Map<Integer, BCNRoutingEntryAlternative>> node: linkTable.entrySet()) {
             List<Integer> toRemove = new LinkedList<>();
             for (Map.Entry<Integer, BCNRoutingEntryAlternative> entry: node.getValue().entrySet()) {
-                entry.getValue().bcn4Entry.decrementTTL((int) (currentTimeMillis - entry.getValue().timeSince)/TTL_MULTIPLIER);
+                // entry.getValue().bcn4Entry.decrementTTL((int) (currentTimeMillis - entry.getValue().timeSince)/TTL_MULTIPLIER);
 
                 if (entry.getValue().isExpired()) {
                     toRemove.add(entry.getKey());
@@ -191,6 +191,10 @@ public class HRP4Router {
 
         public long getRemaining() {
             return System.currentTimeMillis() - timeSince - (TTL_MULTIPLIER * bcn4Entry.getTTL());
+        }
+
+        public byte getTTL() {
+            return (byte) (bcn4Entry.getTTL() - ((System.currentTimeMillis() - timeSince) * TTL_MULTIPLIER));
         }
 
         public boolean isExpired() {

@@ -22,7 +22,7 @@ public class Config {
     private int segmentBufferSize;
     
     private Config() {
-        multicastAddress = "130.89.239.255";
+        multicastAddress = "228.0.0.1";
         multicastPort = 1337;
         baconInterval = 1000;
         baconPacketTTL = 4;
