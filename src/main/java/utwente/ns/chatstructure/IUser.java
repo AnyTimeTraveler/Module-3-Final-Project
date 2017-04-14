@@ -6,5 +6,9 @@ package utwente.ns.chatstructure;
 public interface IUser {
     String getName();
 
+    String getFingerprint();
+
+    boolean isConfirmed();
+
     String getUniqueID();
 }
