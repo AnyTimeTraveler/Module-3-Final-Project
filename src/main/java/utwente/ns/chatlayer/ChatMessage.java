@@ -33,6 +33,7 @@ public class ChatMessage {
     private String data;
     private String signature;
 
+    @Getter
     private transient ChatMessageContent content;
 
     public ChatMessage(String senderId, String messageId, String recipientId, String groupId, String type) {

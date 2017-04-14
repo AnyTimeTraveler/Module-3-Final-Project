@@ -1,5 +1,7 @@
 package utwente.ns;
 
+import com.google.gson.Gson;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -13,6 +15,9 @@ import java.util.concurrent.TimeUnit;
  *         Created on 4/7/17
  */
 public class Util {
+
+    private static Gson gson = new Gson();
+
     public static byte[] intToByteArr(int in) {
         return ByteBuffer.allocate(4).putInt(in).array();
     }
@@ -60,5 +65,21 @@ public class Util {
             e.printStackTrace();
             return text;
         }
+    }
+
+    public static String toJsonString(Object src) {
+        return gson.toJson(src);
+    }
+
+    public static byte[] toJsonBytes(Object src) {
+        return toJsonString(src).getBytes();
+    }
+
+    public static <T> T fromJsonString(String str, Class<T> classOfT) {
+        return gson.fromJson(str, classOfT);
+    }
+
+    public static <T> T fromJsonBytes(byte[] bytes, Class<T> classOfT) {
+        return gson.fromJson(new String(bytes), classOfT);
     }
 }

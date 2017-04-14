@@ -21,6 +21,7 @@ public class HRP4Layer implements IReceiveListener {
     @Getter
     private final ILinkLayer lowerLayer;
 
+    @Getter
     private HRP4Router router = new HRP4Router(this);
 
     private List<IReceiveListener> receiveListeners;
