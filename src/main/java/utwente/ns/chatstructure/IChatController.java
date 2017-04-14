@@ -10,7 +10,7 @@ public interface IChatController {
 
     IUser[] getNewUsers();
 
-    IUser[] getComnnectedUsers();
+    IUser[] getConnectedUsers();
 
     IUser getUserById(int id);
 

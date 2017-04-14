@@ -4,6 +4,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 import lombok.Getter;
+import utwente.ns.chatstructure.IGui;
 import utwente.ns.config.Config;
 
 import javax.swing.*;
@@ -20,7 +21,7 @@ import java.util.Vector;
 /**
  * Created by simon on 12.04.17.
  */
-public class UniversalComminucator {
+public class UniversalComminucator implements IGui {
     private JTabbedPane tabbedPane;
     @Getter
     private JPanel mainPanel;
@@ -33,6 +34,11 @@ public class UniversalComminucator {
     private JTextField settingsTextField;
     private JButton saveButton;
     private HashMap<String, Field> settings;
+
+    @Override
+    public void update() {
+
+    }
 
     public void setup() {
         try {
