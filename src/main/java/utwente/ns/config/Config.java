@@ -20,7 +20,8 @@ public class Config {
     private String myAddress;
     private byte defaultHRP4TTL;
     private int segmentBufferSize;
-    
+    private String name;
+
     private Config() {
         multicastAddress = "228.0.0.1";
         multicastPort = 1337;
