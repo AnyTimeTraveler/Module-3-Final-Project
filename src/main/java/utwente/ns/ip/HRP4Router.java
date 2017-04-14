@@ -12,30 +12,44 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * This router is responsible for storing routing entries and figuring out ideal routes from host to host.
+ *
  * @author rhbvkleef
  *         Created on 4/10/17
  */
-public class HRP4Router {
-
+class HRP4Router {
+    /**
+     * The default (uncorrected) TTL that shall be used as initialization for routing entries.
+     */
     private static final byte DEFAULT_TTL = 100;
+
+    /**
+     * The value the TTL shall be multiplied with to get milliseconds of TTL for routing entries.
+     */
     private static final int TTL_MULTIPLIER = 32;
 
-    private HRP4Layer ipLayer;
+    /**
+     * The table containing all available point-point (single duplex) connections.
+     */
+    private Map<Integer, Map<Integer, BCN4RoutingEntryWrapper>> linkTable = new ConcurrentHashMap<>();
 
-    private Map<Integer, Map<Integer, BCNRoutingEntryAlternative>> linkTable = new ConcurrentHashMap<>();
-    private Set<Integer> neighbors = new HashSet<>();
-
-    public HRP4Router(HRP4Layer ipLayer) {
-        this.ipLayer = ipLayer;
-    }
-
-    public List<BCNRoutingEntryAlternative> getRoutingEntries() {
-        List<BCNRoutingEntryAlternative> entries = new ArrayList<>();
+    /**
+     * Get all single-duplex connections available
+     * @return a list of single-duplex BCN4RoutingEntryWrapper.
+     */
+    List<BCN4RoutingEntryWrapper> getRoutingEntries() {
+        List<BCN4RoutingEntryWrapper> entries = new ArrayList<>();
         linkTable.forEach((m, n) -> n.forEach((o, p) -> entries.add(p)));
         return entries;
     }
 
-    public synchronized void update(BCN4Packet packet) throws UnknownHostException {
+    /**
+     * Update the routing tables for the given BCN4Packet
+     *
+     * @param packet containing all routing entries from the sending host
+     * @throws UnknownHostException when current (own) address does not resolve (config error)
+     */
+    void update(BCN4Packet packet) throws UnknownHostException {
         updateTTL();
         // Get the address of this node
         int myAddress = Util.addressToInt(InetAddress.getByName(Config.getInstance().getMyAddress()));
@@ -47,7 +61,6 @@ public class HRP4Router {
         }
 
         int linkcost = 1;
-        neighbors.add(neighbour);
 
         // Update cost to neighbour
         updateNeighbor(myAddress, neighbour, (byte) linkcost);
@@ -56,11 +69,22 @@ public class HRP4Router {
         processDataTable(routingEntries);
     }
 
+    /**
+     * Update entries for direct neighbor, used for link detection
+     *
+     * @param myAddress Own address
+     * @param addr Other address
+     * @param cost The link-cost of this link
+     */
     private void updateNeighbor(int myAddress, int addr, byte cost) {
         processEntry(myAddress, addr, cost, DEFAULT_TTL);
         processEntry(addr, myAddress, cost, DEFAULT_TTL);
     }
 
+    /**
+     * Process a list of routing entries sent to me
+     * @param table the table of routing entries to be put into the master table
+     */
     private void processDataTable(List<BCN4Packet.RoutingEntry> table) {
 
         int myAddress;
@@ -71,38 +95,45 @@ public class HRP4Router {
             return;
         }
 
-        for (int i = 0; i < table.size(); i++) {
-            BCN4Packet.RoutingEntry entry = table.get(i);
-            if (entry.getAddresses()[0] ==  myAddress || entry.getAddresses()[1] == myAddress) continue;
+        for (BCN4Packet.RoutingEntry entry : table) {
+            if (entry.getAddresses()[0] == myAddress || entry.getAddresses()[1] == myAddress) continue;
             processEntry(entry.getAddresses()[0], entry.getAddresses()[1], entry.getLinkCost(), entry.getTTL());
             processEntry(entry.getAddresses()[1], entry.getAddresses()[0], entry.getLinkCost(), entry.getTTL());
         }
     }
 
+    /**
+     * Process one specific routing entry
+     *
+     * @param addr1 One endpoint of this connection
+     * @param addr2 The other endpoint of this connection
+     * @param weight The link-weight of this connection
+     * @param ttl The time before expiry of this record
+     */
     private void processEntry(int addr1, int addr2, byte weight, byte ttl) {
         if (!linkTable.containsKey(addr1)) {
             linkTable.put(addr1, new HashMap<>());
         }
-        Map<Integer, BCNRoutingEntryAlternative> routes = linkTable.get(addr1);
+        Map<Integer, BCN4RoutingEntryWrapper> routes = linkTable.get(addr1);
         if (routes.containsKey(addr2)) {
-            BCNRoutingEntryAlternative route = routes.get(addr2);
+            BCN4RoutingEntryWrapper route = routes.get(addr2);
             if (route.getRemaining() < TTL_MULTIPLIER * ((int) ttl)) {
                 route.setTimeSince(System.currentTimeMillis());
                 route.getBcn4Entry().setLinkCost(weight);
                 route.getBcn4Entry().setTTL(ttl);
             }
         } else {
-            routes.put(addr2, new BCNRoutingEntryAlternative(new BCN4Packet.RoutingEntry(weight, ttl, addr1, addr2)));
+            routes.put(addr2, new BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry(weight, ttl, addr1, addr2)));
         }
     }
 
+    /**
+     * updateTTL checks expiry of records in the routing table, and removes them.
+     */
     private void updateTTL() {
-        long currentTimeMillis = System.currentTimeMillis();
-        for (Map.Entry<Integer, Map<Integer, BCNRoutingEntryAlternative>> node: linkTable.entrySet()) {
+        for (Map.Entry<Integer, Map<Integer, BCN4RoutingEntryWrapper>> node: linkTable.entrySet()) {
             List<Integer> toRemove = new LinkedList<>();
-            for (Map.Entry<Integer, BCNRoutingEntryAlternative> entry: node.getValue().entrySet()) {
-                // entry.getValue().bcn4Entry.decrementTTL((int) (currentTimeMillis - entry.getValue().timeSince)/TTL_MULTIPLIER);
-
+            for (Map.Entry<Integer, BCN4RoutingEntryWrapper> entry: node.getValue().entrySet()) {
                 if (entry.getValue().isExpired()) {
                     toRemove.add(entry.getKey());
                 }
@@ -113,6 +144,13 @@ public class HRP4Router {
         }
     }
 
+    /**
+     * Calculate the next-hop of a packet given the originator address of the packet
+     *
+     * @param sourceAddress the address for which the next hops need to be calculated
+     * @return Map of destinationAddress --> nextHop
+     */
+    @SuppressWarnings("ConstantConditions")
     private HashMap<Integer, Integer> dijkstra(int sourceAddress) {
         List<RoutingEntry> closed = new ArrayList<>();
         List<RoutingEntry> open = new ArrayList<>();
@@ -133,7 +171,7 @@ public class HRP4Router {
                 continue;
             }
 
-            for (Map.Entry<Integer, BCNRoutingEntryAlternative> entry: linkTable.get(lowest.destination).entrySet()) {
+            for (Map.Entry<Integer, BCN4RoutingEntryWrapper> entry: linkTable.get(lowest.destination).entrySet()) {
                 int alt = lowest.cost + entry.getValue().getBcn4Entry().getLinkCost();
 
                 int index = -1;
@@ -170,14 +208,24 @@ public class HRP4Router {
         return result;
     }
 
-    public HashMap<Integer, Integer> getForwardingTable(int sourceAddress) {
+    /**
+     * Calculate the next-hop of a packet given the originator address of the packet.
+     * Also ensures that no old (expired) records are in this list.
+     *
+     * @param sourceAddress the address for which the next hops need to be calculated
+     * @return Map of destinationAddress --> nextHop
+     */
+    HashMap<Integer, Integer> getForwardingTable(int sourceAddress) {
         updateTTL();
         return dijkstra(sourceAddress);
     }
 
+    /**
+     * Storage for routingEntry
+     */
     @Data
     @AllArgsConstructor
-    public static class RoutingEntry {
+    private static class RoutingEntry {
         private int destination;
         private int hop;
         private int cost;
@@ -185,22 +233,35 @@ public class HRP4Router {
 
     @Data
     @RequiredArgsConstructor
-    public static class BCNRoutingEntryAlternative {
+    static class BCN4RoutingEntryWrapper {
         private final BCN4Packet.RoutingEntry bcn4Entry;
         private long timeSince = System.currentTimeMillis();
 
-        public long getRemaining() {
+        /**
+         * Returns the remaining TTL
+         *
+         * @return the remaining TTL
+         */
+        long getRemaining() {
             return System.currentTimeMillis() - timeSince - (TTL_MULTIPLIER * bcn4Entry.getTTL());
         }
 
-        public byte getTTL() {
+        /**
+         * Gets the adjusted TTL value (should be used over <code>this.getBcn4Entry().getTTL()</code>
+         * @return the actual TTL value
+         */
+        byte getTTL() {
             if (((System.currentTimeMillis() - timeSince) / TTL_MULTIPLIER) > bcn4Entry.getTTL()) {
                 return 0;
             }
             return (byte) (bcn4Entry.getTTL() - ((System.currentTimeMillis() - timeSince) / TTL_MULTIPLIER));
         }
 
-        public boolean isExpired() {
+        /**
+         * Returns <code>this.getTTL() == 0</code>
+         * @return <code>this.getTTL() == 0</code>
+         */
+        boolean isExpired() {
             return this.getTTL() == 0;
             //return (TTL_MULTIPLIER * ((int) bcn4Entry.getTTL())) + timeSince >= System.currentTimeMillis();
         }
