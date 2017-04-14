@@ -7,5 +7,6 @@ public interface IMessage {
     IUser getSender();
     IUser getReceiver();
     String getMessage();
-
+    long getTimeOfSending();
+    long getTimeOfReceiving();
 }
