@@ -8,7 +8,9 @@ public interface IChatController {
 
     void addConversation(String name, IUser... users);
 
-    IUser[] getReachableUsers();
+    IUser[] getNewUsers();
+
+    IUser[] getComnnectedUsers();
 
     IUser getUserById(int id);
 
