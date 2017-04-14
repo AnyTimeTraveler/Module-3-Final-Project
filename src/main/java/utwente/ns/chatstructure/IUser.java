@@ -6,5 +6,5 @@ package utwente.ns.chatstructure;
 public interface IUser {
     String getName();
 
-    int getUniqueID();
+    String getUniqueID();
 }
