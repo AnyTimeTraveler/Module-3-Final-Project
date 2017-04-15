@@ -31,8 +31,8 @@ public class BetterChat implements IApplication {
         String cmd = command.split(";")[0];
         switch (cmd) {
             case "available":
-                PeerIdentity[] identities = this.chatClient.getAvailablePeers();
-                for (int i = 0; i < identities.length; i++) System.out.println(identities[i].toString());
+                IUser[] availableUsers = this.chatClient.getNewUsers();
+                for (int i = 0; i < availableUsers.length; i++) System.out.println(availableUsers[i].toString());
                 break;
             case "connected":
                 IUser[] users = this.chatClient.getConnectedUsers();
