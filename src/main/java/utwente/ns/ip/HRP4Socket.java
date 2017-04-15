@@ -17,7 +17,7 @@ import java.util.List;
  *         Created on 4/10/17
  */
 @Data
-public class HRP4Socket implements IReceiveListener, Closeable {
+public class HRP4Socket implements IHRP4Socket, IReceiveListener, Closeable {
     public List<IReceiveListener> listeners = new ArrayList<>();
     public short dstPort;
     private HRP4Layer ipLayer;

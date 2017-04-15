@@ -109,6 +109,20 @@ public class RTP4Packet implements IPacket {
         System.arraycopy(this.data, 0, out, RTP4Packet.HEADER_LENGTH, this.data.length);
         return out;
     }
+
+    public int getLength(){
+        if (data.length > 0) {
+            return data.length;
+        } else if (syn || fin || rst) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    public String toString(){
+        return "RTP4 <Seq=" + seqNum + (ack ? (", Ack=" + ackNum) : "") + (syn ? ", SYN" : "") + (fin ? ", FIN" : "") + (rst ? ", RST" : "") + ">";
+    }
 }
 
 //         _____ ___ _   _

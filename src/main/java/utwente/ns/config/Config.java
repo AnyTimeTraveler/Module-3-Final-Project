@@ -21,6 +21,7 @@ public class Config {
     private byte defaultHRP4TTL;
     private int segmentBufferSize;
     private String name;
+    private final int maxSegmentLife;
 
     private Config() {
         multicastAddress = "228.0.0.1";
@@ -30,6 +31,7 @@ public class Config {
         myAddress = "CHANGE ME, I'M DEFINITELY NOT CONFIGURED YET!";
         defaultHRP4TTL = 6;
         segmentBufferSize = 2048;
+        maxSegmentLife = 5;
     }
     
     public static Config getInstance() {

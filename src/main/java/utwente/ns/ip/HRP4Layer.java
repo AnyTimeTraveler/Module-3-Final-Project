@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.*;
 
-public class HRP4Layer implements IReceiveListener {
+public class HRP4Layer implements IReceiveListener, IHRP4Layer {
 
     /**
      *
