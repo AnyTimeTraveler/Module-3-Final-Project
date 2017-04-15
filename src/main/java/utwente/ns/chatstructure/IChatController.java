@@ -12,7 +12,7 @@ public interface IChatController {
 
     IUser[] getConnectedUsers();
 
-    IUser getUserById(int id);
+    IUser getUserById(String id);
 
     void sendMessage(IUser user, String message);
 }

@@ -2,6 +2,7 @@ package utwente.ns.ip;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import utwente.ns.Util;
 import utwente.ns.config.Config;
@@ -17,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author rhbvkleef
  *         Created on 4/10/17
  */
-class HRP4Router {
+public class HRP4Router {
     /**
      * The default (uncorrected) TTL that shall be used as initialization for routing entries.
      */
@@ -37,7 +38,7 @@ class HRP4Router {
      * Get all single-duplex connections available
      * @return a list of single-duplex BCN4RoutingEntryWrapper.
      */
-    List<BCN4RoutingEntryWrapper> getRoutingEntries() {
+    public List<BCN4RoutingEntryWrapper> getRoutingEntries() {
         List<BCN4RoutingEntryWrapper> entries = new ArrayList<>();
         linkTable.forEach((m, n) -> n.forEach((o, p) -> entries.add(p)));
         return entries;
@@ -233,7 +234,7 @@ class HRP4Router {
 
     @Data
     @RequiredArgsConstructor
-    static class BCN4RoutingEntryWrapper {
+    public static class BCN4RoutingEntryWrapper {
         private final BCN4Packet.RoutingEntry bcn4Entry;
         private long timeSince = System.currentTimeMillis();
 

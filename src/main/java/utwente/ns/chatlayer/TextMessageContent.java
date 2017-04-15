@@ -8,7 +8,7 @@ import java.security.Key;
 import java.security.PrivateKey;
 
 /**
- * Created by harindu on 4/11/17.
+ * Created by Harindu Perera on 4/11/17.
  */
 @NoArgsConstructor
 public class TextMessageContent extends ChatMessageContent {

@@ -4,15 +4,17 @@ import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 import utwente.ns.IPacket;
 import utwente.ns.IReceiveListener;
+import utwente.ns.NetworkStack;
 import utwente.ns.Util;
+import utwente.ns.chatstructure.IChatController;
+import utwente.ns.chatstructure.IConversation;
+import utwente.ns.chatstructure.IUser;
 import utwente.ns.config.Config;
 import utwente.ns.ip.HRP4Packet;
 import utwente.ns.ip.HRP4Socket;
-import utwente.ns.tcp.RTP4Layer;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.util.*;
@@ -20,40 +22,34 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
 /**
- * Created by harindu on 4/12/17.
+ * Created by Harindu Perera on 4/12/17.
  */
 @Log
-public class ChatClient implements IReceiveListener {
+public class ChatClient implements IReceiveListener, IChatController {
     
     public static final int MAX_AVAILABLE_PEER_COUNT = 10;
     public static final short IDENTITY_PORT = 1024;
     public static final short MESSAGE_PORT = 1025;
+    public static final long AVAILABLE_PEER_EXPIRY_TIME_MS = 1000*6; // 6 seconds
+    public static final long CONNECTED_PEER_EXPIR_TIME_MS = 1000*30; // 30 seconds
     
-    private final RTP4Layer rtp4Layer;
+    private final NetworkStack networkStack;
     private final String name;
     private HRP4Socket messageSocket;
     private HRP4Socket identitySocket;
     private String id;
+    private List<ChatConversation> conversations = new LinkedList<>();
+    private Map<String, ChatConversation> conversationMap = new HashMap<>();
     
     private KeyPair keyPair;
     
     private Map<String, PeerInfo> connectedPeers = new ConcurrentHashMap<>();
     private Map<String, PeerIdentity> availablePeers = new ConcurrentHashMap<>();
     
-    public ChatClient(String name, RTP4Layer rtp4Layer) {
-        
+    public ChatClient(String name, NetworkStack networkStack) {
         this.name = name;
-        this.rtp4Layer = rtp4Layer;
-        
-        // TODO: add ID generator
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(name.getBytes(StandardCharsets.UTF_8));
-            this.id = Base64.getUrlEncoder().encodeToString(hash);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        
+        this.networkStack = networkStack;
+        this.id = UUID.randomUUID().toString();
         this.keyPair = CryptoUtil.generateKeyPair();
     }
     
@@ -65,7 +61,7 @@ public class ChatClient implements IReceiveListener {
         return new PeerIdentity(id, name, this.getOwnAddress(), CryptoUtil.encodePublicKey(this.keyPair.getPublic()));
     }
     
-    public void addPeer(PeerIdentity identity) throws InvalidKeySpecException, InvalidKeyException {
+    private void addPeer(PeerIdentity identity) throws InvalidKeySpecException, InvalidKeyException {
         
         // decode the public key of the peer
         PublicKey peerPublicKey = CryptoUtil.decodePublicKey(identity.publicKey);
@@ -74,10 +70,23 @@ public class ChatClient implements IReceiveListener {
         Key peerKey = CryptoUtil.generateSharedKey(this.keyPair.getPrivate(), peerPublicKey);
         
         // add info to map
-        this.connectedPeers.put(identity.id, new PeerInfo(identity.id, identity.name, identity.address, peerKey, peerPublicKey));
+        this.connectedPeers.put(identity.id, new PeerInfo(identity.id, identity.name, identity.address, peerKey, peerPublicKey, identity.getFingerprint(), new Date()));
         
         // remove from available peers
         this.availablePeers.remove(identity.id);
+    }
+
+    public boolean addPeerById(String id) {
+        PeerIdentity peerIdentity = this.availablePeers.get(id);
+        if (peerIdentity == null) return false;
+        try {
+            this.addPeer(peerIdentity);
+        } catch (InvalidKeySpecException e) {
+            return false;
+        } catch (InvalidKeyException e) {
+            return false;
+        }
+        return true;
     }
     
     public void onPeerIdentity(PeerIdentity identity, String fromAddress) {
@@ -85,18 +94,42 @@ public class ChatClient implements IReceiveListener {
             log.log(Level.INFO, "Peer address mismatch; identity dropped");
             return;
         }
-        if (this.connectedPeers.containsKey(identity.id))
+        if (this.connectedPeers.containsKey(identity.id)) {
+            if (this.connectedPeers.get(identity.id).getFingerprint().equals(identity.getFingerprint())) {
+                this.connectedPeers.get(identity.id).onUpdate();
+            }
             return;
+        }
         this.availablePeers.put(identity.id, identity);
+        this.dropOldestPeer();
     }
 
     
-    private void dropOldestPeerIdentity() {
+    private void dropOldestPeer() {
+        if (this.availablePeers.size() < MAX_AVAILABLE_PEER_COUNT) return;
         PeerIdentity[] peers = getAvailablePeers();
         Arrays.sort(peers);
-        if (peers.length > 1) {
-            this.availablePeers.remove(peers[peers.length - 1].id);
-        }
+        this.availablePeers.remove(peers[peers.length - 1].id);
+    }
+
+    private void dropExpiredPeers() {
+        List<String> expiredAvailableIDs = new LinkedList<>();
+        final Date availableExpiryTime = new Date(System.currentTimeMillis() - AVAILABLE_PEER_EXPIRY_TIME_MS);
+        this.availablePeers.forEach((id, peer) -> {
+            if (peer.updateTime.before(availableExpiryTime)) expiredAvailableIDs.add(id);
+        });
+        expiredAvailableIDs.forEach(id -> {
+            this.availablePeers.remove(id);
+        });
+
+        List<String> expiredConnectedIDs = new LinkedList<>();
+        Date connectionExpiryTime = new Date(System.currentTimeMillis() - CONNECTED_PEER_EXPIR_TIME_MS);
+        this.connectedPeers.forEach((id, peer) -> {
+            if (peer.lastUpdateTime.before(connectionExpiryTime)) expiredConnectedIDs.add(id);
+        });
+        expiredConnectedIDs.forEach(id -> {
+            this.connectedPeers.remove(id);
+        });
     }
     
     public PeerIdentity[] getAvailablePeers() {
@@ -106,13 +139,14 @@ public class ChatClient implements IReceiveListener {
     
     public void run() {
         try {
-            this.messageSocket = this.rtp4Layer.getIpLayer().open(MESSAGE_PORT);
-            this.identitySocket = this.rtp4Layer.getIpLayer().open(IDENTITY_PORT);
+            this.messageSocket = this.networkStack.getRtp4Layer().getIpLayer().open(MESSAGE_PORT);
+            this.identitySocket = this.networkStack.getRtp4Layer().getIpLayer().open(IDENTITY_PORT);
             Timer broadcastTimer = new Timer();
             broadcastTimer.scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
                     sendIdentityData();
+                    dropExpiredPeers();
                 }
             }, (long) Config.getInstance().getBaconInterval() * 4, (long) Config.getInstance().getBaconInterval() * 4);
         } catch (IOException e) {
@@ -121,11 +155,10 @@ public class ChatClient implements IReceiveListener {
     }
 
     private void sendIdentityData() {
-
         byte[] idData = Util.toJsonBytes(this.getIdentity());
 
         Set<Integer> peerAddrs = new HashSet<>();
-        this.rtp4Layer.getIpLayer().getRouter().getRoutingEntries().forEach(entry -> {
+        this.networkStack.getRtp4Layer().getIpLayer().getRouter().getRoutingEntries().forEach(entry -> {
             int[] addrs = entry.getBcn4Entry().getAddresses();
             peerAddrs.add(addrs[0]);
             peerAddrs.add(addrs[1]);
@@ -179,25 +212,19 @@ public class ChatClient implements IReceiveListener {
             return;
         }
 
-        message.encryptContent(recipient.peerSharedKey);
-        message.sign(this.keyPair.getPrivate());
-
         this.sendData(recipient.address, MESSAGE_PORT, Util.toJsonBytes(message));
     }
 
-    public void onMessage(ChatMessage message) {
-        PeerInfo sender = this.connectedPeers.get(message.getSenderId());
+    private void onMessage(ChatMessage message) {
+        ChatConversation conversation = message.getGroupId() == null ?
+                this.getDirectConversation(message.getSenderId()) : this.getGroupConversation(message.getGroupId());
 
-        if (sender == null) {
-            log.log(Level.WARNING, "Message from unconnected sender");
+        if (conversation == null) {
+            log.log(Level.WARNING, "Message from unknown group or unconnected sender; dropped");
             return;
         }
 
-        if (!message.verify(sender.publicKey)) {
-            log.log(Level.WARNING, "Message verification failed");
-        }
-
-        System.out.println(sender.name + ": " + (message.getContent() == null ? "NULL" : message.getContent().toString()));
+        conversation.onNewMessage(message);
     }
 
     @Override
@@ -218,12 +245,101 @@ public class ChatClient implements IReceiveListener {
         }
     }
 
+    private void addConversation(String key, ChatConversation conversation) {
+        synchronized (conversationMap) {
+            this.conversationMap.put(key, conversation);
+            this.conversations.add(conversation);
+        }
+    }
+
+    public ChatConversation getDirectConversation(String userId) {
+        if (this.conversationMap.get(userId) != null && this.conversationMap.get(userId).type == ChatConversation.ConversationType.DIRECT) {
+            return this.conversationMap.get(userId);
+        } else if (this.connectedPeers.get(userId) != null) {
+            ChatConversation conversation = new DirectConversation(this, this.connectedPeers.get(userId), keyPair.getPrivate());
+            this.addConversation(userId, conversation);
+            return conversation;
+        }
+        return null;
+    }
+
+    public ChatConversation getGroupConversation(String groupId) {
+        // TODO: fetching unknown groups from sender
+        return this.conversationMap.get(groupId);
+    }
+
+    @Override
+    public IConversation[] getConversations() {
+        return this.conversations.toArray(new ChatConversation[this.conversations.size()]);
+    }
+
+    @Override
+    public void addConversation(String name, IUser... users) {
+        // TODO: support group chats
+    }
+
+    @Override
+    public IUser[] getNewUsers() {
+        return this.availablePeers.values().toArray(new PeerIdentity[this.availablePeers.size()]);
+    }
+
+    @Override
+    public IUser[] getConnectedUsers() {
+        return this.connectedPeers.values().toArray(new PeerInfo[this.connectedPeers.size()]);
+    }
+
+    @Override
+    public IUser getUserById(String id) {
+        return this.connectedPeers.get(id);
+    }
+
+    @Override
+    public void sendMessage(IUser user, String message) {
+        ChatConversation conversation = this.getDirectConversation(user.getUniqueID());
+        conversation.sendMessage(new ChatMessage(this.id, UUID.randomUUID().toString(), user.getUniqueID(), null, ChatMessage.CONTENT_TYPE_TEXT, message));
+    }
+
     @AllArgsConstructor
-    private class PeerInfo {
+    public class PeerInfo implements IUser {
         public final String id;
         public final String name;
         public final String address;
         public final Key peerSharedKey;
         public final PublicKey publicKey;
+        public final String fingerprint;
+
+        public Date lastUpdateTime;
+
+        @Override
+        public String getName() {
+            return this.name;
+        }
+
+        @Override
+        public String getUniqueID() {
+            return this.id;
+        }
+
+        @Override
+        public String getFingerprint() {
+            return this.fingerprint;
+        }
+
+        @Override
+        public boolean isConfirmed() {
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return "ID: " + id + "\n" +
+                    "Name: " + name + "\n" +
+                    "Address: " + address + "\n" +
+                    "Fingerprint: " + getFingerprint();
+        }
+
+        public void onUpdate() {
+            this.lastUpdateTime = new Date();
+        }
     }
 }

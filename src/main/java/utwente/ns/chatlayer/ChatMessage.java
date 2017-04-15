@@ -1,7 +1,10 @@
 package utwente.ns.chatlayer;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.java.Log;
+import utwente.ns.chatstructure.IMessage;
+import utwente.ns.chatstructure.IUser;
 
 import java.nio.ByteBuffer;
 import java.security.*;
@@ -9,10 +12,10 @@ import java.util.Base64;
 import java.util.logging.Level;
 
 /**
- * Created by harindu on 4/10/17.
+ * Created by Harindu Perera on 4/10/17.
  */
 @Log
-public class ChatMessage {
+public class ChatMessage implements IMessage {
 
     public transient static final String CONTENT_TYPE_TEXT = "text";
     public transient static final String CONTENT_TYPE_IMAGE = "image";
@@ -26,7 +29,13 @@ public class ChatMessage {
     @Getter
     private String groupId;
     @Getter
-    private long timestamp;
+    private long sendTime;
+    @Getter
+    @Setter
+    private transient long receiveTime;
+    @Getter
+    @Setter
+    private transient boolean sent = false;
     @Getter
     private String type;
     @Getter
@@ -41,7 +50,7 @@ public class ChatMessage {
         this.messageId = messageId;
         this.recipientId = recipientId;
         this.groupId = groupId;
-        this.timestamp = System.currentTimeMillis();
+        this.sendTime = System.currentTimeMillis();
         this.type = type;
     }
 
@@ -101,9 +110,36 @@ public class ChatMessage {
         signature.update(messageId.getBytes());
         signature.update(recipientId.getBytes());
         signature.update(groupId.getBytes());
-        signature.update(ByteBuffer.allocate(Long.BYTES).putLong(timestamp).array());
+        signature.update(ByteBuffer.allocate(Long.BYTES).putLong(sendTime).array());
         signature.update(type.getBytes());
         signature.update(data.getBytes());
     }
 
+    @Override
+    public String getSender() {
+        return this.getSenderId();
+    }
+
+    @Override
+    public String getReceiver() {
+        return this.getRecipientId();
+    }
+
+    @Override
+    public String getMessage() {
+        if (this.content instanceof TextMessageContent) {
+            return ((TextMessageContent) this.content).text;
+        }
+        return null;
+    }
+
+    @Override
+    public long getTimeOfSending() {
+        return this.getSendTime();
+    }
+
+    @Override
+    public long getTimeOfReceiving() {
+        return this.getReceiveTime();
+    }
 }

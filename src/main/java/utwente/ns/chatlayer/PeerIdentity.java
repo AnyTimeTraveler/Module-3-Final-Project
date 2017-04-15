@@ -2,15 +2,16 @@ package utwente.ns.chatlayer;
 
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
+import utwente.ns.chatstructure.IUser;
 
 import java.util.Comparator;
 import java.util.Date;
 
 /**
- * Created by harindu on 4/12/17.
+ * Created by Harindu Perera on 4/12/17.
  */
 @NoArgsConstructor
-public class PeerIdentity implements Comparable {
+public class PeerIdentity implements Comparable, IUser {
 
     public String id;
     public String name;
@@ -56,4 +57,26 @@ public class PeerIdentity implements Comparable {
         return this.getFingerprint().hashCode();
     }
 
+    @Override
+    public String getName() {
+        return this.name;
+    }
+
+    @Override
+    public String getUniqueID() {
+        return this.id;
+    }
+
+    @Override
+    public boolean isConfirmed() {
+        return false;
+    }
+
+    @Override
+    public String toString() {
+        return "ID: " + id + "\n" +
+                "Name: " + name + "\n" +
+                "Address: " + address + "\n" +
+                "Fingerprint: " + getFingerprint();
+    }
 }

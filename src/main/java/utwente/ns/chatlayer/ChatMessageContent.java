@@ -8,7 +8,7 @@ import java.util.Base64;
 import java.util.logging.Level;
 
 /**
- * Created by harindu on 4/11/17.
+ * Created by Harindu Perera on 4/11/17.
  */
 @Log
 public abstract class ChatMessageContent {

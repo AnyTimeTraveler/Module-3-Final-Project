@@ -27,7 +27,7 @@ public class RTP4Layer {
         new Thread(this::run).start();
     }
 
-    private void run() {
+    private synchronized void run() {
         while (true) {
             registeredSockets.forEach(this::handleIfPacketInQueueOfSocket);
             try {
