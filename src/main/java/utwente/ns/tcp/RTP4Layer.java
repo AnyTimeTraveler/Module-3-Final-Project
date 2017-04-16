@@ -37,6 +37,7 @@ public class RTP4Layer {
             registeredSockets = registeredSockets.stream().filter((socket1) -> !socket1.isClosed()).collect(Collectors.toList());
             registeredSockets.forEach(this::handleQueues);
             registeredSockets.forEach(this::resendIfTimeout);
+            registeredConnections.forEach(this::sendData);
             registeredSockets.forEach(socket -> System.out.println(Thread.currentThread().getName() + "> " + socket.getPort() + "-" + socket.state));
             try {
                 Thread.sleep(500);
@@ -46,11 +47,22 @@ public class RTP4Layer {
         }
     }
 
+    private void sendData(RTP4Connection connection) {
+        if (connection.canSend()) {
+            byte[] data = connection.sendDataQueue.poll();
+            if (data != null) {
+                connection.getSocket().send(data, connection.getAddress(), (short) connection.getPort());
+            }
+        }
+    }
+
     private void handleQueues(RTP4Socket socket)    {
         SocketAction action = socket.actionQueue.poll();
         if (action != null) {
             System.out.println(Thread.currentThread().getName() + "> Found Action " + action);
             socket.handle(action);
+        } else {
+            System.out.println(Thread.currentThread().getName() + "> No actions in queue ");
         }
         HRP4Packet packet = socket.receivedPacketQueue.poll();
         if (packet != null) {
@@ -60,6 +72,8 @@ public class RTP4Layer {
                 System.out.println(Thread.currentThread().getName() + "> Found Packet! ");
             }
             socket.handle(packet);
+        } else {
+            System.out.println(Thread.currentThread().getName() + "> No Packets in queue ");
         }
 
     }
@@ -78,8 +92,13 @@ public class RTP4Layer {
         }
     }
 
+    void registerConnection(RTP4Connection connection) {
+        registeredConnections.add(connection);
+    }
+
+
     public RTP4Socket open(int port) throws IOException {
-        RTP4Socket socket = new RTP4Socket(ipLayer.open((short) port));
+        RTP4Socket socket = new RTP4Socket(ipLayer.open((short) port), this);
         registeredSockets.add(socket);
         return socket;
     }
@@ -88,7 +107,7 @@ public class RTP4Layer {
         RTP4Socket socket = null;
         while (socket == null) {
             try {
-                socket = new RTP4Socket(ipLayer.open((short) (new Random().nextInt(1000) + 27000)));
+                socket = new RTP4Socket(ipLayer.open((short) (new Random().nextInt(1000) + 27000)), this);
             } catch (IOException e) {
                 e.printStackTrace();
             }

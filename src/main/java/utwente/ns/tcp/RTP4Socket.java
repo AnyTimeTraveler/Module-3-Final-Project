@@ -50,8 +50,9 @@ public class RTP4Socket implements IReceiveListener, Closeable {
     private long timeWaitStart;
 
 
-    RTP4Socket(IHRP4Socket ipSocket) {
+    RTP4Socket(IHRP4Socket ipSocket, RTP4Layer rtp4Layer) {
         this.ipSocket = ipSocket;
+        this.rtp4Layer = rtp4Layer;
         ipSocket.addReceiveListener(this);
         state = SocketState.LISTEN;
         tcpBlock = new TCPBlock();
@@ -80,7 +81,7 @@ public class RTP4Socket implements IReceiveListener, Closeable {
         }
         RTP4Connection rtp4Connection = new RTP4Connection(dstAddr, ((int) dstPort), this);
         addConnection(rtp4Connection);
-        //TODO register connection
+        rtp4Layer.registerConnection(rtp4Connection);
         return rtp4Connection;
     }
 
@@ -209,7 +210,12 @@ public class RTP4Socket implements IReceiveListener, Closeable {
                         sendAcknowledgement();
                         state = SocketState.CLOSE_WAIT;
                     } else {
-                        listeningConnections.forEach(connection -> connection.receiveData(packet.getData()));
+                        if (packet.getData().length > 0) {
+                            listeningConnections.forEach(connection -> connection.receiveData(packet.getData()));
+                        }
+                        if (packet.getLength() > 0){
+                            sendAcknowledgement();
+                        }
                     }
                     if (packet.isAck()) {
                         receiveAcknowledge(packet);

@@ -24,8 +24,11 @@ public class SimulatedRTP4Test {
                         rtp4LayerA = new RTP4Layer(hrp4Layer);
                         RTP4Socket socketA = rtp4LayerA.open(5000);
                         RTP4Connection connection = socketA.accept();
-                        System.out.println(new String(connection.receive()));
-                        connection.close();
+                        System.out.println(Thread.currentThread().getName() + "> " + "Message : " + new String(connection.receive()));
+                        connection.send("Hi Bae!".getBytes());
+//                        while (!connectionB.isDone()) {
+//                            Thread.sleep(1000);
+//                        }
                     } catch (IOException | InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -40,15 +43,19 @@ public class SimulatedRTP4Test {
     public void test(){
         try {
             connectionB = rtp4LayerB.connect("",5000);
-            connectionB.send("Hello".getBytes());
-        } catch (IOException e) {
+            connectionB.send("Hello Asshole".getBytes());
+            System.out.println(Thread.currentThread().getName() + "> " + "Message : " +new String(connectionB.receive()));
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
     }
 
     @After
     public void tearDown() throws Exception {
-        connectionB.close();
+//        while (!connectionB.isDone()) {
+//            Thread.sleep(1000);
+//        }
+//        connectionB.close();
     }
 
 }

@@ -22,7 +22,7 @@ public class SimulatedHRP4Layer implements IHRP4Layer {
 
     @Override
     public void receive(IPacket packet) {
-        receiveListeners.forEach(iReceiveListener -> {if (iReceiveListener != null){iReceiveListener.receive(packet);}});
+        receiveListeners.forEach(iReceiveListener -> iReceiveListener.receive(packet));
     }
 
     @Override
@@ -45,7 +45,7 @@ public class SimulatedHRP4Layer implements IHRP4Layer {
     }
 
     @Override
-    public void addReceiveListener(IReceiveListener receiver) {
+    public synchronized void addReceiveListener(IReceiveListener receiver) {
         this.receiveListeners.add(receiver);
     }
 

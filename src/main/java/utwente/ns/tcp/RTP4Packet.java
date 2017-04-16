@@ -2,12 +2,12 @@ package utwente.ns.tcp;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import sun.security.util.BitArray;
 import utwente.ns.IPacket;
 import utwente.ns.PacketMalformedException;
 import utwente.ns.Util;
 
 import java.nio.ByteBuffer;
-import java.util.BitSet;
 
 /**
  * (De)Marshaller class for the RTP4 layer
@@ -76,7 +76,7 @@ public class RTP4Packet implements IPacket {
         }
         this.seqNum = buf.getInt();
         this.ackNum = buf.getInt();
-        BitSet flagByte = BitSet.valueOf(new byte[]{buf.get()});
+        BitArray flagByte = new BitArray(8,new byte[]{buf.get()});
         this.syn = flagByte.get(0);
         this.ack = flagByte.get(1);
         this.fin = flagByte.get(2);
@@ -99,11 +99,7 @@ public class RTP4Packet implements IPacket {
         out[3] = '4';
         System.arraycopy(Util.intToByteArr(this.seqNum), 0, out, 4, 4);
         System.arraycopy(Util.intToByteArr(this.ackNum), 0, out, 8, 4);
-        BitSet flags = new BitSet(8);
-        flags.set(0,this.syn);
-        flags.set(1,this.ack);
-        flags.set(2,this.fin);
-        flags.set(3,this.rst);
+        BitArray flags = new BitArray(new boolean[]{this.syn, this.ack, this.fin, this.rst, false, false, false, false});
         System.arraycopy(flags.toByteArray(), 0, out, 12, 1);
         System.arraycopy(Util.shortToByteArr(this.windowSize), 0, out, 14, 2);
         System.arraycopy(this.data, 0, out, RTP4Packet.HEADER_LENGTH, this.data.length);
@@ -121,7 +117,7 @@ public class RTP4Packet implements IPacket {
     }
 
     public String toString(){
-        return "RTP4 <Seq=" + seqNum + (ack ? (", Ack=" + ackNum) : "") + (syn ? ", SYN" : "") + (fin ? ", FIN" : "") + (rst ? ", RST" : "") + ">";
+        return "RTP4 <Seq=" + seqNum + (ack ? (", Ack=" + ackNum) : "") + (syn ? ", SYN" : "") + (fin ? ", FIN" : "") + (rst ? ", RST" : "") + ">" + (data.length > 0 ? " [" + new String(data) + "]" : "") ;
     }
 }
 

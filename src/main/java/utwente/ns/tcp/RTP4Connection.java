@@ -16,21 +16,23 @@ public class RTP4Connection implements Closeable{
     private final int port;
     private final RTP4Socket socket;
 
-    private BlockingQueue<byte[]> dataQueue;
+    BlockingQueue<byte[]> receivedDataQueue;
+    BlockingQueue<byte[]> sendDataQueue;
 
     RTP4Connection(int address, int port, RTP4Socket socket) {
         this.address = address;
         this.port = port;
         this.socket = socket;
-        this.dataQueue = new LinkedBlockingQueue<>();
+        this.receivedDataQueue = new LinkedBlockingQueue<>();
+        this.sendDataQueue = new LinkedBlockingQueue<>();
     }
 
     public void send(byte[] data){
-        socket.send(data, address, (short) port);
+        sendDataQueue.add(data);
     }
 
     public byte[] receive() throws InterruptedException {
-        return dataQueue.take();
+        return receivedDataQueue.take();
     }
 
     @Override
@@ -42,8 +44,15 @@ public class RTP4Connection implements Closeable{
         return socket.isClosed();
     }
 
+    public boolean canSend() {
+        return (!isClosed()) || socket.unacknowledgedQueue.size() < 1;
+    }
 
-    public void receiveData(byte[] data) {
-        dataQueue.add(data);
+    public boolean isDone() {
+        return sendDataQueue.isEmpty();
+    }
+
+    void receiveData(byte[] data) {
+        receivedDataQueue.add(data);
     }
 }

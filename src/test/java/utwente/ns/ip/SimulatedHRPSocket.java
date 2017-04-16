@@ -58,6 +58,7 @@ public class SimulatedHRPSocket implements IHRP4Socket {
     @Override
     public void receive(IPacket packet) {
         if (!(packet instanceof HRP4Packet)) {
+            System.err.print("Got wrong packet: " + packet);
             return;
         }
 
