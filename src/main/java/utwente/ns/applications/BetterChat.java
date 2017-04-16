@@ -3,7 +3,6 @@ package utwente.ns.applications;
 import lombok.extern.java.Log;
 import utwente.ns.NetworkStack;
 import utwente.ns.chatlayer.ChatClient;
-import utwente.ns.chatlayer.PeerIdentity;
 import utwente.ns.chatstructure.IUser;
 import utwente.ns.config.Config;
 
