@@ -1,10 +1,11 @@
-package utwente.ns.chatlayer;
+package utwente.ns.chatlayer.protocol;
 
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.java.Log;
+import utwente.ns.chatlayer.exceptions.InvalidMessageException;
+import utwente.ns.chatlayer.exceptions.UnsupportedMessageTypeException;
 import utwente.ns.chatstructure.IMessage;
-import utwente.ns.chatstructure.IUser;
 
 import java.nio.ByteBuffer;
 import java.security.*;

@@ -63,7 +63,7 @@ public class RTP4Socket implements IReceiveListener, Closeable {
         listeningConnections = new LinkedList<>();
     }
 
-    RTP4Connection accept() throws IOException {
+    public RTP4Connection accept() throws IOException {
         actionQueue.offer(RTP4Layer.SocketAction.ACCEPT);
         try {
             stateLock.lock();

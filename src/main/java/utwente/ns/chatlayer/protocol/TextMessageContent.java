@@ -1,11 +1,9 @@
-package utwente.ns.chatlayer;
+package utwente.ns.chatlayer.protocol;
 
 import lombok.NoArgsConstructor;
 
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
 import java.security.Key;
-import java.security.PrivateKey;
 
 /**
  * Created by Harindu Perera on 4/11/17.

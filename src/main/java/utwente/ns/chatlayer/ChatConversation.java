@@ -2,6 +2,9 @@ package utwente.ns.chatlayer;
 
 import lombok.Getter;
 import lombok.extern.java.Log;
+import utwente.ns.chatlayer.exceptions.InvalidMessageException;
+import utwente.ns.chatlayer.exceptions.UnsupportedMessageTypeException;
+import utwente.ns.chatlayer.protocol.ChatMessage;
 import utwente.ns.chatstructure.IConversation;
 import utwente.ns.chatstructure.IMessage;
 import utwente.ns.chatstructure.IUser;
@@ -25,11 +28,11 @@ public abstract class ChatConversation implements Comparable<ChatConversation>, 
     @Getter
     protected final ConversationType type;
     @Getter
+    protected final ChatClient client;
+    @Getter
     protected Key encryptionKey;
     @Getter
     protected PrivateKey signingKey;
-    @Getter
-    protected final ChatClient client;
     @Getter
     protected List<ChatMessage> messages = new LinkedList<>();
     @Getter
@@ -38,10 +41,11 @@ public abstract class ChatConversation implements Comparable<ChatConversation>, 
 
     /**
      * Constructs a new conversation.
-     * @param client the ChatClient managing the conversation
-     * @param type the type of the conversation
+     *
+     * @param client        the ChatClient managing the conversation
+     * @param type          the type of the conversation
      * @param encryptionKey the symmetric encryption key for messages
-     * @param signingKey the private key to sign messages
+     * @param signingKey    the private key to sign messages
      */
     ChatConversation(ChatClient client, ConversationType type, Key encryptionKey, PrivateKey signingKey) {
         this.client = client;
@@ -53,18 +57,21 @@ public abstract class ChatConversation implements Comparable<ChatConversation>, 
     /**
      * Adds a message to the conversation in a thread-safe way.
      * Messages with a duplicated ID will be dropped.
+     *
      * @param message the message
      */
     private void addMessage(ChatMessage message) {
         synchronized (this.messages) {
             if (!this.messageIdSet.containsKey(message.getMessageId()))
                 this.messages.add(message);
-            else log.log(Level.WARNING, "Duplicate message ID \""+message.getMessageId()+"\"for conversation detected; duplicate dropped");
+            else
+                log.log(Level.WARNING, "Duplicate message ID \"" + message.getMessageId() + "\"for conversation detected; duplicate dropped");
         }
     }
 
     /**
      * Sends a message and adds message to conversation.
+     *
      * @param message the message
      */
     public void sendMessage(ChatMessage message) {
@@ -81,14 +88,16 @@ public abstract class ChatConversation implements Comparable<ChatConversation>, 
 
     /**
      * Processes a new incoming message
+     *
      * @param message the message
      */
     public abstract void onNewMessage(ChatMessage message);
 
     /**
      * Decrypts, verifies, and adds a new incoming message.
+     *
      * @param signingKey the public key of the sender
-     * @param message the message
+     * @param message    the message
      */
     protected void decryptAndAddMessage(PublicKey signingKey, ChatMessage message) {
         if (!message.verify(signingKey)) {
@@ -111,6 +120,7 @@ public abstract class ChatConversation implements Comparable<ChatConversation>, 
 
     /**
      * Gets the information about the participants in the chat excluding self.
+     *
      * @return an participants
      */
     protected abstract ChatClient.PeerInfo[] getParticipantInfo();
@@ -125,15 +135,15 @@ public abstract class ChatConversation implements Comparable<ChatConversation>, 
         return this.getMessages().toArray(new ChatMessage[this.messages.size()]);
     }
 
+    @Override
+    public int compareTo(ChatConversation o) {
+        return o.lastUpdated > this.lastUpdated ? 1 : -1;
+    }
+
     /**
      * Type of a chat
      */
     protected enum ConversationType {
         GROUP, DIRECT
-    }
-
-    @Override
-    public int compareTo(ChatConversation o) {
-        return o.lastUpdated > this.lastUpdated ? 1 : -1;
     }
 }

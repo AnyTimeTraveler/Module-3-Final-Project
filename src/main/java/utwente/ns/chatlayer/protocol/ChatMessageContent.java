@@ -1,4 +1,4 @@
-package utwente.ns.chatlayer;
+package utwente.ns.chatlayer.protocol;
 
 import lombok.extern.java.Log;
 
@@ -12,8 +12,6 @@ import java.util.logging.Level;
  */
 @Log
 public abstract class ChatMessageContent {
-
-    public abstract void setContent(Key key, String encData);
 
     public static byte[] getDecryptedData(Key key, String encData) throws IllegalArgumentException {
         try {
@@ -31,6 +29,8 @@ public abstract class ChatMessageContent {
             return null;
         }
     }
+
+    public abstract void setContent(Key key, String encData);
 
     public String getEncryptedContent(Key key) {
         try {
