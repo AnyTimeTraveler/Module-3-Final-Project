@@ -3,6 +3,7 @@ package utwente.ns;
 import lombok.Getter;
 import utwente.ns.config.Config;
 import utwente.ns.ip.HRP4Layer;
+import utwente.ns.ip.IHRP4Layer;
 import utwente.ns.linklayer.SimulatedLinkLayer;
 import utwente.ns.tcp.RTP4Layer;
 
@@ -16,7 +17,7 @@ public class NetworkStack {
     @Getter
     private SimulatedLinkLayer linkLayer;
     @Getter
-    private HRP4Layer hrp4Layer;
+    private IHRP4Layer hrp4Layer;
     @Getter
     private RTP4Layer rtp4Layer;
     

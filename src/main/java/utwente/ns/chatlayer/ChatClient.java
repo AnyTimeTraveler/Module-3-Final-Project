@@ -40,10 +40,10 @@ public class ChatClient implements IReceiveListener, IChatController {
 
     private final NetworkStack networkStack;
     private final String name;
-    private IHRP4Socket messageSocket;
-    private IHRP4Socket identitySocket;
     private final boolean isGUI;
     private final IUserInterface ui;
+    private IHRP4Socket messageSocket;
+    private IHRP4Socket identitySocket;
     private String id;
     private List<ChatConversation> conversations = new LinkedList<>();
     private Map<String, ChatConversation> conversationMap = new HashMap<>();
@@ -70,30 +70,31 @@ public class ChatClient implements IReceiveListener, IChatController {
         this.ui = gui;
         this.isGUI = isGUI;
     }
-    
+
     public String getOwnAddress() {
         return Config.getInstance().myAddress;
     }
-    
+
     public PeerIdentity getIdentity() {
         return new PeerIdentity(id, name, this.getOwnAddress(), CryptoUtil.encodePublicKey(this.keyPair.getPublic()));
     }
-    
-    private void addPeer(PeerIdentity identity) throws InvalidKeySpecException, InvalidKeyException {
-        
+
+    public void addPeer(PeerIdentity identity) throws InvalidKeySpecException, InvalidKeyException {
+
         // decode the public key of the peer
         PublicKey peerPublicKey = CryptoUtil.decodePublicKey(identity.publicKey);
-        
+
         // generate shared key using own private key and peer public key
         Key peerKey = CryptoUtil.generateSharedKey(this.keyPair.getPrivate(), peerPublicKey);
-        
+
         // add info to map
         this.connectedPeers.put(identity.id, new PeerInfo(identity.id, identity.name, identity.address, peerKey, peerPublicKey, identity.getFingerprint(), new Date()));
-        
+
         // remove from available peers
         this.availablePeers.remove(identity.id);
     }
 
+    @Override
     public boolean addPeerById(String id) {
         PeerIdentity peerIdentity = this.availablePeers.get(id);
         if (peerIdentity == null)
@@ -105,7 +106,7 @@ public class ChatClient implements IReceiveListener, IChatController {
         }
         return true;
     }
-    
+
     public void onPeerIdentity(PeerIdentity identity, String fromAddress) {
         if (!identity.address.equals(fromAddress)) {
             log.log(Level.INFO, "Peer address mismatch; identity dropped");
@@ -121,7 +122,7 @@ public class ChatClient implements IReceiveListener, IChatController {
         this.dropOldestPeer();
     }
 
-    
+
     private void dropOldestPeer() {
         if (this.availablePeers.size() < MAX_AVAILABLE_PEER_COUNT)
             return;
@@ -151,12 +152,12 @@ public class ChatClient implements IReceiveListener, IChatController {
             this.connectedPeers.remove(id);
         });
     }
-    
+
     public PeerIdentity[] getAvailablePeers() {
         Collection<PeerIdentity> peers = this.availablePeers.values();
         return peers.toArray(new PeerIdentity[peers.size()]);
     }
-    
+
     public void run() {
         try {
             this.messageSocket = this.networkStack.getRtp4Layer().getIpLayer().open(MESSAGE_PORT);
@@ -237,8 +238,7 @@ public class ChatClient implements IReceiveListener, IChatController {
     }
 
     private void onMessage(ChatMessage message) {
-        ChatConversation conversation = message.getGroupId() == null ?
-                this.getDirectConversation(message.getSenderId()) : this.getGroupConversation(message.getGroupId());
+        ChatConversation conversation = message.getGroupId() == null ? this.getDirectConversation(message.getSenderId()) : this.getGroupConversation(message.getGroupId());
 
         if (conversation == null) {
             log.log(Level.WARNING, "Message from unknown group or unconnected sender; dropped");
@@ -315,8 +315,7 @@ public class ChatClient implements IReceiveListener, IChatController {
         return this.connectedPeers.get(id);
     }
 
-    @Override
-    public void sendMessage(IConversation conversation, String message) {
+    public void sendMessage(IUser user, String message) {
         ChatConversation conversation = this.getDirectConversation(user.getUniqueID());
         conversation.sendMessage(new ChatMessage(this.id, UUID.randomUUID().toString(), user.getUniqueID(), null, ChatMessage.CONTENT_TYPE_TEXT, message));
     }
