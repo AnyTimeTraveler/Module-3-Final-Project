@@ -1,17 +1,13 @@
 package utwente.ns.ui;
 
+import com.sun.deploy.panel.ControlPanel;
+import utwente.ns.ip.BCN4Packet;
+import utwente.ns.ip.HRP4Router;
+
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.ListIterator;
-import java.util.Random;
 
 /**
  * @author John B. Matthews; distribution per GPL.
@@ -31,6 +27,17 @@ public class NetworkGraph extends JPanel {
     private Point mousePt;
     private Rectangle mouseRect = new Rectangle();
     private boolean selecting = false;
+    private Node[] presetNodes = new Node[]{new Node(new Point(100, 100), RADIUS, Color.BLUE, Kind.Circular), new Node(new Point(200, 100),
+            RADIUS,
+            Color.GREEN,
+            Kind.Circular), new Node(new Point(200, 200),
+            RADIUS,
+            Color.RED,
+            Kind.Circular), new Node(new Point(100,
+            200),
+            RADIUS,
+            Color.YELLOW,
+            Kind.Circular)};
 
     public NetworkGraph() {
         WIDE = 640;
@@ -39,27 +46,25 @@ public class NetworkGraph extends JPanel {
 
     public NetworkGraph(JPanel networkGraph) {
         this.setOpaque(true);
-        this.addMouseListener(new MouseHandler());
-        this.addMouseMotionListener(new MouseMotionHandler());
         WIDE = networkGraph.getWidth();
         HIGH = networkGraph.getHeight();
         mousePt = new Point(WIDE / 2, HIGH / 2);
     }
 
     public static void main() throws Exception {
-        EventQueue.invokeLater(new Runnable() {
+        EventQueue.invokeLater(() -> {
+            JFrame f = new JFrame("GraphPanel");
+            f.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+            NetworkGraph gp = new NetworkGraph();
+            f.add(new JScrollPane(gp), BorderLayout.CENTER);
+            f.pack();
+            f.setLocationByPlatform(true);
+            f.setVisible(true);
 
-            public void run() {
-                JFrame f = new JFrame("GraphPanel");
-                f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                NetworkGraph gp = new NetworkGraph();
-                f.add(gp.control, BorderLayout.NORTH);
-                f.add(new JScrollPane(gp), BorderLayout.CENTER);
-                f.getRootPane().setDefaultButton(gp.control.defaultButton);
-                f.pack();
-                f.setLocationByPlatform(true);
-                f.setVisible(true);
-            }
+            gp.updateNodes(Arrays.asList(new HRP4Router.BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry((byte) 1, (byte) 1, 1, 2)),
+                    new HRP4Router.BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry((byte) 1, (byte) 1, 2, 3)),
+                    new HRP4Router.BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry((byte) 1, (byte) 1, 3, 4)),
+                    new HRP4Router.BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry((byte) 1, (byte) 1, 4, 1))));
         });
     }
 
@@ -84,15 +89,33 @@ public class NetworkGraph extends JPanel {
         }
     }
 
-    public JToolBar getControlPanel() {
-        return control;
+    void updateNodes(List<HRP4Router.BCN4RoutingEntryWrapper> routingEntries) {
+        int i = 0;
+        HashMap<Integer, Node> nodes = new HashMap<>();
+
+        for (HRP4Router.BCN4RoutingEntryWrapper entry : routingEntries) {
+            int[] addresses = entry.getBcn4Entry().getAddresses();
+            if (!nodes.containsKey(addresses[0])) {
+                nodes.put(addresses[0], presetNodes[i++]);
+            }
+            if (!nodes.containsKey(addresses[1])) {
+                nodes.put(addresses[1], presetNodes[i++]);
+            }
+            edges.add(new Edge(nodes.get(addresses[0]), nodes.get(addresses[1])));
+        }
+        this.nodes.addAll(nodes.values());
+
+        /*
+        // Random
+        Point p = new Point(rnd.nextInt(getWidth()), rnd.nextInt(getHeight()));
+        this.nodes.add(new Node(p, radius, new Color(rnd.nextInt()), kind));
+        */
     }
 
     /**
      * The kinds of node in a graph.
      */
     private enum Kind {
-
         Circular, Rounded, Square;
     }
 
@@ -178,73 +201,6 @@ public class NetworkGraph extends JPanel {
         }
 
         /**
-         * Select each node in r.
-         */
-        public static void selectRect(List<Node> list, Rectangle r) {
-            for (Node n : list) {
-                n.setSelected(r.contains(n.p));
-            }
-        }
-
-        /**
-         * Toggle selected state of each node containing p.
-         */
-        public static void selectToggle(List<Node> list, Point p) {
-            for (Node n : list) {
-                if (n.contains(p)) {
-                    n.setSelected(!n.isSelected());
-                }
-            }
-        }
-
-        /**
-         * Update each node's position by d (delta).
-         */
-        public static void updatePosition(List<Node> list, Point d) {
-            for (Node n : list) {
-                if (n.isSelected()) {
-                    n.p.x += d.x;
-                    n.p.y += d.y;
-                    n.setBoundary(n.b);
-                }
-            }
-        }
-
-        /**
-         * Update each node's radius r.
-         */
-        public static void updateRadius(List<Node> list, int r) {
-            for (Node n : list) {
-                if (n.isSelected()) {
-                    n.r = r;
-                    n.setBoundary(n.b);
-                }
-            }
-        }
-
-        /**
-         * Update each node's color.
-         */
-        public static void updateColor(List<Node> list, Color color) {
-            for (Node n : list) {
-                if (n.isSelected()) {
-                    n.color = color;
-                }
-            }
-        }
-
-        /**
-         * Update each node's kind.
-         */
-        public static void updateKind(List<Node> list, Kind kind) {
-            for (Node n : list) {
-                if (n.isSelected()) {
-                    n.kind = kind;
-                }
-            }
-        }
-
-        /**
          * Calculate this node's rectangular boundary.
          */
         private void setBoundary(Rectangle b) {
@@ -295,283 +251,6 @@ public class NetworkGraph extends JPanel {
          */
         public void setSelected(boolean selected) {
             this.selected = selected;
-        }
-    }
-
-    private static class ColorIcon implements Icon {
-
-        private static final int WIDE = 20;
-        private static final int HIGH = 20;
-        private Color color;
-
-        public ColorIcon(Color color) {
-            this.color = color;
-        }
-
-        public Color getColor() {
-            return color;
-        }
-
-        public void setColor(Color color) {
-            this.color = color;
-        }
-
-        public void paintIcon(Component c, Graphics g, int x, int y) {
-            g.setColor(color);
-            g.fillRect(x, y, WIDE, HIGH);
-        }
-
-        public int getIconWidth() {
-            return WIDE;
-        }
-
-        public int getIconHeight() {
-            return HIGH;
-        }
-    }
-
-    private class MouseHandler extends MouseAdapter {
-
-        @Override
-        public void mouseReleased(MouseEvent e) {
-            selecting = false;
-            mouseRect.setBounds(0, 0, 0, 0);
-            if (e.isPopupTrigger()) {
-                showPopup(e);
-            }
-            e.getComponent().repaint();
-        }
-
-        @Override
-        public void mousePressed(MouseEvent e) {
-            mousePt = e.getPoint();
-            if (e.isShiftDown()) {
-                Node.selectToggle(nodes, mousePt);
-            } else if (e.isPopupTrigger()) {
-                Node.selectOne(nodes, mousePt);
-                showPopup(e);
-            } else if (Node.selectOne(nodes, mousePt)) {
-                selecting = false;
-            } else {
-                Node.selectNone(nodes);
-                selecting = true;
-            }
-            e.getComponent().repaint();
-        }
-
-        private void showPopup(MouseEvent e) {
-            control.popup.show(e.getComponent(), e.getX(), e.getY());
-        }
-    }
-
-    private class MouseMotionHandler extends MouseMotionAdapter {
-
-        Point delta = new Point();
-
-        @Override
-        public void mouseDragged(MouseEvent e) {
-            if (selecting) {
-                mouseRect.setBounds(Math.min(mousePt.x, e.getX()), Math.min(mousePt.y, e.getY()), Math.abs(mousePt.x - e.getX()), Math.abs(mousePt.y - e.getY()));
-                Node.selectRect(nodes, mouseRect);
-            } else {
-                delta.setLocation(e.getX() - mousePt.x, e.getY() - mousePt.y);
-                Node.updatePosition(nodes, delta);
-                mousePt = e.getPoint();
-            }
-            e.getComponent().repaint();
-        }
-    }
-
-    private class ControlPanel extends JToolBar {
-
-        private Action newNode = new NewNodeAction("New");
-        private Action clearAll = new ClearAction("Clear");
-        private Action kind = new KindComboAction("Kind");
-        private Action color = new ColorAction("Color");
-        private Action connect = new ConnectAction("Connect");
-        private Action delete = new DeleteAction("Delete");
-        private Action random = new RandomAction("Random");
-        private JButton defaultButton = new JButton(newNode);
-        private JComboBox kindCombo = new JComboBox();
-        private ColorIcon hueIcon = new ColorIcon(Color.blue);
-        private JPopupMenu popup = new JPopupMenu();
-
-        ControlPanel() {
-            this.setLayout(new FlowLayout(FlowLayout.LEFT));
-            this.setBackground(Color.lightGray);
-
-            this.add(defaultButton);
-            this.add(new JButton(clearAll));
-            this.add(kindCombo);
-            this.add(new JButton(color));
-            this.add(new JLabel(hueIcon));
-            JSpinner js = new JSpinner();
-            js.setModel(new SpinnerNumberModel(RADIUS, 5, 100, 5));
-            js.addChangeListener(new ChangeListener() {
-
-                @Override
-                public void stateChanged(ChangeEvent e) {
-                    JSpinner s = (JSpinner) e.getSource();
-                    radius = (Integer) s.getValue();
-                    Node.updateRadius(nodes, radius);
-                    NetworkGraph.this.repaint();
-                }
-            });
-            this.add(new JLabel("Size:"));
-            this.add(js);
-            this.add(new JButton(random));
-
-            popup.add(new JMenuItem(newNode));
-            popup.add(new JMenuItem(color));
-            popup.add(new JMenuItem(connect));
-            popup.add(new JMenuItem(delete));
-            JMenu subMenu = new JMenu("Kind");
-            for (Kind k : Kind.values()) {
-                kindCombo.addItem(k);
-                subMenu.add(new JMenuItem(new KindItemAction(k)));
-            }
-            popup.add(subMenu);
-            kindCombo.addActionListener(kind);
-        }
-
-        class KindItemAction extends AbstractAction {
-
-            private Kind k;
-
-            public KindItemAction(Kind k) {
-                super(k.toString());
-                this.k = k;
-            }
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                kindCombo.setSelectedItem(k);
-            }
-        }
-    }
-
-    private class ClearAction extends AbstractAction {
-
-        public ClearAction(String name) {
-            super(name);
-        }
-
-        public void actionPerformed(ActionEvent e) {
-            nodes.clear();
-            edges.clear();
-            repaint();
-        }
-    }
-
-    private class ColorAction extends AbstractAction {
-
-        public ColorAction(String name) {
-            super(name);
-        }
-
-        public void actionPerformed(ActionEvent e) {
-            Color color = control.hueIcon.getColor();
-            color = JColorChooser.showDialog(NetworkGraph.this, "Choose a color", color);
-            if (color != null) {
-                Node.updateColor(nodes, color);
-                control.hueIcon.setColor(color);
-                control.repaint();
-                repaint();
-            }
-        }
-    }
-
-    private class ConnectAction extends AbstractAction {
-
-        public ConnectAction(String name) {
-            super(name);
-        }
-
-        public void actionPerformed(ActionEvent e) {
-            Node.getSelected(nodes, selected);
-            if (selected.size() > 1) {
-                for (int i = 0; i < selected.size() - 1; ++i) {
-                    Node n1 = selected.get(i);
-                    Node n2 = selected.get(i + 1);
-                    edges.add(new Edge(n1, n2));
-                }
-            }
-            repaint();
-        }
-    }
-
-    private class DeleteAction extends AbstractAction {
-
-        public DeleteAction(String name) {
-            super(name);
-        }
-
-        public void actionPerformed(ActionEvent e) {
-            ListIterator<Node> iter = nodes.listIterator();
-            while (iter.hasNext()) {
-                Node n = iter.next();
-                if (n.isSelected()) {
-                    deleteEdges(n);
-                    iter.remove();
-                }
-            }
-            repaint();
-        }
-
-        private void deleteEdges(Node n) {
-            ListIterator<Edge> iter = edges.listIterator();
-            while (iter.hasNext()) {
-                Edge e = iter.next();
-                if (e.n1 == n || e.n2 == n) {
-                    iter.remove();
-                }
-            }
-        }
-    }
-
-    private class KindComboAction extends AbstractAction {
-
-        public KindComboAction(String name) {
-            super(name);
-        }
-
-        public void actionPerformed(ActionEvent e) {
-            JComboBox combo = (JComboBox) e.getSource();
-            kind = (Kind) combo.getSelectedItem();
-            Node.updateKind(nodes, kind);
-            repaint();
-        }
-    }
-
-    private class NewNodeAction extends AbstractAction {
-
-        public NewNodeAction(String name) {
-            super(name);
-        }
-
-        public void actionPerformed(ActionEvent e) {
-            Node.selectNone(nodes);
-            Point p = mousePt.getLocation();
-            Color color = control.hueIcon.getColor();
-            Node n = new Node(p, radius, color, kind);
-            n.setSelected(true);
-            nodes.add(n);
-            repaint();
-        }
-    }
-
-    private class RandomAction extends AbstractAction {
-
-        public RandomAction(String name) {
-            super(name);
-        }
-
-        public void actionPerformed(ActionEvent e) {
-            for (int i = 0; i < 16; i++) {
-                Point p = new Point(rnd.nextInt(getWidth()), rnd.nextInt(getHeight()));
-                nodes.add(new Node(p, radius, new Color(rnd.nextInt()), kind));
-            }
-            repaint();
         }
     }
 }

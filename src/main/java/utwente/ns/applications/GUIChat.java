@@ -34,9 +34,10 @@ public class GUIChat implements IApplication {
 
                 // Continue setup
                 frame.setContentPane(universalComminucator.getMainPanel());
-                universalComminucator.setup(chatClient);
+                universalComminucator.setup(chatClient, networkStack);
                 frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
                 frame.pack();
+                frame.setLocationByPlatform(true);
 
                 // Show it to the world!
                 frame.setVisible(true);
