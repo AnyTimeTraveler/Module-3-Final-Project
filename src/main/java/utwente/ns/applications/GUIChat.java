@@ -3,7 +3,7 @@ package utwente.ns.applications;
 import utwente.ns.NetworkStack;
 import utwente.ns.chatlayer.ChatClient;
 import utwente.ns.config.Config;
-import utwente.ns.ui.UniversalComminucator;
+import utwente.ns.ui.UniversalCommunicator;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,7 +18,7 @@ public class GUIChat implements IApplication {
     public void start() {
         try {
             // Start the GUI
-            UniversalComminucator universalComminucator = new UniversalComminucator();
+            UniversalCommunicator universalComminucator = new UniversalCommunicator();
 
             // Start the Network with default parameters
             NetworkStack networkStack = new NetworkStack();
@@ -30,7 +30,7 @@ public class GUIChat implements IApplication {
             chatThreat.setName("ChatThreat"); //Found the typo, but left it in. Have fun :)
             chatThreat.start();
             EventQueue.invokeLater(() -> {
-                JFrame frame = new JFrame("UniversalComminucator");
+                JFrame frame = new JFrame("UniversalCommunicator");
 
                 // Continue setup
                 frame.setContentPane(universalComminucator.getMainPanel());

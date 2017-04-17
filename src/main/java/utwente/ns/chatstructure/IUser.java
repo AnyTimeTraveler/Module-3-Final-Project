@@ -11,4 +11,6 @@ public interface IUser {
     boolean isConfirmed();
 
     String getUniqueID();
+
+    String getAddress();
 }

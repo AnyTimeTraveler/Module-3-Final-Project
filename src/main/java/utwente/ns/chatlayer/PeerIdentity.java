@@ -66,6 +66,11 @@ public class PeerIdentity implements Comparable, IUser {
     }
 
     @Override
+    public String getAddress() {
+        return address;
+    }
+
+    @Override
     public boolean isConfirmed() {
         return false;
     }
