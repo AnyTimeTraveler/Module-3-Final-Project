@@ -15,6 +15,7 @@ public class NetUtil {
 
     public static <T> T doRTP4JsonRequest(Object request, String address, int port, NetworkStack networkStack, Class<T> responseClass) throws IOException, InterruptedException {
         // TODO: address the whole closing issue
+        // TODO: protect against arbitrarily long requests
         byte[] requestData = Util.toJsonBytes(request);
         ByteArrayOutputStream responseBuffer = new ByteArrayOutputStream();
         try (RTP4Connection connection = networkStack.getRtp4Layer().connect(address, port)) {
