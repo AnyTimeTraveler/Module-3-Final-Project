@@ -1,12 +1,15 @@
 package utwente.ns.ui;
 
-import com.sun.deploy.panel.ControlPanel;
+import utwente.ns.Util;
 import utwente.ns.ip.BCN4Packet;
 import utwente.ns.ip.HRP4Router;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -14,30 +17,17 @@ import java.util.List;
  */
 public class NetworkGraph extends JPanel {
 
-    private static final Random rnd = new Random();
+    public static final int LINE_WIDTH = 5;
     private final int WIDE;
     private final int HIGH;
-    private final int RADIUS = 35;
-    private ControlPanel control = new ControlPanel();
-    private int radius = RADIUS;
-    private Kind kind = Kind.Circular;
-    private List<Node> nodes = new ArrayList<Node>();
-    private List<Node> selected = new ArrayList<Node>();
-    private List<Edge> edges = new ArrayList<Edge>();
-    private Point mousePt;
+    private final int RADIUS = 50;
+    private List<Node> nodes = new ArrayList<>();
+    private List<Edge> edges = new ArrayList<>();
     private Rectangle mouseRect = new Rectangle();
-    private boolean selecting = false;
-    private Node[] presetNodes = new Node[]{new Node(new Point(100, 100), RADIUS, Color.BLUE, Kind.Circular), new Node(new Point(200, 100),
-            RADIUS,
-            Color.GREEN,
-            Kind.Circular), new Node(new Point(200, 200),
-            RADIUS,
-            Color.RED,
-            Kind.Circular), new Node(new Point(100,
-            200),
-            RADIUS,
-            Color.YELLOW,
-            Kind.Circular)};
+    private Node[] presetNodes = new Node[]{new Node(new Point(150, 150), RADIUS, Color.BLUE, Kind.Circular),
+            new Node(new Point(300, 150), RADIUS, Color.GREEN, Kind.Circular),
+            new Node(new Point(300, 300), RADIUS, Color.RED, Kind.Circular),
+            new Node(new Point(150, 300), RADIUS, Color.YELLOW, Kind.Circular)};
 
     public NetworkGraph() {
         WIDE = 640;
@@ -48,7 +38,6 @@ public class NetworkGraph extends JPanel {
         this.setOpaque(true);
         WIDE = networkGraph.getWidth();
         HIGH = networkGraph.getHeight();
-        mousePt = new Point(WIDE / 2, HIGH / 2);
     }
 
     public static void main() throws Exception {
@@ -64,7 +53,9 @@ public class NetworkGraph extends JPanel {
             gp.updateNodes(Arrays.asList(new HRP4Router.BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry((byte) 1, (byte) 1, 1, 2)),
                     new HRP4Router.BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry((byte) 1, (byte) 1, 2, 3)),
                     new HRP4Router.BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry((byte) 1, (byte) 1, 3, 4)),
-                    new HRP4Router.BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry((byte) 1, (byte) 1, 4, 1))));
+                    new HRP4Router.BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry((byte) 1, (byte) 1, 4, 1)),
+                    new HRP4Router.BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry((byte) 1, (byte) 1, 1, 3)),
+                    new HRP4Router.BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry((byte) 1, (byte) 1, 3, 1))));
         });
     }
 
@@ -83,10 +74,6 @@ public class NetworkGraph extends JPanel {
         for (Node n : nodes) {
             n.draw(g);
         }
-        if (selecting) {
-            g.setColor(Color.darkGray);
-            g.drawRect(mouseRect.x, mouseRect.y, mouseRect.width, mouseRect.height);
-        }
     }
 
     void updateNodes(List<HRP4Router.BCN4RoutingEntryWrapper> routingEntries) {
@@ -96,9 +83,19 @@ public class NetworkGraph extends JPanel {
         for (HRP4Router.BCN4RoutingEntryWrapper entry : routingEntries) {
             int[] addresses = entry.getBcn4Entry().getAddresses();
             if (!nodes.containsKey(addresses[0])) {
+                try {
+                    presetNodes[i].text = Util.intToAddressString(addresses[0]);
+                } catch (UnknownHostException e) {
+                    e.printStackTrace();
+                }
                 nodes.put(addresses[0], presetNodes[i++]);
             }
             if (!nodes.containsKey(addresses[1])) {
+                try {
+                    presetNodes[i].text = Util.intToAddressString(addresses[1]);
+                } catch (UnknownHostException e) {
+                    e.printStackTrace();
+                }
                 nodes.put(addresses[1], presetNodes[i++]);
             }
             edges.add(new Edge(nodes.get(addresses[0]), nodes.get(addresses[1])));
@@ -135,8 +132,13 @@ public class NetworkGraph extends JPanel {
         public void draw(Graphics g) {
             Point p1 = n1.getLocation();
             Point p2 = n2.getLocation();
-            g.setColor(Color.darkGray);
-            g.drawLine(p1.x, p1.y, p2.x, p2.y);
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setColor(n1.color);
+            g2d.setStroke(new BasicStroke(LINE_WIDTH));
+            if (p1.getX() > p2.getX())
+                g2d.drawLine(p1.x + LINE_WIDTH, p1.y, p2.x + LINE_WIDTH, p2.y);
+            else
+                g2d.drawLine(p1.x - LINE_WIDTH, p1.y, p2.x - LINE_WIDTH, p2.y);
         }
     }
 
@@ -151,6 +153,7 @@ public class NetworkGraph extends JPanel {
         private Kind kind;
         private boolean selected = false;
         private Rectangle b = new Rectangle();
+        private String text;
 
         /**
          * Construct a new node.
@@ -161,43 +164,6 @@ public class NetworkGraph extends JPanel {
             this.color = color;
             this.kind = kind;
             setBoundary(b);
-        }
-
-        /**
-         * Collected all the selected nodes in list.
-         */
-        public static void getSelected(List<Node> list, List<Node> selected) {
-            selected.clear();
-            for (Node n : list) {
-                if (n.isSelected()) {
-                    selected.add(n);
-                }
-            }
-        }
-
-        /**
-         * Select no nodes.
-         */
-        public static void selectNone(List<Node> list) {
-            for (Node n : list) {
-                n.setSelected(false);
-            }
-        }
-
-        /**
-         * Select a single node; return true if not already selected.
-         */
-        public static boolean selectOne(List<Node> list, Point p) {
-            for (Node n : list) {
-                if (n.contains(p)) {
-                    if (!n.isSelected()) {
-                        Node.selectNone(list);
-                        n.setSelected(true);
-                    }
-                    return true;
-                }
-            }
-            return false;
         }
 
         /**
@@ -223,6 +189,10 @@ public class NetworkGraph extends JPanel {
                 g.setColor(Color.darkGray);
                 g.drawRect(b.x, b.y, b.width, b.height);
             }
+            g.setColor(Color.BLACK);
+            g.setFont(new Font("default", Font.BOLD, 15));
+            if (text != null)
+                g.drawString(text, b.x + r / 2, b.y + r / 2 + r / 3);
         }
 
         /**
@@ -230,27 +200,6 @@ public class NetworkGraph extends JPanel {
          */
         public Point getLocation() {
             return p;
-        }
-
-        /**
-         * Return true if this node contains p.
-         */
-        public boolean contains(Point p) {
-            return b.contains(p);
-        }
-
-        /**
-         * Return true if this node is selected.
-         */
-        public boolean isSelected() {
-            return selected;
-        }
-
-        /**
-         * Mark this node as selected.
-         */
-        public void setSelected(boolean selected) {
-            this.selected = selected;
         }
     }
 }
