@@ -3,11 +3,14 @@ package utwente.ns.ip;
 import utwente.ns.IPacket;
 import utwente.ns.IReceiveListener;
 import utwente.ns.PacketMalformedException;
+import utwente.ns.Util;
 import utwente.ns.tcp.RTP4Packet;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NavigableSet;
+import java.util.TreeSet;
 
 /**
  * Created by Niels Overkamp on 13-Apr-17.
@@ -15,6 +18,8 @@ import java.util.List;
 public class SimulatedHRP4Layer implements IHRP4Layer {
 
     private List<IReceiveListener> receiveListeners;
+
+	private NavigableSet<Integer> ports = new TreeSet<>();
 
     public SimulatedHRP4Layer() {
         this.receiveListeners = new ArrayList<>();
@@ -47,6 +52,9 @@ public class SimulatedHRP4Layer implements IHRP4Layer {
     @Override
     public synchronized void addReceiveListener(IReceiveListener receiver) {
         this.receiveListeners.add(receiver);
+        if (receiver instanceof IHRP4Socket) {
+        	ports.add((int) ((IHRP4Socket) receiver).getDstPort());
+		}
     }
 
     @Override
@@ -62,6 +70,11 @@ public class SimulatedHRP4Layer implements IHRP4Layer {
         return simulatedHRPSocket;
     }
 
+	@Override
+	public IHRP4Socket openRandom() throws IOException {
+		return this.open((short) Util.randomNotInSet(ports, 1024, 65535));
+	}
+
     @Override
     public HRP4Router getRouter() {
         return null;
@@ -69,5 +82,6 @@ public class SimulatedHRP4Layer implements IHRP4Layer {
 
     void close(SimulatedHRPSocket simulatedHRPSocket) {
         receiveListeners.remove(simulatedHRPSocket);
+        ports.remove((int) simulatedHRPSocket.getDstPort());
     }
 }
