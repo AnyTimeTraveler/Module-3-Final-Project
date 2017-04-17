@@ -2,7 +2,6 @@ package utwente.ns.ip;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import utwente.ns.Util;
 import utwente.ns.config.Config;
@@ -53,7 +52,7 @@ public class HRP4Router {
     void update(BCN4Packet packet) throws UnknownHostException {
         updateTTL();
         // Get the address of this node
-        int myAddress = Util.addressToInt(InetAddress.getByName(Config.getInstance().getMyAddress()));
+        int myAddress = Util.addressToInt(InetAddress.getByName(Config.getInstance().myAddress));
 
         int neighbour = packet.getHip4Packet().getSrcAddr();
 
@@ -90,7 +89,7 @@ public class HRP4Router {
 
         int myAddress;
         try {
-            myAddress = Util.addressToInt(InetAddress.getByName(Config.getInstance().getMyAddress()));
+            myAddress = Util.addressToInt(InetAddress.getByName(Config.getInstance().myAddress));
         } catch (UnknownHostException e) {
             e.printStackTrace();
             return;

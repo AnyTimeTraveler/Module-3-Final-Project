@@ -14,5 +14,5 @@ public interface IChatController {
 
     IUser getUserById(String id);
 
-    void sendMessage(IUser user, String message);
+    void sendMessage(IConversation conversation, String message);
 }

@@ -21,7 +21,7 @@ public class NetworkStack {
     private RTP4Layer rtp4Layer;
     
     public NetworkStack() throws IOException {
-        this(Config.getInstance().getSegmentBufferSize());
+        this(Config.getInstance().segmentBufferSize);
     }
     
     public NetworkStack(int maxSegmentSize, InetAddress... multicastAddresses) throws IOException {

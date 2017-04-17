@@ -19,8 +19,8 @@ public class ShittyRouter {
     private static int port;
     
     public static void main(String[] args) throws Exception {
-        mcastaddr = InetAddress.getByName(Config.getInstance().getMulticastAddress());
-        port = Config.getInstance().getMulticastPort();
+        mcastaddr = InetAddress.getByName(Config.getInstance().multicastAddress);
+        port = Config.getInstance().multicastPort;
         socket = new DatagramSocket(port, mcastaddr);
         socket.connect(mcastaddr, port);
         socket.setBroadcast(true);

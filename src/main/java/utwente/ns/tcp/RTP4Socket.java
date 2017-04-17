@@ -143,7 +143,7 @@ public class RTP4Socket implements IReceiveListener, Closeable {
             case CLOSED:
                 return;
             case TIME_WAIT:
-                if (System.currentTimeMillis() - timeWaitStart > Config.getInstance().getMaxSegmentLife()) {
+                if (System.currentTimeMillis() - timeWaitStart > Config.getInstance().maxSegmentLife) {
                     try {
                         stateLock.lock();
                         state = SocketState.CLOSED;

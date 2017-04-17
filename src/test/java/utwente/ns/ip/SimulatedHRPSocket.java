@@ -29,7 +29,7 @@ public class SimulatedHRPSocket implements IHRP4Socket {
                 0,
                 this.dstPort,
                 dstPort,
-                Config.getInstance().getDefaultHRP4TTL(),
+                Config.getInstance().defaultHRP4TTL,
                 data
         );
         simulatedHRP4Layer.send(hrp4Packet);
