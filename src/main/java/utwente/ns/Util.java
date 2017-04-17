@@ -8,6 +8,8 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.NavigableSet;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -81,5 +83,15 @@ public class Util {
 
     public static <T> T fromJsonBytes(byte[] bytes, Class<T> classOfT) {
         return gson.fromJson(new String(bytes), classOfT);
+    }
+
+    public static int randomNotInSet(NavigableSet<Integer> set, int start, int stop) {
+        int value = start + new Random().nextInt(stop - start);
+
+        for (Integer i : set) {
+            if (i >= start && i <= value) value++;
+        }
+
+        return value;
     }
 }
