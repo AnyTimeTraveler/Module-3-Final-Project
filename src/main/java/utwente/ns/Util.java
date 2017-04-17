@@ -90,6 +90,7 @@ public class Util {
 
         for (Integer i : set) {
             if (i >= start && i <= value) value++;
+            if (i > value) break;
         }
 
         return value;
