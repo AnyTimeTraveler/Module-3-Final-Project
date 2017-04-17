@@ -1,4 +1,4 @@
-package utwente.ns;
+package utwente.ns.ui;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -16,35 +16,43 @@ import java.util.Random;
 /**
  * @author John B. Matthews; distribution per GPL.
  */
-public class GraphThing extends JComponent {
+public class NetworkGraph extends JPanel {
 
-    private static final int WIDE = 640;
-    private static final int HIGH = 480;
-    private static final int RADIUS = 35;
     private static final Random rnd = new Random();
+    private final int WIDE;
+    private final int HIGH;
+    private final int RADIUS = 35;
     private ControlPanel control = new ControlPanel();
     private int radius = RADIUS;
     private Kind kind = Kind.Circular;
     private List<Node> nodes = new ArrayList<Node>();
     private List<Node> selected = new ArrayList<Node>();
     private List<Edge> edges = new ArrayList<Edge>();
-    private Point mousePt = new Point(WIDE / 2, HIGH / 2);
+    private Point mousePt;
     private Rectangle mouseRect = new Rectangle();
     private boolean selecting = false;
 
-    public GraphThing() {
+    public NetworkGraph() {
+        WIDE = 640;
+        HIGH = 480;
+    }
+
+    public NetworkGraph(JPanel networkGraph) {
         this.setOpaque(true);
         this.addMouseListener(new MouseHandler());
         this.addMouseMotionListener(new MouseMotionHandler());
+        WIDE = networkGraph.getWidth();
+        HIGH = networkGraph.getHeight();
+        mousePt = new Point(WIDE / 2, HIGH / 2);
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main() throws Exception {
         EventQueue.invokeLater(new Runnable() {
 
             public void run() {
                 JFrame f = new JFrame("GraphPanel");
                 f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                GraphThing gp = new GraphThing();
+                NetworkGraph gp = new NetworkGraph();
                 f.add(gp.control, BorderLayout.NORTH);
                 f.add(new JScrollPane(gp), BorderLayout.CENTER);
                 f.getRootPane().setDefaultButton(gp.control.defaultButton);
@@ -406,7 +414,7 @@ public class GraphThing extends JComponent {
                     JSpinner s = (JSpinner) e.getSource();
                     radius = (Integer) s.getValue();
                     Node.updateRadius(nodes, radius);
-                    GraphThing.this.repaint();
+                    NetworkGraph.this.repaint();
                 }
             });
             this.add(new JLabel("Size:"));
@@ -463,7 +471,7 @@ public class GraphThing extends JComponent {
 
         public void actionPerformed(ActionEvent e) {
             Color color = control.hueIcon.getColor();
-            color = JColorChooser.showDialog(GraphThing.this, "Choose a color", color);
+            color = JColorChooser.showDialog(NetworkGraph.this, "Choose a color", color);
             if (color != null) {
                 Node.updateColor(nodes, color);
                 control.hueIcon.setColor(color);

@@ -6,6 +6,7 @@ import utwente.ns.config.Config;
 import utwente.ns.ui.UniversalComminucator;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.IOException;
 
 /**
@@ -17,7 +18,6 @@ public class GUIChat implements IApplication {
     public void start() {
         try {
             // Start the GUI
-            JFrame frame = new JFrame("UniversalComminucator");
             UniversalComminucator universalComminucator = new UniversalComminucator();
 
             // Start the Network with default parameters
@@ -29,15 +29,18 @@ public class GUIChat implements IApplication {
             chatThreat.setDaemon(true);
             chatThreat.setName("ChatThreat"); //Found the typo, but left it in. Have fun :)
             chatThreat.start();
+            EventQueue.invokeLater(() -> {
+                JFrame frame = new JFrame("UniversalComminucator");
 
-            // Continue setup
-            frame.setContentPane(universalComminucator.getMainPanel());
-            universalComminucator.setup(chatClient);
-            frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-            frame.pack();
+                // Continue setup
+                frame.setContentPane(universalComminucator.getMainPanel());
+                universalComminucator.setup(chatClient);
+                frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+                frame.pack();
 
-            // Show it to the world!
-            frame.setVisible(true);
+                // Show it to the world!
+                frame.setVisible(true);
+            });
         } catch (IOException e) {
             e.printStackTrace();
         }

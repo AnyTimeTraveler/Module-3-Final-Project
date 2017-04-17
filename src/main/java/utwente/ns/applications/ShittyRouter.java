@@ -1,4 +1,4 @@
-package utwente.ns;
+package utwente.ns.applications;
 
 import utwente.ns.config.Config;
 
@@ -13,18 +13,26 @@ import java.util.Scanner;
 /**
  * Created by simon on 10.04.17.
  */
-public class ShittyRouter {
+public class ShittyRouter implements IApplication{
     private static DatagramSocket socket;
     private static InetAddress mcastaddr;
     private static int port;
-    
-    public static void main(String[] args) throws Exception {
+
+    public void start() {
+        try {
+            run();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void run() throws Exception {
         mcastaddr = InetAddress.getByName(Config.getInstance().multicastAddress);
         port = Config.getInstance().multicastPort;
         socket = new DatagramSocket(port, mcastaddr);
         socket.connect(mcastaddr, port);
         socket.setBroadcast(true);
-        Thread receiver = new Thread(ShittyRouter::runReceiver);
+        Thread receiver = new Thread(this::runReceiver);
         receiver.start();
         Scanner sc = new Scanner(System.in);
         boolean running = true;
@@ -48,7 +56,8 @@ public class ShittyRouter {
             socket.send(new DatagramPacket(packet, packet.length, mcastaddr, port));
         }
     }
-    private static void runReceiver() {
+
+    private void runReceiver() {
         try {
             byte[] data = new byte[2048];
             DatagramPacket packet = new DatagramPacket(data, data.length);
@@ -68,7 +77,8 @@ public class ShittyRouter {
             e.printStackTrace();
         }
     }
-    private static Packet getPacket(byte[] input, int length) throws UnknownHostException {
+
+    private Packet getPacket(byte[] input, int length) throws UnknownHostException {
         Packet p = new Packet();
         ByteBuffer buf = ByteBuffer.wrap(input, 0, length);
         int srcLength = buf.getInt();
@@ -88,11 +98,20 @@ public class ShittyRouter {
         buf.get(p.data, 0, dataLength);
         return p;
     }
-    private static byte[] marshal(InetAddress src, InetAddress dst, byte[] data) {
+
+    private byte[] marshal(InetAddress src, InetAddress dst, byte[] data) {
         byte[] srcData = src != null ? src.getAddress() : new byte[0];
         byte[] dstData = dst != null ? dst.getAddress() : new byte[0];
-        return ByteBuffer.allocate(12 + srcData.length + dstData.length + data.length).putInt(srcData.length).put(srcData).putInt(dstData.length).put(dstData).putInt(data.length).put(data).array();
+        return ByteBuffer.allocate(12 + srcData.length + dstData.length + data.length)
+                         .putInt(srcData.length)
+                         .put(srcData)
+                         .putInt(dstData.length)
+                         .put(dstData)
+                         .putInt(data.length)
+                         .put(data)
+                         .array();
     }
+
     private static class Packet {
         private InetAddress src;
         private InetAddress dst;
