@@ -1,11 +1,15 @@
 package utwente.ns.tcp;
 
 import lombok.Getter;
+import utwente.ns.config.Config;
 import utwente.ns.ip.IHRP4Layer;
 
 import java.io.IOException;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
@@ -13,59 +17,73 @@ import java.util.stream.Collectors;
  * Created by simon on 07.04.17.
  */
 public class RTP4Layer {
+    private static final int SEND_INTERVAL = Config.getInstance().tcpPacketInterval;
+    public static final boolean DEBUG = false;
+
     @Getter
     private IHRP4Layer ipLayer;
     private List<RTP4Socket> registeredSockets;
-    private List<RTP4Connection> registeredConnections;
-
+    private final List<RTP4Connection> registeredConnections;
+    private BlockingQueue<AbstractMap.Entry<Boolean, RTP4Connection>> connectionRegisterRequests;
 
     public RTP4Layer(IHRP4Layer ipLayer) {
         this.ipLayer = ipLayer;
         registeredSockets = new ArrayList<>();
         registeredConnections = new ArrayList<>();
-        new Thread(this::run,Thread.currentThread().getName() + "-tcpLoop").start();
+        connectionRegisterRequests = new LinkedBlockingQueue<>();
+        new Thread(this::run, Thread.currentThread().getName() + "-tcpLoop").start();
     }
 
-    private synchronized void run() {
+    private void run() {
         while (true) {
-            System.out.println(Thread.currentThread().getName() + "> Scanning");
-            registeredConnections.stream().filter(connection -> connection.getState() == ConnectionState.TIME_WAIT).forEach(RTP4Connection::clear);
-            registeredConnections = registeredConnections.stream()
-                    .filter(connection -> connection.getState() != ConnectionState.CLOSED || connection.getState() != ConnectionState.TIME_WAIT)
-                    .collect(Collectors.toList());
-            registeredConnections.forEach(RTP4Connection::handlePacket);
-            registeredConnections.forEach(RTP4Connection::handleAction);
-            registeredConnections.forEach(RTP4Connection::resendPacket);
-            registeredConnections.forEach(connection -> System.out.println(Thread.currentThread().getName() + "> " + connection.getRemoteHost().getPort() + "-" + connection.getState()));
+            synchronized (registeredConnections) {
+                if (DEBUG) System.out.println(Thread.currentThread().getName() + "> Scanning");
+                registeredConnections.stream().filter(connection -> connection.getState() == ConnectionState.TIME_WAIT).forEach(RTP4Connection::clear);
+                registeredConnections.removeAll(registeredConnections.stream()
+                        .filter(connection -> connection.getState() == ConnectionState.CLOSED)
+                        .collect(Collectors.toList()));
+                connectionRegisterRequests.forEach(entry -> {
+                    if (entry.getKey()) {
+                        registeredConnections.add(entry.getValue());
+                    } else {
+                        registeredConnections.remove(entry.getValue());
+                    }
+                });
+                connectionRegisterRequests.clear();
+                registeredConnections.forEach(RTP4Connection::handlePacket);
+                registeredConnections.forEach(RTP4Connection::handleAction);
+                registeredConnections.forEach(RTP4Connection::resendPacket);
+                if (DEBUG)
+                    registeredConnections.forEach(connection -> System.out.println(Thread.currentThread().getName() + "> " + connection.getRemoteHost().getPort() + "-" + connection.getState()));
+            }
             try {
-                Thread.sleep(500);
+                Thread.sleep(SEND_INTERVAL);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    void registerConnection(RTP4Connection connection) {
-        registeredConnections.add(connection);
+    synchronized void registerConnection(RTP4Connection rtp4Connection) {
+        connectionRegisterRequests.add(new AbstractMap.SimpleEntry<>(true, rtp4Connection));
     }
 
-    void removeConnection(RTP4Connection rtp4Connection) {
-        registeredConnections.remove(rtp4Connection);
+    synchronized void removeConnection(RTP4Connection rtp4Connection) {
+        connectionRegisterRequests.add(new AbstractMap.SimpleEntry<>(false, rtp4Connection));
     }
 
 
     public RTP4Socket
     open(int port) throws IOException {
-        RTP4Socket socket = new RTP4Socket(ipLayer.open((short) port), this);
+        RTP4Socket socket = new RTP4Socket(ipLayer.open(port), this);
         registeredSockets.add(socket);
         return socket;
     }
 
-    public RTP4Connection connect(String address, int port, long timeout) throws IOException, TimeoutException {
+    public RTP4Connection connect(String address, int port) throws IOException, TimeoutException {
         RTP4Socket socket = new RTP4Socket(ipLayer.openRandom(), this);
         registeredSockets.add(socket);
-        RTP4Connection connection = socket.connect(address, port);
-        return connection;
+        return socket.connect(address, port);
     }
 
     enum ConnectionState {
@@ -80,6 +98,7 @@ public class RTP4Layer {
         LAST_ACK,
         CLOSED,
     }
+
     enum ConnectionAction {
         CLOSE, CONNECT, SEND
     }

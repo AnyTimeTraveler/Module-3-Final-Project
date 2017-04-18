@@ -39,7 +39,7 @@ public class SimulatedRTP4Test {
 
     @Test
     public void test() throws IOException, TimeoutException, InterruptedException {
-        connectionB = rtp4LayerB.connect("",5000, -1);
+        connectionB = rtp4LayerB.connect("",5000);
         connectionB.send("Hello Asshole".getBytes());
     }
 

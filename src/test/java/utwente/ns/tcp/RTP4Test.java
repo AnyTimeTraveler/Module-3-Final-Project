@@ -25,7 +25,7 @@ public class RTP4Test {
 
     @Test
     public void client() throws IOException, InterruptedException, TimeoutException {
-        RTP4Connection connection = stack.getRtp4Layer().connect(partner, 10, -1);
+        RTP4Connection connection = stack.getRtp4Layer().connect(partner, 10);
 
         connection.send("Server: Hi!".getBytes());
         Assert.assertEquals("First message from client", "Client: Hello", new String(connection.receive()));

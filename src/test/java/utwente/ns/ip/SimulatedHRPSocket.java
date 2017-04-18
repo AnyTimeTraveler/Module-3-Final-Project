@@ -15,39 +15,39 @@ import java.util.List;
 public class SimulatedHRPSocket implements IHRP4Socket {
     public List<IReceiveListener> listeners = new ArrayList<>();
     private final SimulatedHRP4Layer simulatedHRP4Layer;
-    public short dstPort;
+    public int dstPort;
 
 
-    public SimulatedHRPSocket(SimulatedHRP4Layer simulatedHRP4Layer, short port) {
+    public SimulatedHRPSocket(SimulatedHRP4Layer simulatedHRP4Layer, int port) {
         this.simulatedHRP4Layer = simulatedHRP4Layer;
         this.dstPort = port;
     }
 
     @Override
-    public void send(byte[] data, int dstAddress, short dstPort) throws IOException {
+    public void send(byte[] data, int dstAddress, int dstPort) throws IOException {
         HRP4Packet hrp4Packet = new HRP4Packet(
                 Util.addressStringToInt(""),
                 Util.addressStringToInt(""),
-                this.dstPort,
-                dstPort,
-                Config.getInstance().getDefaultHRP4TTL(),
+                (short) this.dstPort,
+                (short) dstPort,
+                Config.getInstance().defaultHRP4TTL,
                 data
         );
         simulatedHRP4Layer.send(hrp4Packet);
     }
 
     @Override
-    public void addReceiveListener(IReceiveListener listener) {
+    public synchronized void addReceiveListener(IReceiveListener listener) {
         listeners.add(listener);
     }
 
     @Override
-    public void removeReceiveListener(IReceiveListener listener) {
+    public synchronized void removeReceiveListener(IReceiveListener listener) {
         listeners.remove(listener);
     }
 
     @Override
-    public short getDstPort() {
+    public int getDstPort() {
         return dstPort;
     }
 
@@ -63,7 +63,7 @@ public class SimulatedHRPSocket implements IHRP4Socket {
             return;
         }
 
-        if (((HRP4Packet) packet).getDstPort() != this.dstPort) {
+        if (((int) ((HRP4Packet) packet).getDstPort() & 0xFFFF) != this.dstPort) {
             return;
         }
 

@@ -36,13 +36,13 @@ public class RTP4Socket implements IReceiveListener, Closeable {
         remoteHostRTP4ConnectionMap = new HashMap<>();
     }
 
-    RTP4Connection accept() throws IOException, TimeoutException {
+    public RTP4Connection accept() throws IOException, TimeoutException {
         RTP4Connection rtp4Connection;
         RemoteHost remoteHost;
         while (true) {
             HRP4Packet synPacket;
             long timeStart = System.currentTimeMillis();
-            long timeout = Config.getInstance().getTcpListenTimeout();
+            long timeout = Config.getInstance().tcpListenTimeout;
             while (true) {
                 synPacket = receivedSynQueue.poll();
                 if (synPacket != null) {
@@ -72,7 +72,7 @@ public class RTP4Socket implements IReceiveListener, Closeable {
     }
 
     RTP4Connection connect(String address, int port) throws IOException, TimeoutException {
-        RemoteHost remoteHost = new RemoteHost(Util.addressStringToInt(address), (short) port);
+        RemoteHost remoteHost = new RemoteHost(Util.addressStringToInt(address), port);
         RTP4Connection rtp4Connection = new RTP4Connection(remoteHost, this);
         addConnection(remoteHost, rtp4Connection);
         rtp4Layer.registerConnection(rtp4Connection);
@@ -89,7 +89,7 @@ public class RTP4Socket implements IReceiveListener, Closeable {
     }
 
 
-    void send(byte[] data, int dstAddr, short dstPort) throws IOException {
+    void send(byte[] data, int dstAddr, int dstPort) throws IOException {
         ipSocket.send(data, dstAddr, dstPort);
     }
 
@@ -115,7 +115,7 @@ public class RTP4Socket implements IReceiveListener, Closeable {
         }
     }
 
-    public short getPort() {
+    public int getPort() {
         return ipSocket.getDstPort();
     }
 

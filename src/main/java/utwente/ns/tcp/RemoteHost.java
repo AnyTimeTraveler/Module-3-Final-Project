@@ -10,7 +10,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class RemoteHost {
     private int address;
-    private short port;
+    private int port;
 
     public boolean equals(Object object) {
         return

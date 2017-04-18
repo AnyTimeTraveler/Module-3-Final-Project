@@ -19,8 +19,8 @@ import java.util.concurrent.TimeoutException;
  * Created by simon on 07.04.17.
  */
 public class RTP4Connection implements Closeable, IReceiveListener {
-    private static final long PACKET_TIMEOUT_MILLIS = Config.getInstance().getTcpPacketTimeout();
-    private static final long LISTEN_TIMEOUT_MILLIS = Config.getInstance().getTcpListenTimeout();
+    private static final long PACKET_TIMEOUT_MILLIS = Config.getInstance().tcpPacketTimeout;
+    private static final long LISTEN_TIMEOUT_MILLIS = Config.getInstance().tcpListenTimeout;
     @Getter
     private RemoteHost remoteHost;
     @Getter
@@ -57,7 +57,7 @@ public class RTP4Connection implements Closeable, IReceiveListener {
         this.state = RTP4Layer.ConnectionState.CLOSED;
     }
 
-    RTP4Connection(int address, short port, RTP4Socket socket) {
+    RTP4Connection(int address, int port, RTP4Socket socket) {
         this(new RemoteHost(address, port), socket);
     }
 
@@ -68,6 +68,7 @@ public class RTP4Connection implements Closeable, IReceiveListener {
 
     void accept(HRP4Packet synPacket) throws PacketMalformedException, TimeoutException {
         RTP4Packet rtp4Packet = new RTP4Packet(synPacket.getData());
+        if (RTP4Layer.DEBUG) System.out.println(Thread.currentThread().getName() + "> Found SYN! " + rtp4Packet);
         tcpBlock.registerReceivedSequenceNumber(rtp4Packet.getSeqNum(), rtp4Packet.getLength());
         sendControl(true, true, false);
         state = RTP4Layer.ConnectionState.SYN_ACCEPTED;
@@ -102,17 +103,17 @@ public class RTP4Connection implements Closeable, IReceiveListener {
         } catch (PacketMalformedException e) {
             return;
         }
-        System.out.println(Thread.currentThread().getName() + "> " + "Found Packet! " + packet);
+        if (RTP4Layer.DEBUG) System.out.println(Thread.currentThread().getName() + "> " + "Found Packet! " + packet);
 
         if (tcpBlock.receiveInitialSeqNumIsSet) {
             if (packet.getSeqNum() < tcpBlock.receiveNext) {
-                System.out.println(Thread.currentThread().getName() + "> Nvm, outdated");
+                if (RTP4Layer.DEBUG) System.out.println(Thread.currentThread().getName() + "> Nvm, outdated");
                 if (packet.getLength() > 0) {
                     sendAcknowledgement();
                 }
                 return;
             } else if (packet.getSeqNum() > tcpBlock.receiveNext) {
-                System.out.println(Thread.currentThread().getName() + "> Nvm, disordered");
+                if (RTP4Layer.DEBUG) System.out.println(Thread.currentThread().getName() + "> Nvm, disordered");
                 receivedPacketQueue.add(hrp4Packet);
                 return;
             } else {
@@ -186,14 +187,14 @@ public class RTP4Connection implements Closeable, IReceiveListener {
         if (action == null) {
             return;
         }
-        System.out.println(Thread.currentThread().getName() + "> " + "Found action! " + action);
+        if (RTP4Layer.DEBUG) System.out.println(Thread.currentThread().getName() + "> " + "Found action! " + action);
         switch (action) {
 //            case ACCEPT:
 //                HRP4Packet packet;
 //                try {
 //                    packet = receivedSynQueue.peek();
 //                    if (packet != null) {
-//                        System.out.println(Thread.currentThread().getName() + "> " + "Received Syn!");
+//                        if (DEBUG) System.out.println(Thread.currentThread().getName() + "> " + "Received Syn!");
 //                        receivedSynQueue.remove();
 //                        dstAddr = packet.getSrcAddr();
 //                        dstPort = packet.getSrcPort();
@@ -208,7 +209,7 @@ public class RTP4Connection implements Closeable, IReceiveListener {
 //                            stateLock.unlock();
 //                        }
 //                    } else {
-//                        System.out.println(Thread.currentThread().getName() + "> " + "No Syn yet");
+//                        if (DEBUG) System.out.println(Thread.currentThread().getName() + "> " + "No Syn yet");
 //                        actionQueue.offer(action);
 //                    }
 //                } catch (PacketMalformedException e) {
@@ -259,7 +260,7 @@ public class RTP4Connection implements Closeable, IReceiveListener {
             if (entry == null || time - entry.getValue() < PACKET_TIMEOUT_MILLIS) {
                 break;
             }
-            System.out.println(Thread.currentThread().getName() + "> Found Timed out packet! " + entry.getKey());
+            if (RTP4Layer.DEBUG) System.out.println(Thread.currentThread().getName() + "> Found Timed out packet! " + entry.getKey());
             unacknowledgedPacketQueue.remove();
             send(entry.getKey());
         }
@@ -418,7 +419,7 @@ public class RTP4Connection implements Closeable, IReceiveListener {
             case CLOSED:
                 return;
             case TIME_WAIT:
-                if (System.currentTimeMillis() - timeWaitStart > Config.getInstance().getMaxSegmentLife()) {
+                if (System.currentTimeMillis() - timeWaitStart > Config.getInstance().maxSegmentLife) {
                     state = RTP4Layer.ConnectionState.CLOSED;
                 }
         }
