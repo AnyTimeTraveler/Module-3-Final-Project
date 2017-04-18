@@ -223,7 +223,8 @@ public class ChatClient implements IReceiveListener, IChatController {
     private void sendData(IHRP4Socket sock, String toAddr, short toPort, byte[] data) throws IOException {
         if (sock == null)
             this.messageSocket.send(data, Util.addressStringToInt(toAddr), toPort);
-        sock.send(data, Util.addressStringToInt(toAddr), toPort);
+        else
+            sock.send(data, Util.addressStringToInt(toAddr), toPort);
     }
 
     private void sendData(String toAddr, short toPort, byte[] data) throws IOException {

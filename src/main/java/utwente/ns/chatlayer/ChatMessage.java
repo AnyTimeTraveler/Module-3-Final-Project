@@ -82,7 +82,7 @@ public class ChatMessage implements IMessage {
 
     public void sign(PrivateKey key) {
         try {
-            Signature signature = Signature.getInstance("SHA256withRSA");
+            Signature signature = Signature.getInstance("SHA1withECDSA");
             signature.initSign(key);
             appendSigData(signature);
             this.signature = Base64.getEncoder().encodeToString(signature.sign());
@@ -94,7 +94,7 @@ public class ChatMessage implements IMessage {
 
     public boolean verify(PublicKey key) {
         try {
-            Signature signature = Signature.getInstance("SHA256withRSA");
+            Signature signature = Signature.getInstance("SHA1withECDSA");
             signature.initVerify(key);
             appendSigData(signature);
             return signature.verify(Base64.getDecoder().decode(this.signature));
@@ -109,7 +109,7 @@ public class ChatMessage implements IMessage {
         signature.update(senderId.getBytes());
         signature.update(messageId.getBytes());
         signature.update(recipientId.getBytes());
-        signature.update(groupId.getBytes());
+        if (groupId != null) signature.update(groupId.getBytes());
         signature.update(ByteBuffer.allocate(Long.BYTES).putLong(sendTime).array());
         signature.update(type.getBytes());
         signature.update(data.getBytes());

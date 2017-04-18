@@ -19,7 +19,10 @@ public class CryptoUtil {
     public static KeyPair generateKeyPair() {
         try {
             KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
-            kpg.initialize(256);
+            SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
+
+            kpg.initialize(256, random);
+            //kpg.initialize(256);
             return kpg.generateKeyPair();
         } catch (Exception e) {
             e.printStackTrace();
