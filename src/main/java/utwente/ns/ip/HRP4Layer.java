@@ -25,6 +25,7 @@ public class HRP4Layer implements IReceiveListener, IHRP4Layer {
     private HRP4Router router = new HRP4Router();
 
     private List<IReceiveListener> receiveListeners;
+    private NavigableSet<Integer> ports = new TreeSet<>();
 
     /**
      * @param linkLayer
@@ -65,6 +66,9 @@ public class HRP4Layer implements IReceiveListener, IHRP4Layer {
 
     public void addReceiveListener(IReceiveListener receiver) {
         receiveListeners.add(receiver);
+        if (receiver instanceof IHRP4Socket) {
+            ports.add((int) ((IHRP4Socket) receiver).getDstPort());
+        }
     }
 
     public HRP4Socket open(short port) throws IOException {
@@ -80,8 +84,14 @@ public class HRP4Layer implements IReceiveListener, IHRP4Layer {
         return socket;
     }
 
+    @Override
+    public IHRP4Socket openRandom() throws IOException {
+        return this.open((short) Util.randomNotInSet(ports, 1024, 65535));
+    }
+
     void close(HRP4Socket socket) {
         this.receiveListeners.remove(socket);
+        this.ports.remove((int) socket.getDstPort());
     }
 
     @Override
