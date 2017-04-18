@@ -10,6 +10,7 @@ import utwente.ns.ip.HRP4Packet;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.AbstractMap;
+import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeoutException;
@@ -101,14 +102,17 @@ public class RTP4Connection implements Closeable, IReceiveListener {
         } catch (PacketMalformedException e) {
             return;
         }
+        System.out.println(Thread.currentThread().getName() + "> " + "Found Packet! " + packet);
 
         if (tcpBlock.receiveInitialSeqNumIsSet) {
             if (packet.getSeqNum() < tcpBlock.receiveNext) {
+                System.out.println(Thread.currentThread().getName() + "> Nvm, outdated");
                 if (packet.getLength() > 0) {
                     sendAcknowledgement();
                 }
                 return;
             } else if (packet.getSeqNum() > tcpBlock.receiveNext) {
+                System.out.println(Thread.currentThread().getName() + "> Nvm, disordered");
                 receivedPacketQueue.add(hrp4Packet);
                 return;
             } else {
@@ -182,13 +186,15 @@ public class RTP4Connection implements Closeable, IReceiveListener {
         if (action == null) {
             return;
         }
+        System.out.println(Thread.currentThread().getName() + "> " + "Found action! " + action);
         switch (action) {
 //            case ACCEPT:
 //                HRP4Packet packet;
 //                try {
 //                    packet = receivedSynQueue.peek();
 //                    if (packet != null) {
-//                        //                        receivedSynQueue.remove();
+//                        System.out.println(Thread.currentThread().getName() + "> " + "Received Syn!");
+//                        receivedSynQueue.remove();
 //                        dstAddr = packet.getSrcAddr();
 //                        dstPort = packet.getSrcPort();
 //                        RTP4Packet rtp4Packet = new RTP4Packet(packet.getData());
@@ -202,14 +208,15 @@ public class RTP4Connection implements Closeable, IReceiveListener {
 //                            stateLock.unlock();
 //                        }
 //                    } else {
-//                        //                        actionQueue.offer(action);
+//                        System.out.println(Thread.currentThread().getName() + "> " + "No Syn yet");
+//                        actionQueue.offer(action);
 //                    }
 //                } catch (PacketMalformedException e) {
 //                    e.printStackTrace();
 //                }
 //                break;
             case CONNECT:
-                switch (state) {
+                switch (state){
                     case CLOSED:
                         sendControl(true, false, false);
                         state = RTP4Layer.ConnectionState.SYN_SENT;
@@ -252,6 +259,7 @@ public class RTP4Connection implements Closeable, IReceiveListener {
             if (entry == null || time - entry.getValue() < PACKET_TIMEOUT_MILLIS) {
                 break;
             }
+            System.out.println(Thread.currentThread().getName() + "> Found Timed out packet! " + entry.getKey());
             unacknowledgedPacketQueue.remove();
             send(entry.getKey());
         }
@@ -307,6 +315,8 @@ public class RTP4Connection implements Closeable, IReceiveListener {
                     }
                 }
             }
+        } else {
+            //TODO handle invalid acknowledgement
         }
     }
 
@@ -332,6 +342,7 @@ public class RTP4Connection implements Closeable, IReceiveListener {
     private void sendAcknowledgement() {
         send(new RTP4Packet(tcpBlock.takeSendSequenceNumber(0), tcpBlock.receiveNext, false, true, false, false, tcpBlock.receiveWindow, new byte[0]));
     }
+
 
 
     public void send(byte[] data) throws IOException, TimeoutException {
@@ -367,18 +378,18 @@ public class RTP4Connection implements Closeable, IReceiveListener {
         return data;
     }
 
-    public boolean localIsClosed() {
+    public boolean localIsClosed(){
         return state == RTP4Layer.ConnectionState.FIN_WAIT_1
                 || state == RTP4Layer.ConnectionState.FIN_WAIT_2
                 || isClosed();
     }
 
-    public boolean remoteIsClosed() {
+    public boolean remoteIsClosed(){
         return state == RTP4Layer.ConnectionState.CLOSE_WAIT
                 || isClosed();
     }
 
-    public boolean isClosed() {
+    public boolean isClosed(){
         return state == RTP4Layer.ConnectionState.TIME_WAIT
                 || state == RTP4Layer.ConnectionState.CLOSING
                 || state == RTP4Layer.ConnectionState.LAST_ACK
@@ -436,7 +447,9 @@ public class RTP4Connection implements Closeable, IReceiveListener {
         private int receiveInitialSeqNum;
 
         TCPBlock() {
-            this.sendInitialSeqNum = (int) (System.nanoTime() / 4000);
+            //TODO reset to non debug init
+//            this.sendInitialSeqNum = (int) (System.nanoTime() / 4000);
+            this.sendInitialSeqNum = new Random().nextInt(100);
             this.sendNext = this.sendInitialSeqNum;
             this.sendUnacknowledged = this.sendInitialSeqNum - 1;
             this.receiveInitialSeqNumIsSet = false;

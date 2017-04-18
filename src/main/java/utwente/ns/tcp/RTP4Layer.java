@@ -1,7 +1,6 @@
 package utwente.ns.tcp;
 
 import lombok.Getter;
-import utwente.ns.config.Config;
 import utwente.ns.ip.IHRP4Layer;
 
 import java.io.IOException;
@@ -14,8 +13,6 @@ import java.util.stream.Collectors;
  * Created by simon on 07.04.17.
  */
 public class RTP4Layer {
-    private static final int PACKET_INTERVAL = Config.getInstance().getTcpPacketInterval();
-
     @Getter
     private IHRP4Layer ipLayer;
     private List<RTP4Socket> registeredSockets;
@@ -26,11 +23,12 @@ public class RTP4Layer {
         this.ipLayer = ipLayer;
         registeredSockets = new ArrayList<>();
         registeredConnections = new ArrayList<>();
-        new Thread(this::run, Thread.currentThread().getName() + "-tcpLoop").start();
+        new Thread(this::run,Thread.currentThread().getName() + "-tcpLoop").start();
     }
 
     private synchronized void run() {
         while (true) {
+            System.out.println(Thread.currentThread().getName() + "> Scanning");
             registeredConnections.stream().filter(connection -> connection.getState() == ConnectionState.TIME_WAIT).forEach(RTP4Connection::clear);
             registeredConnections = registeredConnections.stream()
                     .filter(connection -> connection.getState() != ConnectionState.CLOSED || connection.getState() != ConnectionState.TIME_WAIT)
@@ -38,9 +36,11 @@ public class RTP4Layer {
             registeredConnections.forEach(RTP4Connection::handlePacket);
             registeredConnections.forEach(RTP4Connection::handleAction);
             registeredConnections.forEach(RTP4Connection::resendPacket);
+            registeredConnections.forEach(connection -> System.out.println(Thread.currentThread().getName() + "> " + connection.getRemoteHost().getPort() + "-" + connection.getState()));
             try {
-                Thread.sleep(PACKET_INTERVAL);
-            } catch (InterruptedException ignored) {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -80,7 +80,6 @@ public class RTP4Layer {
         LAST_ACK,
         CLOSED,
     }
-
     enum ConnectionAction {
         CLOSE, CONNECT, SEND
     }

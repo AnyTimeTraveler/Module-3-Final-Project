@@ -37,7 +37,7 @@ public class Config {
         maxSegmentLife = 2*60000;
         tcpPacketTimeout = 5;
         tcpListenTimeout = 60000;
-        tcpPacketInterval = 10;
+        tcpPacketInterval = 500;
     }
     
     public static Config getInstance() {
