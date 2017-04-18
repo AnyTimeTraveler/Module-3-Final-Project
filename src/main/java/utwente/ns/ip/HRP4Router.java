@@ -63,22 +63,10 @@ public class HRP4Router {
         int linkcost = 1;
 
         // Update cost to neighbour
-        updateNeighbor(myAddress, neighbour, (byte) linkcost);
+		processEntry(neighbour, myAddress, (byte) linkcost, DEFAULT_TTL);
 
         List<BCN4Packet.RoutingEntry> routingEntries = packet.getRoutingTable();
         processDataTable(routingEntries);
-    }
-
-    /**
-     * Update entries for direct neighbor, used for link detection
-     *
-     * @param myAddress Own address
-     * @param addr Other address
-     * @param cost The link-cost of this link
-     */
-    private void updateNeighbor(int myAddress, int addr, byte cost) {
-        processEntry(myAddress, addr, cost, DEFAULT_TTL);
-        processEntry(addr, myAddress, cost, DEFAULT_TTL);
     }
 
     /**
@@ -96,9 +84,8 @@ public class HRP4Router {
         }
 
         for (BCN4Packet.RoutingEntry entry : table) {
-            if (entry.getAddresses()[0] == myAddress || entry.getAddresses()[1] == myAddress) continue;
+            if (entry.getAddresses()[1] == myAddress) continue;
             processEntry(entry.getAddresses()[0], entry.getAddresses()[1], entry.getLinkCost(), entry.getTTL());
-            processEntry(entry.getAddresses()[1], entry.getAddresses()[0], entry.getLinkCost(), entry.getTTL());
         }
     }
 
@@ -159,10 +146,14 @@ public class HRP4Router {
         open.add(new RoutingEntry(sourceAddress, -1, 0));
 
         while(open.size() > 0) {
+
+        	// Find the first node in the open set
             RoutingEntry lowest = null;
             for (RoutingEntry entry: open) {
                 if (lowest == null || entry.cost < lowest.cost) lowest = entry;
             }
+
+            // Close that node
             open.remove(lowest);
             closed.add(lowest);
             visited.add(lowest.destination);
@@ -171,9 +162,11 @@ public class HRP4Router {
                 continue;
             }
 
+            // Loop through all routes from that node to all other nodes
             for (Map.Entry<Integer, BCN4RoutingEntryWrapper> entry: linkTable.get(lowest.destination).entrySet()) {
                 int alt = lowest.cost + entry.getValue().getBcn4Entry().getLinkCost();
 
+                // Find whether that node is already in the open set
                 int index = -1;
                 for (int i = 0; i < open.size(); i++) {
                     if(open.get(i).destination == entry.getKey()) {
@@ -181,15 +174,21 @@ public class HRP4Router {
                         break;
                     }
                 }
+
+                // If it is already visited, continue
                 if (visited.contains(entry.getKey())) {
                     continue;
                 }
 
+                // If the node wasn't opened yet, open it
                 if (index == -1) {
                     open.add(new RoutingEntry(entry.getKey(), lowest.hop == -1 ? entry.getKey() : lowest.hop, alt));
                 }else if (alt < open.get(index).cost) {
+                	// Otherwise, if the link-cost is lower, replace it.
                     open.get(index).cost = alt;
                     open.get(index).hop = lowest.hop;
+
+                    // If the first-hop is still -1, replace it with the current node, to denote the first/next hop
                     if(lowest.hop == -1) {
                         open.get(index).hop = entry.getKey();
                     }
@@ -231,7 +230,10 @@ public class HRP4Router {
         private int cost;
     }
 
-    @Data
+	/**
+	 * Wrapper for managing routing entries and their TTL.
+	 */
+	@Data
     @RequiredArgsConstructor
     public static class BCN4RoutingEntryWrapper {
         private final BCN4Packet.RoutingEntry bcn4Entry;
@@ -263,7 +265,6 @@ public class HRP4Router {
          */
         boolean isExpired() {
             return this.getTTL() == 0;
-            //return (TTL_MULTIPLIER * ((int) bcn4Entry.getTTL())) + timeSince >= System.currentTimeMillis();
         }
     }
 }
