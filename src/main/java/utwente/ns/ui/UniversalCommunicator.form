@@ -46,7 +46,7 @@
                     <properties/>
                     <border type="none"/>
                     <children>
-                      <component id="9cf0d" class="javax.swing.JList" binding="contactList">
+                      <component id="9cf0d" class="javax.swing.JList" binding="conversationList">
                         <constraints/>
                         <properties>
                           <selectionMode value="2"/>
