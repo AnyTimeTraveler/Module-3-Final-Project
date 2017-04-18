@@ -13,7 +13,7 @@ public interface IHRP4Layer extends IReceiveListener {
     void send(IPacket packet) throws IOException;
     void addReceiveListener(IReceiveListener receiver);
     IHRP4Socket open(short port) throws IOException;
+    IHRP4Socket openRandom() throws IOException;
     HRP4Router getRouter();
-
 
 }

@@ -2,26 +2,24 @@ package utwente.ns.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import lombok.Data;
 
 import java.io.*;
 
-@Data
 public class Config {
-    
+
     // Configfile name
     private static final String CONFIGFILE = "config.json";
     private static Config instance;
     
-    private String multicastAddress;
-    private int multicastPort;
-    private int baconInterval;
-    private byte baconPacketTTL;
-    private String myAddress;
-    private byte defaultHRP4TTL;
-    private int segmentBufferSize;
-    private String name;
-    private final int maxSegmentLife;
+    public String multicastAddress;
+    public int multicastPort;
+    public int baconInterval;
+    public byte baconPacketTTL;
+    public String myAddress;
+    public byte defaultHRP4TTL;
+    public int segmentBufferSize;
+    public String name;
+    public int maxSegmentLife;
 
     private Config() {
         multicastAddress = "228.0.0.1";
@@ -31,16 +29,17 @@ public class Config {
         myAddress = "CHANGE ME, I'M DEFINITELY NOT CONFIGURED YET!";
         defaultHRP4TTL = 6;
         segmentBufferSize = 2048;
+        name = "UNSET";
         maxSegmentLife = 5;
     }
-    
+
     public static Config getInstance() {
         if (instance == null) {
             load();
         }
         return instance;
     }
-    
+
     private static void load(File file) {
         instance = fromFile(file);
         // no config file found
@@ -50,15 +49,15 @@ public class Config {
             throw new RuntimeException("Set values in config file according to your settings!");
         }
     }
-    
+
     private static void load() {
         load(new File(CONFIGFILE));
     }
-    
+
     private static Config fromDefaults() {
         return new Config();
     }
-    
+
     private static Config fromFile(File configFile) {
         try {
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -69,15 +68,15 @@ public class Config {
             return null;
         }
     }
-    
+
     public void toFile() {
         toFile(new File(CONFIGFILE));
     }
-    
+
     public void toFile(String file) {
         toFile(new File(file));
     }
-    
+
     public void toFile(File file) {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         String jsonConfig = gson.toJson(this);
@@ -91,7 +90,7 @@ public class Config {
             e.printStackTrace();
         }
     }
-    
+
     @Override
     public String toString() {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();

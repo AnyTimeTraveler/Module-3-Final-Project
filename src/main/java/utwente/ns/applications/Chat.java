@@ -33,7 +33,7 @@ public class Chat implements IApplication {
         new BufferedReader(new InputStreamReader(System.in)).lines().forEach(line -> {
             try {
                 String destination = "192.168.5." + line.split(";")[0];
-                String message = Config.getInstance().getMyAddress() + " --> " + destination +" : " + line.split(";")[1];
+                String message = Config.getInstance().myAddress + " --> " + destination + " : " + line.split(";")[1];
                 InetAddress ip = InetAddress.getByName(destination);
                 short port = 25565;
                 socket.send(message.getBytes(), Util.addressToInt(ip), port);
