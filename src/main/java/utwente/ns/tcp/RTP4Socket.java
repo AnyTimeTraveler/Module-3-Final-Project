@@ -96,7 +96,7 @@ public class RTP4Socket implements IReceiveListener, Closeable {
 
     @Override
     public void receive(IPacket packet) {
-        if (packet instanceof HRP4Packet) {
+        if (packet instanceof HRP4Packet) { //TODO Check if not closed
             HRP4Packet hrp4Packet = ((HRP4Packet) packet);
             RemoteHost remoteHost = new RemoteHost(hrp4Packet.getSrcAddr(), hrp4Packet.getSrcPort());
             if (remoteHostRTP4ConnectionMap.containsKey(remoteHost)) {
@@ -121,9 +121,14 @@ public class RTP4Socket implements IReceiveListener, Closeable {
 
     @Override
     public void close() throws IOException {
-        for (Map.Entry<RemoteHost, RTP4Connection> entry : remoteHostRTP4ConnectionMap.entrySet()) {
-            entry.getValue().close();
-        }
+        remoteHostRTP4ConnectionMap.entrySet().forEach(entry -> {
+            try {
+                entry.getValue().close();
+            } catch (IOException e) {
+                e.printStackTrace();
+                //TODO throw exception up
+            }
+        });
         ipSocket.close();
     }
 }
