@@ -119,7 +119,7 @@ public class HRP4Layer implements IReceiveListener, IHRP4Layer {
      */
     @Override
     public IHRP4Socket openRandom() throws IOException {
-        return this.open(Util.randomNotInSet(ports, 1024, 65535));
+        return this.open(Util.randomNotInSet(ports, 1024, 32767));
     }
 
     void close(HRP4Socket socket) {

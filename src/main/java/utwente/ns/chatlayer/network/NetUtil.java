@@ -20,6 +20,7 @@ public class NetUtil {
         ByteArrayOutputStream responseBuffer = new ByteArrayOutputStream();
         try (RTP4Connection connection = networkStack.getRtp4Layer().connect(address, port)) {
             connection.send(requestData);
+            connection.close();
             while (!connection.remoteIsClosed()) {
                 responseBuffer.write(connection.receive());
             }
