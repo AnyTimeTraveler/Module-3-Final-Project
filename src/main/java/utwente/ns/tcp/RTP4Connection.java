@@ -163,6 +163,7 @@ public class RTP4Connection implements Closeable, IReceiveListener {
                 }
                 if (packet.getData().length > 0) {
                     receivedDataQueue.add(packet.getData());
+                    sendAcknowledgement();
                 }
                 break;
             case FIN_WAIT_2:
@@ -176,6 +177,7 @@ public class RTP4Connection implements Closeable, IReceiveListener {
                 }
                 if (packet.getData().length > 0) {
                     receivedDataQueue.add(packet.getData());
+                    sendAcknowledgement();
                 }
                 break;
             case CLOSING:
