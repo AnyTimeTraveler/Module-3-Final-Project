@@ -144,7 +144,7 @@ public class NetworkGraph extends JPanel {
             Graphics2D g2d = (Graphics2D) g;
             g2d.setColor(n1.color);
             g2d.setStroke(new BasicStroke(LINE_WIDTH));
-            System.out.println(n1.text + " --> " + n2.text);
+//            System.out.println(n1.text + " --> " + n2.text);
             int x1 = p1.x;
             int y1 = p1.y;
             int x2 = p2.x;
