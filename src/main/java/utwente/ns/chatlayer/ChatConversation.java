@@ -74,9 +74,10 @@ public abstract class ChatConversation implements Comparable<ChatConversation>, 
      *
      * @param message the message
      */
+    @Override
     public void sendMessage(ChatMessage message) {
-        message.sign(this.signingKey);
         message.encryptContent(encryptionKey);
+        message.sign(this.signingKey);
         try {
             this.client.sendChatMessage(message);
             message.setSent(true);
@@ -139,6 +140,7 @@ public abstract class ChatConversation implements Comparable<ChatConversation>, 
     public int compareTo(ChatConversation o) {
         return o.lastUpdated > this.lastUpdated ? 1 : -1;
     }
+    public abstract String getName();
 
     /**
      * Type of a chat

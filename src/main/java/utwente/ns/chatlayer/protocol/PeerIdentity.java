@@ -28,7 +28,7 @@ public class PeerIdentity implements Comparable, IUser {
     }
 
     public String getFingerprint() {
-
+        // TODO: Fingerprint is never set. Intentional?
         if (fingerprint != null) return fingerprint;
 
         byte[] hash = CryptoUtil.getSHA256Hash((id + name + address + publicKey).getBytes());
@@ -64,6 +64,11 @@ public class PeerIdentity implements Comparable, IUser {
     @Override
     public String getUniqueID() {
         return this.id;
+    }
+
+    @Override
+    public String getAddress() {
+        return address;
     }
 
     @Override

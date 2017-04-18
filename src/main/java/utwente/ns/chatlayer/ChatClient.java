@@ -1,6 +1,7 @@
 package utwente.ns.chatlayer;
 
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.extern.java.Log;
 import utwente.ns.IPacket;
 import utwente.ns.IReceiveListener;
@@ -15,11 +16,13 @@ import utwente.ns.chatlayer.protocol.PeerIdentity;
 import utwente.ns.chatstructure.IChatController;
 import utwente.ns.chatstructure.IConversation;
 import utwente.ns.chatstructure.IUser;
+import utwente.ns.chatstructure.IUserInterface;
 import utwente.ns.config.Config;
 import utwente.ns.ip.HRP4Packet;
 import utwente.ns.ip.IHRP4Socket;
 import utwente.ns.tcp.RTP4Connection;
 import utwente.ns.tcp.RTP4Socket;
+import utwente.ns.ui.SimpleTUI;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -47,6 +50,9 @@ public class ChatClient implements IReceiveListener, IChatController, IRequestHa
     private final NetworkStack networkStack;
     private final String name;
     private RTP4Socket messageSocket;
+    private final boolean isGUI;
+    @Getter
+    private final IUserInterface ui;
     private IHRP4Socket identitySocket;
     private String id;
     private List<ChatConversation> conversations = new LinkedList<>();
@@ -62,10 +68,21 @@ public class ChatClient implements IReceiveListener, IChatController, IRequestHa
         this.networkStack = networkStack;
         this.id = UUID.randomUUID().toString();
         this.keyPair = CryptoUtil.generateKeyPair();
+        this.ui = new SimpleTUI(this);
+        isGUI = false;
+    }
+
+    public ChatClient(String name, NetworkStack networkStack, IUserInterface gui, boolean isGUI) {
+        this.name = name;
+        this.networkStack = networkStack;
+        this.id = UUID.randomUUID().toString();
+        this.keyPair = CryptoUtil.generateKeyPair();
+        this.ui = gui;
+        this.isGUI = isGUI;
     }
 
     public String getOwnAddress() {
-        return Config.getInstance().getMyAddress();
+        return Config.getInstance().myAddress;
     }
 
     public PeerIdentity getIdentity() {
@@ -87,14 +104,14 @@ public class ChatClient implements IReceiveListener, IChatController, IRequestHa
         this.availablePeers.remove(identity.id);
     }
 
+    @Override
     public boolean addPeerById(String id) {
         PeerIdentity peerIdentity = this.availablePeers.get(id);
-        if (peerIdentity == null) return false;
+        if (peerIdentity == null)
+            return false;
         try {
             this.addPeer(peerIdentity);
-        } catch (InvalidKeySpecException e) {
-            return false;
-        } catch (InvalidKeyException e) {
+        } catch (InvalidKeySpecException | InvalidKeyException e) {
             return false;
         }
         return true;
@@ -117,7 +134,8 @@ public class ChatClient implements IReceiveListener, IChatController, IRequestHa
 
 
     private void dropOldestPeer() {
-        if (this.availablePeers.size() < MAX_AVAILABLE_PEER_COUNT) return;
+        if (this.availablePeers.size() < MAX_AVAILABLE_PEER_COUNT)
+            return;
         PeerIdentity[] peers = getAvailablePeers();
         Arrays.sort(peers);
         this.availablePeers.remove(peers[peers.length - 1].id);
@@ -127,7 +145,8 @@ public class ChatClient implements IReceiveListener, IChatController, IRequestHa
         List<String> expiredAvailableIDs = new LinkedList<>();
         final Date availableExpiryTime = new Date(System.currentTimeMillis() - AVAILABLE_PEER_EXPIRY_TIME_MS);
         this.availablePeers.forEach((id, peer) -> {
-            if (peer.updateTime.before(availableExpiryTime)) expiredAvailableIDs.add(id);
+            if (peer.updateTime.before(availableExpiryTime))
+                expiredAvailableIDs.add(id);
         });
         expiredAvailableIDs.forEach(id -> {
             this.availablePeers.remove(id);
@@ -136,7 +155,8 @@ public class ChatClient implements IReceiveListener, IChatController, IRequestHa
         List<String> expiredConnectedIDs = new LinkedList<>();
         Date connectionExpiryTime = new Date(System.currentTimeMillis() - CONNECTED_PEER_EXPIR_TIME_MS);
         this.connectedPeers.forEach((id, peer) -> {
-            if (peer.lastUpdateTime.before(connectionExpiryTime)) expiredConnectedIDs.add(id);
+            if (peer.lastUpdateTime.before(connectionExpiryTime))
+                expiredConnectedIDs.add(id);
         });
         expiredConnectedIDs.forEach(id -> {
             this.connectedPeers.remove(id);
@@ -156,6 +176,8 @@ public class ChatClient implements IReceiveListener, IChatController, IRequestHa
             RTP4SocketListener msgListener = new RTP4SocketListener(messageSocket, this);
             new Thread(msgListener).start();
 
+            this.identitySocket.addReceiveListener(this);
+
             Timer broadcastTimer = new Timer();
             broadcastTimer.scheduleAtFixedRate(new TimerTask() {
                 @Override
@@ -163,8 +185,7 @@ public class ChatClient implements IReceiveListener, IChatController, IRequestHa
                     sendIdentityData();
                     dropExpiredPeers();
                 }
-            }, (long) Config.getInstance().getBaconInterval() * 4, (long) Config.getInstance().getBaconInterval() * 4);
-
+            }, Config.getInstance().baconInterval * 4, Config.getInstance().baconInterval * 4);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -183,8 +204,9 @@ public class ChatClient implements IReceiveListener, IChatController, IRequestHa
         peerAddrs.forEach(addr -> {
             try {
                 String addrStr = Util.intToAddressString(addr);
-                if (addrStr.equals(this.getOwnAddress())) return;
-                this.sendData(addrStr, IDENTITY_PORT, idData);
+                if (addrStr.equals(this.getOwnAddress()))
+                    return;
+                this.sendData(this.identitySocket, addrStr, IDENTITY_PORT, idData);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -209,10 +231,18 @@ public class ChatClient implements IReceiveListener, IChatController, IRequestHa
         this.onMessage(message);
     }
 
+
     private void sendData(String toAddr, int port, byte[] data) throws IOException {
         try (RTP4Connection conn = this.networkStack.getRtp4Layer().connect(toAddr, port)) {
             conn.send(data);
         }
+    }
+
+    private void sendData(IHRP4Socket sock, String toAddr, short toPort, byte[] data) throws IOException {
+//        if (sock == null)
+//            //this.messageSocket.send(data, Util.addressStringToInt(toAddr), toPort);
+//        else
+            if (sock != null) sock.send(data, Util.addressStringToInt(toAddr), toPort);
     }
 
     public void sendChatMessage(ChatMessage message) throws IOException {
@@ -226,9 +256,8 @@ public class ChatClient implements IReceiveListener, IChatController, IRequestHa
         this.sendData(recipient.address, MESSAGE_PORT, Util.toJsonBytes(message));
     }
 
-    private void onMessage(ChatMessage message) throws IllegalArgumentException {
-        ChatConversation conversation = message.getGroupId() == null ?
-                this.getDirectConversation(message.getSenderId()) : this.getGroupConversation(message.getGroupId());
+    private void onMessage(ChatMessage message) {
+        ChatConversation conversation = message.getGroupId() == null ? this.getDirectConversation(message.getSenderId()) : this.getGroupConversation(message.getGroupId());
 
         if (conversation == null) {
             log.log(Level.WARNING, "Message from unknown group or unconnected sender; dropped");
@@ -240,7 +269,8 @@ public class ChatClient implements IReceiveListener, IChatController, IRequestHa
 
     @Override
     public void receive(IPacket packet) {
-        if (!(packet instanceof HRP4Packet)) return;
+        if (!(packet instanceof HRP4Packet))
+            return;
 
         HRP4Packet hrp4Packet = (HRP4Packet) packet;
 
@@ -302,7 +332,6 @@ public class ChatClient implements IReceiveListener, IChatController, IRequestHa
         return this.connectedPeers.get(id);
     }
 
-    @Override
     public void sendMessage(IUser user, String message) {
         ChatConversation conversation = this.getDirectConversation(user.getUniqueID());
         conversation.sendMessage(new ChatMessage(this.id, UUID.randomUUID().toString(), user.getUniqueID(), null, ChatMessage.CONTENT_TYPE_TEXT, message));
@@ -326,9 +355,11 @@ public class ChatClient implements IReceiveListener, IChatController, IRequestHa
     public class PeerInfo implements IUser {
         public final String id;
         public final String name;
+        @Getter
         public final String address;
         public final Key peerSharedKey;
         public final PublicKey publicKey;
+        @Getter
         public final String fingerprint;
 
         public Date lastUpdateTime;
@@ -344,21 +375,13 @@ public class ChatClient implements IReceiveListener, IChatController, IRequestHa
         }
 
         @Override
-        public String getFingerprint() {
-            return this.fingerprint;
-        }
-
-        @Override
         public boolean isConfirmed() {
             return true;
         }
 
         @Override
         public String toString() {
-            return "ID: " + id + "\n" +
-                    "Name: " + name + "\n" +
-                    "Address: " + address + "\n" +
-                    "Fingerprint: " + getFingerprint();
+            return "ID: " + id + "\n" + "Name: " + name + "\n" + "Address: " + address + "\n" + "Fingerprint: " + getFingerprint();
         }
 
         public void onUpdate() {

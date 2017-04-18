@@ -26,9 +26,10 @@ public class SimulatedRTP4Test {
                         RTP4Connection connection = socketA.accept();
                         System.out.println(Thread.currentThread().getName() + "> " + "Message : " + new String(connection.receive()));
                         connection.send("Hi Bae!".getBytes());
-//                        while (!connectionB.isDone()) {
-//                            Thread.sleep(1000);
-//                        }
+                        while (!connection.isDone()) {
+                            Thread.sleep(1000);
+                        }
+                        connection.close();
                     } catch (IOException | InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -52,10 +53,10 @@ public class SimulatedRTP4Test {
 
     @After
     public void tearDown() throws Exception {
-//        while (!connectionB.isDone()) {
-//            Thread.sleep(1000);
-//        }
-//        connectionB.close();
+        while (!connectionB.isDone()) {
+            Thread.sleep(1000);
+        }
+        connectionB.close();
     }
 
 }

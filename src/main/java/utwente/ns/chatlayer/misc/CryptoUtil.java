@@ -19,7 +19,10 @@ public class CryptoUtil {
     public static KeyPair generateKeyPair() {
         try {
             KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
-            kpg.initialize(256);
+            SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
+
+            kpg.initialize(256, random);
+            //kpg.initialize(256);
             return kpg.generateKeyPair();
         } catch (Exception e) {
             e.printStackTrace();
@@ -57,8 +60,8 @@ public class CryptoUtil {
         ka.init(ownPrivateKey);
         ka.doPhase(peerPublicKey, true);
 
-        PBEKeySpec spec = new PBEKeySpec(new String(ka.generateSecret()).toCharArray(), new byte[0], PBKDF2_ITERATIONS, 128);
-        SecretKeyFactory skf = null;
+        PBEKeySpec spec = new PBEKeySpec(new String(ka.generateSecret()).toCharArray(), new byte[]{1}, PBKDF2_ITERATIONS, 128);
+        SecretKeyFactory skf;
         try {
             skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
         } catch (NoSuchAlgorithmException e) {

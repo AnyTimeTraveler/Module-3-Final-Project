@@ -27,7 +27,7 @@ import static utwente.ns.tcp.RTP4Layer.SocketState;
  */
 public class RTP4Socket implements IReceiveListener, Closeable {
     RTP4Layer rtp4Layer;
-    RTP4Layer.SocketState state;
+    SocketState state;
     private ReentrantLock stateLock = new ReentrantLock();
     private Condition stateChanged = stateLock.newCondition();
 
@@ -85,7 +85,7 @@ public class RTP4Socket implements IReceiveListener, Closeable {
         return rtp4Connection;
     }
 
-    RTP4Connection connect(String address, int port) throws IOException {
+    public RTP4Connection connect(String address, int port) throws IOException {
         dstAddr = Util.addressStringToInt(address);
         dstPort = (short) port;
         actionQueue.offer(RTP4Layer.SocketAction.CONNECT);
@@ -143,7 +143,7 @@ public class RTP4Socket implements IReceiveListener, Closeable {
             case CLOSED:
                 return;
             case TIME_WAIT:
-                if (System.currentTimeMillis() - timeWaitStart > Config.getInstance().getMaxSegmentLife()) {
+                if (System.currentTimeMillis() - timeWaitStart > Config.getInstance().maxSegmentLife) {
                     try {
                         stateLock.lock();
                         state = SocketState.CLOSED;
@@ -168,13 +168,11 @@ public class RTP4Socket implements IReceiveListener, Closeable {
 
         if (tcpBlock.receiveInitialSeqNumIsSet) {
             if (packet.getSeqNum() < tcpBlock.receiveNext ) {
-                System.out.println(Thread.currentThread().getName() + "> Nvm, outdated");
                 if (packet.getLength() > 0) {
                     sendAcknowledgement();
                 }
                 return;
             } else if (packet.getSeqNum() > tcpBlock.receiveNext) {
-                System.out.println(Thread.currentThread().getName() + "> Nvm, disordered");
                 receivedPacketQueue.add(ipPacket);
                 return;
             } else {
@@ -261,7 +259,6 @@ public class RTP4Socket implements IReceiveListener, Closeable {
                 try {
                     packet = receivedSynQueue.peek();
                     if (packet != null) {
-                        System.out.println(Thread.currentThread().getName() + "> " + "Received Syn!");
                         receivedSynQueue.remove();
                         dstAddr = packet.getSrcAddr();
                         dstPort = packet.getSrcPort();
@@ -276,7 +273,6 @@ public class RTP4Socket implements IReceiveListener, Closeable {
                             stateLock.unlock();
                         }
                     } else {
-                        System.out.println(Thread.currentThread().getName() + "> " + "No Syn yet");
                         actionQueue.offer(action);
                     }
                 } catch (PacketMalformedException e) {
@@ -300,6 +296,15 @@ public class RTP4Socket implements IReceiveListener, Closeable {
                         }
                         sendControl(false,false,true);
                         break;
+                    case CLOSE_WAIT:
+                        try {
+                            stateLock.lock();
+                            state = SocketState.LAST_ACK;
+                            stateChanged.signal();
+                        } finally {
+                            stateLock.unlock();
+                        }
+                        sendControl(false,false,true);
                 }
                 break;
             case CONNECT:
@@ -333,30 +338,22 @@ public class RTP4Socket implements IReceiveListener, Closeable {
                         case SYN_SENT:
                             if (acknowledgedPacket.isSyn()) {
                                 state = SocketState.ESTABLISHED;
-                            }  else {
-                                System.err.print(acknowledgedPacket.toString() + " is in unacknowledgedQueue but should not be");
                             }
                             break;
                         case FIN_WAIT_1:
                             if (acknowledgedPacket.isFin()) {
                                 state = SocketState.FIN_WAIT_2;
-                            }  else {
-                                System.err.print(acknowledgedPacket.toString() + " is in unacknowledgedQueue but should not be");
                             }
                             break;
                         case CLOSING:
                             if (acknowledgedPacket.isFin()) {
                                 state = SocketState.TIME_WAIT;
                                 timeWaitStart = System.currentTimeMillis();
-                            }  else {
-                                System.err.print(acknowledgedPacket.toString() + " is in unacknowledgedQueue but should not be");
                             }
                             break;
                         case LAST_ACK:
                             if (acknowledgedPacket.isFin()) {
                                 state = SocketState.CLOSED;
-                            }  else {
-                                System.err.print(acknowledgedPacket.toString() + " is in unacknowledgedQueue but should not be");
                             }
                             break;
                     }

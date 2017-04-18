@@ -25,7 +25,8 @@ public class HRP4Layer implements IReceiveListener, IHRP4Layer {
     private HRP4Router router = new HRP4Router();
 
     private List<IReceiveListener> receiveListeners;
-    
+    private NavigableSet<Integer> ports = new TreeSet<>();
+
     /**
      * @param linkLayer
      */
@@ -39,7 +40,7 @@ public class HRP4Layer implements IReceiveListener, IHRP4Layer {
             public void run() {
                 sendBeaconPacket();
             }
-        }, (long) Config.getInstance().getBaconInterval(), (long) Config.getInstance().getBaconInterval());
+        }, Config.getInstance().baconInterval, Config.getInstance().baconInterval);
     }
 
     /**
@@ -48,14 +49,7 @@ public class HRP4Layer implements IReceiveListener, IHRP4Layer {
     private void sendBeaconPacket() {
         try {
             List<HRP4Router.BCN4RoutingEntryWrapper> routingEntries = this.router.getRoutingEntries();
-            HRP4Packet packet = new HRP4Packet(
-                    Util.addressToInt(InetAddress.getByName(Config.getInstance().getMyAddress())),
-                    0,
-                    (short) 0,
-                    (short) 0,
-                    (byte) 0,
-                    new byte[0]
-            );
+            HRP4Packet packet = new HRP4Packet(Util.addressToInt(InetAddress.getByName(Config.getInstance().myAddress)), 0, (short) 0, (short) 0, (byte) 0, new byte[0]);
             BCN4Packet beaconPacket = new BCN4Packet(routingEntries, packet);
             packet.setData(beaconPacket.marshal());
             send(packet);
@@ -69,9 +63,12 @@ public class HRP4Layer implements IReceiveListener, IHRP4Layer {
     public void send(IPacket packet) throws IOException {
         lowerLayer.send(packet);
     }
-    
+
     public void addReceiveListener(IReceiveListener receiver) {
         receiveListeners.add(receiver);
+        if (receiver instanceof IHRP4Socket) {
+            ports.add((int) ((IHRP4Socket) receiver).getDstPort());
+        }
     }
 
     public HRP4Socket open(short port) throws IOException {
@@ -87,18 +84,23 @@ public class HRP4Layer implements IReceiveListener, IHRP4Layer {
         return socket;
     }
 
+    @Override
+    public IHRP4Socket openRandom() throws IOException {
+        return this.open((short) Util.randomNotInSet(ports, 1024, 65535));
+    }
+
     void close(HRP4Socket socket) {
         this.receiveListeners.remove(socket);
+        this.ports.remove((int) socket.getDstPort());
     }
 
     @Override
     public void receive(IPacket packet) {
         try {
             HRP4Packet hrp4Packet = new HRP4Packet(packet.getData());
-            int myAddr = Util.addressToInt(InetAddress.getByName(Config.getInstance().getMyAddress()));
+            int myAddr = Util.addressToInt(InetAddress.getByName(Config.getInstance().myAddress));
 
-            if (hrp4Packet.getDstAddr() == Util.addressToInt(InetAddress.getByName(Config.getInstance().getMyAddress())) ||
-                    hrp4Packet.getDstAddr() == 0) {
+            if (hrp4Packet.getDstAddr() == Util.addressToInt(InetAddress.getByName(Config.getInstance().myAddress)) || hrp4Packet.getDstAddr() == 0) {
                 try {
                     BCN4Packet p = new BCN4Packet(hrp4Packet, hrp4Packet.getData());
                     router.update(p);
@@ -112,16 +114,14 @@ public class HRP4Layer implements IReceiveListener, IHRP4Layer {
 
                 Map<Integer, Integer> forwardingTable = this.router.getForwardingTable(origin);
 
-                if ((
-                        forwardingTable.get(hrp4Packet.getDstAddr()) != null &&
-                        forwardingTable.get(hrp4Packet.getDstAddr()) == myAddr) ||
-                      hrp4Packet.getDstAddr() == 0) {
+                if ((forwardingTable.get(hrp4Packet.getDstAddr()) != null && forwardingTable.get(hrp4Packet.getDstAddr()) == myAddr) || hrp4Packet.getDstAddr() == 0) {
 
                     hrp4Packet.setTTL((byte) (hrp4Packet.getTTL() - 1));
 
                     this.send(hrp4Packet);
                 }
             }
-        } catch (PacketMalformedException | IOException ignored) { }
+        } catch (PacketMalformedException | IOException ignored) {
+        }
     }
 }

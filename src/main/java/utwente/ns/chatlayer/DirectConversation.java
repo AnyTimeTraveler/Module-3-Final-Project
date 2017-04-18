@@ -19,7 +19,7 @@ public class DirectConversation extends ChatConversation {
     @Override
     public void onNewMessage(ChatMessage message) {
         this.decryptAndAddMessage(this.recipient.publicKey, message);
-        System.out.println(recipient.name + ": " + (message.getContent() == null ? "NULL (Error?)" : message.getContent().toString()));
+        this.client.getUi().update(recipient.name + ": " + (message.getContent() == null ? "NULL (Error?)" : message.getContent().toString()));
     }
 
     @Override
@@ -27,4 +27,8 @@ public class DirectConversation extends ChatConversation {
         return new ChatClient.PeerInfo[]{recipient};
     }
 
+    @Override
+    public String getName() {
+        return recipient.getName();
+    }
 }

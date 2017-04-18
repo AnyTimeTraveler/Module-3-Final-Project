@@ -50,11 +50,11 @@ public class HRP4Socket implements IHRP4Socket, IReceiveListener, Closeable {
 
     public void send(byte[] data, int dstAddress, short dstPort) throws IOException {
         HRP4Packet hrp4Packet = new HRP4Packet(
-                Util.addressToInt(InetAddress.getByName(Config.getInstance().getMyAddress())),
+                Util.addressToInt(InetAddress.getByName(Config.getInstance().myAddress)),
                 dstAddress,
                 this.dstPort,
                 dstPort,
-                Config.getInstance().getDefaultHRP4TTL(),
+                Config.getInstance().defaultHRP4TTL,
                 data
         );
         ipLayer.send(hrp4Packet);

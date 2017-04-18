@@ -18,8 +18,8 @@ public class TextMessageContent extends ChatMessageContent {
     }
 
     @Override
-    public void setContent(Key key, String encData) {
-        byte[] rawData = getDecryptedData(key, encData);
+    public void setContent(Key key, String encData, byte[] ivBytes) {
+        byte[] rawData = getDecryptedData(key, encData, ivBytes);
         this.text = new String(rawData);
     }
 
@@ -31,5 +31,9 @@ public class TextMessageContent extends ChatMessageContent {
             e.printStackTrace();
             return new byte[0];
         }
+    }
+
+    public String toString() {
+        return this.text;
     }
 }
