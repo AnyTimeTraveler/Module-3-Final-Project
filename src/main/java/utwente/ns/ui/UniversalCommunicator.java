@@ -52,6 +52,7 @@ public class UniversalCommunicator implements IUserInterface {
     private JTextArea fileTransferLogTextArea;
     private JLabel restartNotice;
     private JPanel networkGraph;
+    private JLabel idField;
     private HashMap<String, Field> settings;
     private IConversation selectedConversation;
     private IChatController chatClient;
@@ -88,7 +89,26 @@ public class UniversalCommunicator implements IUserInterface {
         // Chat
         conversationList.setListData(new Vector<>(Arrays.stream(chatClient.getConversations())
                 .map(IConversation::getName).collect(Collectors.toSet())));
-
+        conversationList.addListSelectionListener(e -> {
+            for (IConversation con : chatClient.getConversations()) {
+                if (con.getName().equals(conversationList.getSelectedValue())) {
+                    selectedConversation = con;
+                    break;
+                }
+            }
+            if (selectedConversation != null)
+                chatHistoryTextArea.setText(Arrays.stream(selectedConversation.getChatHistory()).map(message -> message.getSender() + " : " + message.getMessage()).collect(Collectors.joining("\n")));
+        });
+        createGroupButton.addActionListener(e -> {
+            ConcurrentLinkedQueue<List<IUser>> selectionQueue = new ConcurrentLinkedQueue<>();
+            new UserListDialogue(chatClient.getConnectedUsers(), true, selectionQueue);
+            List<IUser> selection = selectionQueue.poll();
+            if (!selection.isEmpty()) {
+                String name = (String) JOptionPane.showInputDialog(null, "Please enter a name for the group: ", "Group Name", JOptionPane.QUESTION_MESSAGE, null, null, "Unnamed Group");
+                if (name != null)
+                    chatClient.addConversation(name, selection.toArray(new IUser[selection.size()]));
+            }
+        });
         messageTextField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -108,7 +128,14 @@ public class UniversalCommunicator implements IUserInterface {
                 selection.forEach(user -> chatClient.addPeerById(user.getUniqueID()));
             }
         });
-
+        confirmIDButton.addActionListener(e -> {
+            if (selectedConversation != null) {
+                if (selectedConversation.getParticipants().length == 1) {
+                    IUser user = selectedConversation.getParticipants()[0];
+                    JOptionPane.showConfirmDialog(getMainPanel(), "Is this fingerprint correct for " + user.getName() + ":\n" + user.getFingerprint(), "Fingerprint Varification", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                }
+            }
+        });
         // File transfer
         fileTransferFileButton.addActionListener(e -> {
             JFileChooser fc = new JFileChooser();

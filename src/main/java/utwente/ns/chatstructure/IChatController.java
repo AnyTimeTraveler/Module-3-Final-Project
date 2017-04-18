@@ -4,6 +4,7 @@ package utwente.ns.chatstructure;
  * Created by simon on 14.04.17.
  */
 public interface IChatController {
+
     boolean addPeerById(String id);
 
     IConversation[] getConversations();
@@ -15,4 +16,8 @@ public interface IChatController {
     IUser[] getConnectedUsers();
 
     IUser getUserById(String id);
+
+    String getMyFingerprint();
+
+    String getMyId();
 }
