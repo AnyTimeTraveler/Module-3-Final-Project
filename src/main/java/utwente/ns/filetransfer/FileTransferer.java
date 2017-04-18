@@ -72,8 +72,6 @@ public class FileTransferer {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
     }
 
     private void receiveTheFile() {
