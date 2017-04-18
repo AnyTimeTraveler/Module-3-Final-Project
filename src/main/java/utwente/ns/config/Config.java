@@ -12,7 +12,7 @@ public class Config {
     // Configfile name
     private static final String CONFIGFILE = "config.json";
     private static Config instance;
-    
+
     private String multicastAddress;
     private int multicastPort;
     private int baconInterval;
@@ -21,7 +21,9 @@ public class Config {
     private byte defaultHRP4TTL;
     private int segmentBufferSize;
     private String name;
-    private final int maxSegmentLife;
+    private int maxSegmentLife;
+    private int tcpPacketTimeout;
+    private int tcpListenTimeout;
 
     private Config() {
         multicastAddress = "228.0.0.1";
@@ -31,7 +33,11 @@ public class Config {
         myAddress = "CHANGE ME, I'M DEFINITELY NOT CONFIGURED YET!";
         defaultHRP4TTL = 6;
         segmentBufferSize = 2048;
+        //TODO up to 2 minutes
         maxSegmentLife = 5;
+        tcpPacketTimeout = 5;
+        //TODO set to positive
+        tcpListenTimeout = -1;
     }
     
     public static Config getInstance() {

@@ -2,6 +2,7 @@ package utwente.ns.ip;
 
 import utwente.ns.IPacket;
 import utwente.ns.IReceiveListener;
+import utwente.ns.Util;
 import utwente.ns.config.Config;
 
 import java.io.IOException;
@@ -25,8 +26,8 @@ public class SimulatedHRPSocket implements IHRP4Socket {
     @Override
     public void send(byte[] data, int dstAddress, short dstPort) throws IOException {
         HRP4Packet hrp4Packet = new HRP4Packet(
-                0,
-                0,
+                Util.addressStringToInt(""),
+                Util.addressStringToInt(""),
                 this.dstPort,
                 dstPort,
                 Config.getInstance().getDefaultHRP4TTL(),

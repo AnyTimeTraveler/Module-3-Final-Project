@@ -4,6 +4,7 @@ import lombok.Getter;
 import utwente.ns.IPacket;
 import utwente.ns.IReceiveListener;
 import utwente.ns.PacketMalformedException;
+import utwente.ns.config.Config;
 import utwente.ns.ip.HRP4Packet;
 
 import java.io.Closeable;
@@ -12,57 +13,99 @@ import java.util.AbstractMap;
 import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Created by simon on 07.04.17.
  */
-public class RTP4Connection implements Closeable, IReceiveListener{
+public class RTP4Connection implements Closeable, IReceiveListener {
+    private static final long PACKET_TIMEOUT_MILLIS = Config.getInstance().getTcpPacketTimeout();
+    private static final long LISTEN_TIMEOUT_MILLIS = Config.getInstance().getTcpListenTimeout();
     @Getter
     private RemoteHost remoteHost;
     @Getter
     private final RTP4Socket socket;
 
-    BlockingQueue<AbstractMap.Entry<RTP4Packet, Long>> unacknowledgedQueue;
+    BlockingQueue<AbstractMap.Entry<RTP4Packet, Long>> unacknowledgedPacketQueue;
+    BlockingQueue<byte[]> unAcknowledgedDataQueue;
     private BlockingQueue<byte[]> receivedDataQueue;
     BlockingQueue<byte[]> sendDataQueue;
 
+
     private RTP4Layer.ConnectionState state;
 
+    RTP4Layer.ConnectionState getState() {
+        return state;
+    }
 
 
     private BlockingQueue<HRP4Packet> receivedPacketQueue;
     private BlockingQueue<RTP4Layer.ConnectionAction> actionQueue;
     private TCPBlock tcpBlock;
+    private long timeWaitStart;
 
-    RTP4Connection(RemoteHost remoteHost, RTP4Socket socket){
+    RTP4Connection(RemoteHost remoteHost, RTP4Socket socket) {
         this.remoteHost = remoteHost;
         this.socket = socket;
         this.receivedDataQueue = new LinkedBlockingQueue<>();
         this.sendDataQueue = new LinkedBlockingQueue<>();
         this.actionQueue = new LinkedBlockingQueue<>();
-        receivedPacketQueue = new LinkedBlockingQueue<>();
-        actionQueue.offer(RTP4Layer.ConnectionAction.CONNECT);
+        this.receivedPacketQueue = new LinkedBlockingQueue<>();
+        this.unacknowledgedPacketQueue = new LinkedBlockingQueue<>();
+        this.unAcknowledgedDataQueue = new LinkedBlockingQueue<>();
+        this.tcpBlock = new TCPBlock();
+        this.state = RTP4Layer.ConnectionState.CLOSED;
     }
 
     RTP4Connection(int address, short port, RTP4Socket socket) {
         this(new RemoteHost(address, port), socket);
     }
 
+    void connect() throws TimeoutException {
+        actionQueue.offer(RTP4Layer.ConnectionAction.CONNECT);
+        waitForEstablishment(LISTEN_TIMEOUT_MILLIS);
+    }
 
-    void handle(HRP4Packet ipPacket) {
+    void accept(HRP4Packet synPacket) throws PacketMalformedException, TimeoutException {
+        RTP4Packet rtp4Packet = new RTP4Packet(synPacket.getData());
+        tcpBlock.registerReceivedSequenceNumber(rtp4Packet.getSeqNum(), rtp4Packet.getLength());
+        sendControl(true, true, false);
+        state = RTP4Layer.ConnectionState.SYN_ACCEPTED;
+        waitForEstablishment(LISTEN_TIMEOUT_MILLIS);
+    }
+
+    private void waitForEstablishment(long timeout) throws TimeoutException {
+        long timeStart = System.currentTimeMillis();
+        while (state != RTP4Layer.ConnectionState.ESTABLISHED) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ignored) {
+            }
+            if (timeout >= 0 && System.currentTimeMillis() - timeStart > timeout) {
+                throw new TimeoutException("Could not create connection within timeout");
+            }
+        }
+    }
+
+    void handlePacket() {
         if (state == RTP4Layer.ConnectionState.CLOSED || state == RTP4Layer.ConnectionState.TIME_WAIT) {
             return;
         }
-        //Create RTP4 packet from the data, if the dat is malformed, return
+        HRP4Packet hrp4Packet = receivedPacketQueue.poll();
+        if (hrp4Packet == null) {
+            return;
+        }
+        //Create RTP4 packet from the data, if the data is malformed, return
         RTP4Packet packet;
         try {
-            packet = new RTP4Packet(ipPacket.getData());
+            packet = new RTP4Packet(hrp4Packet.getData());
         } catch (PacketMalformedException e) {
             return;
         }
+        System.out.println(Thread.currentThread().getName() + "> " + "Found Packet! " + packet);
 
         if (tcpBlock.receiveInitialSeqNumIsSet) {
-            if (packet.getSeqNum() < tcpBlock.receiveNext ) {
+            if (packet.getSeqNum() < tcpBlock.receiveNext) {
                 System.out.println(Thread.currentThread().getName() + "> Nvm, outdated");
                 if (packet.getLength() > 0) {
                     sendAcknowledgement();
@@ -70,86 +113,80 @@ public class RTP4Connection implements Closeable, IReceiveListener{
                 return;
             } else if (packet.getSeqNum() > tcpBlock.receiveNext) {
                 System.out.println(Thread.currentThread().getName() + "> Nvm, disordered");
-                receivedPacketQueue.add(ipPacket);
+                receivedPacketQueue.add(hrp4Packet);
                 return;
             } else {
                 tcpBlock.registerReceivedSequenceNumber(packet.getSeqNum(), packet.getLength());
             }
         }
 
-        stateLock.lock();
-        try {
-            switch (state) {
-                case LISTEN:
-                    if (packet.isSyn()) {
-                        receivedSynQueue.offer(ipPacket);
+        switch (state) {
+            case SYN_ACCEPTED:
+                if (packet.isAck()) {
+                    receiveAcknowledge(packet);
+                }
+                break;
+            case SYN_SENT:
+                if (packet.isSyn()) {
+                    tcpBlock.registerReceivedSequenceNumber(packet.getSeqNum(), packet.getLength());
+                    sendAcknowledgement();
+                    state = RTP4Layer.ConnectionState.SYN_ACCEPTED;
+                }
+                if (packet.isAck()) {
+                    receiveAcknowledge(packet);
+                }
+                break;
+            case ESTABLISHED:
+                if (packet.isFin()) {
+                    sendAcknowledgement();
+                    state = RTP4Layer.ConnectionState.CLOSE_WAIT;
+                } else {
+                    if (packet.getData().length > 0) {
+                        receivedDataQueue.add(packet.getData());
                     }
-                    break;
-                case SYN_ACCEPTED:
-                    if (packet.isAck()) {
-                        receiveAcknowledge(packet);
-                    }
-                    break;
-                case SYN_SENT:
-                    if (packet.isSyn()) {
-                        tcpBlock.registerReceivedSequenceNumber(packet.getSeqNum(), packet.getLength());
-                        sendAcknowledgement();
-                        state = RTP4Layer.ConnectionState.SYN_ACCEPTED;
-                    }
-                    if (packet.isAck()) {
-                        receiveAcknowledge(packet);
-                    }
-                    break;
-                case ESTABLISHED:
-                    if (packet.isFin()) {
-                        sendAcknowledgement();
-                        state = RTP4Layer.ConnectionState.CLOSE_WAIT;
-                    } else {
-                        if (packet.getData().length > 0) {
-                            listeningConnections.forEach(connection -> connection.receiveData(packet.getData()));
-                        }
-                        if (packet.getLength() > 0){
-                            sendAcknowledgement();
-                        }
-                    }
-                    if (packet.isAck()) {
-                        receiveAcknowledge(packet);
-                    }
-                    break;
-                case FIN_WAIT_1:
-                    if (packet.isFin()) {
-                        state = RTP4Layer.ConnectionState.CLOSING;
+                    if (packet.getLength() > 0) {
                         sendAcknowledgement();
                     }
-                    if (packet.isAck()) {
-                        receiveAcknowledge(packet);
-                    }
-                    break;
-                case FIN_WAIT_2:
-                    if (packet.isFin()) {
-                        sendAcknowledgement();
-                        state = RTP4Layer.ConnectionState.TIME_WAIT;
-                        timeWaitStart = System.currentTimeMillis();
-                    }
-                    if (packet.isAck()) {
-                        receiveAcknowledge(packet);
-                    }
-                    break;
-                case CLOSING:
-                case CLOSE_WAIT:
-                case LAST_ACK:
-                    if (packet.isAck()) {
-                        receiveAcknowledge(packet);
-                    }
-                    break;
-            }
-            stateChanged.signal();
-        } finally {
-            stateLock.unlock();
+                }
+                if (packet.isAck()) {
+                    receiveAcknowledge(packet);
+                }
+                break;
+            case FIN_WAIT_1:
+                if (packet.isFin()) {
+                    state = RTP4Layer.ConnectionState.CLOSING;
+                    sendAcknowledgement();
+                }
+                if (packet.isAck()) {
+                    receiveAcknowledge(packet);
+                }
+                break;
+            case FIN_WAIT_2:
+                if (packet.isFin()) {
+                    sendAcknowledgement();
+                    state = RTP4Layer.ConnectionState.TIME_WAIT;
+                    timeWaitStart = System.currentTimeMillis();
+                }
+                if (packet.isAck()) {
+                    receiveAcknowledge(packet);
+                }
+                break;
+            case CLOSING:
+            case CLOSE_WAIT:
+            case LAST_ACK:
+                if (packet.isAck()) {
+                    receiveAcknowledge(packet);
+                }
+                break;
         }
     }
 
-    void handle(RTP4Layer.ConnectionAction action){
+    void handleAction() {
+        RTP4Layer.ConnectionAction action = actionQueue.poll();
+        if (action == null) {
+            return;
+        }
+        System.out.println(Thread.currentThread().getName() + "> " + "Found action! " + action);
         switch (action) {
 //            case ACCEPT:
 //                HRP4Packet packet;
@@ -179,33 +216,119 @@ public class RTP4Connection implements Closeable, IReceiveListener{
 //                }
 //                break;
             case CONNECT:
-                sendControl(true, false, false);
-                state = RTP4Layer.ConnectionState.SYN_SENT;
+                switch (state){
+                    case CLOSED:
+                        sendControl(true, false, false);
+                        state = RTP4Layer.ConnectionState.SYN_SENT;
+                        break;
+                    case SYN_ACCEPTED:
+                        sendControl(true, true, false);
+                        state = RTP4Layer.ConnectionState.SYN_SENT;
+                }
+                break;
+            case SEND:
+                byte[] data = sendDataQueue.poll();
+                if (data != null) {
+                    sendData(data);
+                    unAcknowledgedDataQueue.add(data);
+                }
                 break;
             case CLOSE:
                 switch (state) {
-                    case LISTEN:
                     case SYN_SENT:
                         actionQueue.offer(action);
                         break;
                     case SYN_ACCEPTED:
                     case ESTABLISHED:
                         state = RTP4Layer.ConnectionState.FIN_WAIT_1;
-                        sendControl(false,false,true);
+                        sendControl(false, false, true);
                         break;
                     case CLOSE_WAIT:
                         state = RTP4Layer.ConnectionState.LAST_ACK;
-                        sendControl(false,false,true);
+                        sendControl(false, false, true);
                 }
                 break;
         }
+    }
+
+    void resendPacket() {
+        long time = System.currentTimeMillis();
+        AbstractMap.Entry<RTP4Packet, Long> entry;
+        while (true) {
+            entry = unacknowledgedPacketQueue.peek();
+            if (entry == null || time - entry.getValue() < PACKET_TIMEOUT_MILLIS) {
+                break;
+            }
+            System.out.println(Thread.currentThread().getName() + "> Found Timed out packet! " + entry.getKey());
+            unacknowledgedPacketQueue.remove();
+            send(entry.getKey());
+        }
+    }
+
+    private void receiveAcknowledge(RTP4Packet packet) {
+        if (tcpBlock.registerReceivedAcknowledgeNumber(packet.getAckNum())) {
+            AbstractMap.Entry<RTP4Packet, Long> entry;
+            while (true) {
+                entry = unacknowledgedPacketQueue.peek();
+                if (entry == null) {
+                    break;
+                }
+                if (entry.getKey().getSeqNum() + entry.getKey().getLength() > packet.getAckNum()) {
+                    unacknowledgedPacketQueue.offer(entry);
+                } else {
+                    RTP4Packet acknowledgedPacket = entry.getKey();
+                    unacknowledgedPacketQueue.remove();
+                    switch (state) {
+                        case SYN_ACCEPTED:
+                        case SYN_SENT:
+                            if (acknowledgedPacket.isSyn()) {
+                                state = RTP4Layer.ConnectionState.ESTABLISHED;
+                            } else {
+                                System.err.print(acknowledgedPacket.toString() + " is in unacknowledgedPacketQueue but should not be");
+                            }
+                            break;
+                        case ESTABLISHED:
+                            unAcknowledgedDataQueue.remove(acknowledgedPacket.getData());
+                            break;
+                        case FIN_WAIT_1:
+                            if (acknowledgedPacket.isFin()) {
+                                state = RTP4Layer.ConnectionState.FIN_WAIT_2;
+                            } else {
+                                System.err.print(acknowledgedPacket.toString() + " is in unacknowledgedPacketQueue but should not be");
+                            }
+                            break;
+                        case CLOSING:
+                            if (acknowledgedPacket.isFin()) {
+                                state = RTP4Layer.ConnectionState.TIME_WAIT;
+                                timeWaitStart = System.currentTimeMillis();
+                            } else {
+                                System.err.print(acknowledgedPacket.toString() + " is in unacknowledgedPacketQueue but should not be");
+                            }
+                            break;
+                        case LAST_ACK:
+                            if (acknowledgedPacket.isFin()) {
+                                state = RTP4Layer.ConnectionState.CLOSED;
+                            } else {
+                                System.err.print(acknowledgedPacket.toString() + " is in unacknowledgedPacketQueue but should not be");
+                            }
+                            break;
+                    }
+                }
+            }
+        } else {
+            //TODO handle invalid acknowledgement
+        }
+    }
+
+    private void sendData(byte[] data) {
+        send(new RTP4Packet(tcpBlock.takeSendSequenceNumber(data.length), tcpBlock.receiveNext, false, false, false, false, tcpBlock.receiveWindow, data));
     }
 
     private void send(RTP4Packet packet) {
         try {
             socket.send(packet.marshal(), remoteHost.getAddress(), remoteHost.getPort());
             if (packet.getLength() > 0) {
-                unacknowledgedQueue.add(new AbstractMap.SimpleEntry<>(packet, System.currentTimeMillis()));
+                unacknowledgedPacketQueue.add(new AbstractMap.SimpleEntry<>(packet, System.currentTimeMillis()));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -216,23 +339,89 @@ public class RTP4Connection implements Closeable, IReceiveListener{
         send(new RTP4Packet(tcpBlock.takeSendSequenceNumber(syn || fin ? 1 : 0), tcpBlock.receiveNext, syn, ack, fin, false, tcpBlock.receiveWindow, new byte[0]));
     }
 
-    public void send(byte[] data){
-        //TODO fix
-        sendDataQueue.add(data);
+    private void sendAcknowledgement() {
+        send(new RTP4Packet(tcpBlock.takeSendSequenceNumber(0), tcpBlock.receiveNext, false, true, false, false, tcpBlock.receiveWindow, new byte[0]));
     }
 
-    public byte[] receive() throws InterruptedException {
-        //TODO fix
-        return receivedDataQueue.take();
+
+
+    public void send(byte[] data) throws IOException, TimeoutException {
+        sendDataQueue.add(data);
+        actionQueue.add(RTP4Layer.ConnectionAction.SEND);
+        long timeStart = System.currentTimeMillis();
+        while (unAcknowledgedDataQueue.contains(data) || sendDataQueue.contains(data)) {
+            if (localIsClosed()) {
+                throw new IOException("Connection closed while sending");
+            }
+            if (LISTEN_TIMEOUT_MILLIS >= 0 && System.currentTimeMillis() - timeStart > LISTEN_TIMEOUT_MILLIS) {
+                throw new TimeoutException("Timed out while sending");
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ignored) {
+            }
+        }
+    }
+
+    public byte[] receive() throws InterruptedException, TimeoutException {
+        long timeStart = System.currentTimeMillis();
+        byte[] data = receivedDataQueue.take();
+        while (!remoteIsClosed()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ignored) {
+            }
+            if (LISTEN_TIMEOUT_MILLIS >= 0 && System.currentTimeMillis() - timeStart > LISTEN_TIMEOUT_MILLIS) {
+                throw new TimeoutException("Timed out while receiving");
+            }
+        }
+        return data;
+    }
+
+    public boolean localIsClosed(){
+        return state == RTP4Layer.ConnectionState.FIN_WAIT_1
+                || state == RTP4Layer.ConnectionState.FIN_WAIT_2
+                || isClosed();
+    }
+
+    public boolean remoteIsClosed(){
+        return state == RTP4Layer.ConnectionState.CLOSE_WAIT
+                || isClosed();
+    }
+
+    public boolean isClosed(){
+        return state == RTP4Layer.ConnectionState.TIME_WAIT
+                || state == RTP4Layer.ConnectionState.CLOSING
+                || state == RTP4Layer.ConnectionState.LAST_ACK
+                || state == RTP4Layer.ConnectionState.CLOSED;
+
     }
 
     @Override
     public void close() throws IOException {
-        socket.close();
+        actionQueue.offer(RTP4Layer.ConnectionAction.CLOSE);
+        try {
+            while (state != RTP4Layer.ConnectionState.CLOSED && state != RTP4Layer.ConnectionState.TIME_WAIT) {
+                Thread.sleep(100);
+            }
+            if (state == RTP4Layer.ConnectionState.CLOSED) {
+                clear();
+            }
+        } catch (InterruptedException e) {
+            throw new IOException();
+        }
     }
 
-    void receiveData(byte[] data) {
-        receivedDataQueue.add(data);
+
+    void clear() {
+        switch (state) {
+            case CLOSED:
+                return;
+            case TIME_WAIT:
+                if (System.currentTimeMillis() - timeWaitStart > Config.getInstance().getMaxSegmentLife()) {
+                    state = RTP4Layer.ConnectionState.CLOSED;
+                }
+        }
     }
 
     @Override
@@ -241,7 +430,6 @@ public class RTP4Connection implements Closeable, IReceiveListener{
             receivedPacketQueue.add(((HRP4Packet) packet));
         }
     }
-
 
 
     class TCPBlock {
@@ -277,12 +465,13 @@ public class RTP4Connection implements Closeable, IReceiveListener{
             if (receiveNext == sequenceNumber) {
                 receiveNext += length;
                 return true;
-            }  else if (!receiveInitialSeqNumIsSet){
+            } else if (!receiveInitialSeqNumIsSet) {
                 receiveInitialSeqNum = sequenceNumber;
                 receiveInitialSeqNumIsSet = true;
                 receiveNext = receiveInitialSeqNum + length;
                 return true;
-            } if (sequenceNumber > receiveNext) {
+            }
+            if (sequenceNumber > receiveNext) {
                 return false;
             } else {
                 return false;

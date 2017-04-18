@@ -10,75 +10,73 @@ import utwente.ns.ip.IHRP4Socket;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
-
-import static utwente.ns.tcp.RTP4Layer.ConnectionState;
 
 /**
  * Created by simon on 07.04.17.
  */
 public class RTP4Socket implements IReceiveListener, Closeable {
-    RTP4Layer rtp4Layer;
+    private RTP4Layer rtp4Layer;
 
-    Map<RemoteHost, RTP4Connection> remoteHostRTP4ConnectionMap;
-
-    private ReentrantLock stateLock = new ReentrantLock();
-    private Condition stateChanged = stateLock.newCondition();
+    private Map<RemoteHost, RTP4Connection> remoteHostRTP4ConnectionMap;
 
     private final IHRP4Socket ipSocket;
 
     private BlockingQueue<HRP4Packet> receivedSynQueue;
 
-    private TCPBlock tcpBlock;
-
-
     RTP4Socket(IHRP4Socket ipSocket, RTP4Layer rtp4Layer) {
         this.ipSocket = ipSocket;
         this.rtp4Layer = rtp4Layer;
         ipSocket.addReceiveListener(this);
-        state = ConnectionState.LISTEN;
-        tcpBlock = new TCPBlock();
-        receivedPacketQueue = new LinkedBlockingQueue<>();
         receivedSynQueue = new LinkedBlockingQueue<>(10);
-        unacknowledgedQueue = new LinkedBlockingQueue<>();
-        actionQueue = new LinkedBlockingQueue<>();
-        listeningConnections = new LinkedList<>();
+        remoteHostRTP4ConnectionMap = new HashMap<>();
     }
 
-    RTP4Connection accept(long timeout) throws IOException, TimeoutException {
-        HRP4Packet synPacket;
-        long timeStart = System.currentTimeMillis();
+    RTP4Connection accept() throws IOException, TimeoutException {
+        RTP4Connection rtp4Connection;
+        RemoteHost remoteHost;
         while (true) {
-            synPacket = receivedSynQueue.poll();
-            if (synPacket != null) {
-                break;
+            HRP4Packet synPacket;
+            long timeStart = System.currentTimeMillis();
+            long timeout = Config.getInstance().getTcpListenTimeout();
+            while (true) {
+                synPacket = receivedSynQueue.poll();
+                if (synPacket != null) {
+                    break;
+                }
+                if (timeout >= 0 && System.currentTimeMillis() - timeStart > timeout) {
+                    throw new TimeoutException("Got no connection request within timeout");
+                }
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException ignored) {
+                }
             }
-            if (System.currentTimeMillis() - timeStart > timeout) {
-                throw new TimeoutException("Got no connection request within timeout");
-            }
+            remoteHost = new RemoteHost(synPacket.getSrcAddr(), synPacket.getSrcPort());
+            rtp4Connection = new RTP4Connection(remoteHost, this);
+            addConnection(remoteHost, rtp4Connection);
+            rtp4Layer.registerConnection(rtp4Connection);
             try {
-                Thread.sleep(100);
-            } catch (InterruptedException ignored) {
+                rtp4Connection.accept(synPacket);
+                break;
+            } catch (PacketMalformedException e) {
+                removeConnection(remoteHost);
+                rtp4Layer.removeConnection(rtp4Connection);
             }
         }
-        RTP4Connection rtp4Connection = new RTP4Connection(synPacket.getSrcAddr(), synPacket.getSrcPort(), this);
-        addConnection(new RemoteHost(synPacket.getSrcAddr(), synPacket.getSrcPort()), rtp4Connection);
-        rtp4Layer.registerConnection(rtp4Connection);
-        //Todo might remove ^
         return rtp4Connection;
     }
 
-    RTP4Connection connect(String address, int port) throws IOException {
+    RTP4Connection connect(String address, int port) throws IOException, TimeoutException {
         RemoteHost remoteHost = new RemoteHost(Util.addressStringToInt(address), (short) port);
         RTP4Connection rtp4Connection = new RTP4Connection(remoteHost, this);
         addConnection(remoteHost, rtp4Connection);
         rtp4Layer.registerConnection(rtp4Connection);
-        //Todo might remove ^
+        rtp4Connection.connect();
         return rtp4Connection;
     }
 
@@ -90,103 +88,6 @@ public class RTP4Socket implements IReceiveListener, Closeable {
         remoteHostRTP4ConnectionMap.remove(remoteHost);
     }
 
-    @Override
-    public void close() throws IOException {
-        actionQueue.offer(RTP4Layer.ConnectionAction.CLOSE);
-        try {
-            stateLock.lock();
-            while (state != ConnectionState.CLOSED && state != ConnectionState.TIME_WAIT) {
-                stateChanged.await();
-            }
-            if (state == ConnectionState.CLOSED) {
-                clear();
-            }
-        } catch (InterruptedException e) {
-            throw new IOException();
-        } finally {
-            stateLock.unlock();
-        }
-    }
-
-    void clear(){
-        try {
-            ipSocket.close();
-        } catch (IOException ignored) {
-        }
-        switch (state) {
-            case CLOSED:
-                return;
-            case TIME_WAIT:
-                if (System.currentTimeMillis() - timeWaitStart > Config.getInstance().getMaxSegmentLife()) {
-                    try {
-                        stateLock.lock();
-                        state = ConnectionState.CLOSED;
-                    } finally {
-                        stateLock.unlock();
-                    }
-                }
-        }
-    }
-
-    private void receiveAcknowledge(RTP4Packet packet) {
-        if (tcpBlock.registerReceivedAcknowledgeNumber(packet.getAckNum())) {
-            AbstractMap.Entry<RTP4Packet, Long> entry;
-            while (true) {
-                entry = unacknowledgedQueue.peek();
-                if (entry == null){
-                    break;
-                }
-                if (entry.getKey().getSeqNum() + entry.getKey().getLength() > packet.getAckNum()) {
-                    unacknowledgedQueue.offer(entry);
-                } else {
-                    RTP4Packet acknowledgedPacket = entry.getKey();
-                    unacknowledgedQueue.remove();
-                    switch(state) {
-                        case SYN_ACCEPTED:
-                        case SYN_SENT:
-                            if (acknowledgedPacket.isSyn()) {
-                                state = ConnectionState.ESTABLISHED;
-                            }  else {
-                                System.err.print(acknowledgedPacket.toString() + " is in unacknowledgedQueue but should not be");
-                            }
-                            break;
-                        case FIN_WAIT_1:
-                            if (acknowledgedPacket.isFin()) {
-                                state = ConnectionState.FIN_WAIT_2;
-                            }  else {
-                                System.err.print(acknowledgedPacket.toString() + " is in unacknowledgedQueue but should not be");
-                            }
-                            break;
-                        case CLOSING:
-                            if (acknowledgedPacket.isFin()) {
-                                state = ConnectionState.TIME_WAIT;
-                                timeWaitStart = System.currentTimeMillis();
-                            }  else {
-                                System.err.print(acknowledgedPacket.toString() + " is in unacknowledgedQueue but should not be");
-                            }
-                            break;
-                        case LAST_ACK:
-                            if (acknowledgedPacket.isFin()) {
-                                state = ConnectionState.CLOSED;
-                            }  else {
-                                System.err.print(acknowledgedPacket.toString() + " is in unacknowledgedQueue but should not be");
-                            }
-                            break;
-                    }
-                }
-            }
-        } else {
-            //TODO handle invalid acknowledgement
-        }
-    }
-
-    private void sendAcknowledgement(){
-        send(
-                new RTP4Packet(tcpBlock.takeSendSequenceNumber(0), tcpBlock.receiveNext, false, true, false, false, tcpBlock.receiveWindow, new byte[0]),
-                dstAddr,
-                dstPort
-        );
-    }
 
     void send(byte[] data, int dstAddr, short dstPort) throws IOException {
         ipSocket.send(data, dstAddr, dstPort);
@@ -195,7 +96,7 @@ public class RTP4Socket implements IReceiveListener, Closeable {
 
     @Override
     public void receive(IPacket packet) {
-        if (!isClosed() && packet instanceof HRP4Packet) {
+        if (packet instanceof HRP4Packet) { //TODO Check if not closed
             HRP4Packet hrp4Packet = ((HRP4Packet) packet);
             RemoteHost remoteHost = new RemoteHost(hrp4Packet.getSrcAddr(), hrp4Packet.getSrcPort());
             if (remoteHostRTP4ConnectionMap.containsKey(remoteHost)) {
@@ -204,6 +105,7 @@ public class RTP4Socket implements IReceiveListener, Closeable {
                 try {
                     RTP4Packet rtp4Packet = new RTP4Packet(hrp4Packet.getData());
                     if (rtp4Packet.isSyn()) {
+                        System.out.println(System.currentTimeMillis() + "> " + "Found SYN: " + rtp4Packet);
                         receivedSynQueue.add(hrp4Packet);
                     }
                 } catch (PacketMalformedException e) {
@@ -214,13 +116,20 @@ public class RTP4Socket implements IReceiveListener, Closeable {
         }
     }
 
-
-    public boolean isClosed() {
-        return state == ConnectionState.CLOSED;
-    }
-
     public short getPort(){
         return ipSocket.getDstPort();
     }
 
+    @Override
+    public void close() throws IOException {
+        remoteHostRTP4ConnectionMap.entrySet().forEach(entry -> {
+            try {
+                entry.getValue().close();
+            } catch (IOException e) {
+                e.printStackTrace();
+                //TODO throw exception up
+            }
+        });
+        ipSocket.close();
+    }
 }

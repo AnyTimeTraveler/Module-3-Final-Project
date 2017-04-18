@@ -18,4 +18,10 @@ public class RemoteHost{
                 && ((RemoteHost) object).address == this.address
                 && ((RemoteHost) object).port == this.port;
     }
+
+    public int hashCode(){
+        return 15 * address + port;
+    }
+
+    
 }
