@@ -120,7 +120,9 @@ public class ChatClient implements IReceiveListener, IChatController {
             }
             return;
         }
+        boolean available = availablePeers.containsKey(identity.id);
         this.availablePeers.put(identity.id, identity);
+        if (!available) this.getUi().update(identity.getName() + " is now available with ID " + identity.getFingerprint() + " and FP " +identity.getFingerprint());
         this.dropOldestPeer();
     }
 
@@ -280,6 +282,7 @@ public class ChatClient implements IReceiveListener, IChatController {
             this.conversationMap.put(key, conversation);
             this.conversations.add(conversation);
         }
+        this.getUi().update("New conversation: " + conversation.getName());
     }
 
     private void addDirectConversation(String userId) {
@@ -312,6 +315,7 @@ public class ChatClient implements IReceiveListener, IChatController {
     public void addConversation(String name, IUser... users) {
         if (users.length == 1) {
            this.addDirectConversation(users[0].getUniqueID());
+           return;
         }
         // TODO: groups
         log.log(Level.WARNING, "Creating group conversations are not supported yet!");
