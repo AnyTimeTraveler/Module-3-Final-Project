@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 /**
@@ -104,14 +103,7 @@ public class RTP4Layer {
     }
 
     public RTP4Connection connect(String address, int port) throws IOException {
-        RTP4Socket socket = null;
-        while (socket == null) {
-            try {
-                socket = new RTP4Socket(ipLayer.open((short) (new Random().nextInt(1000) + 27000)), this);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        RTP4Socket socket = new RTP4Socket(ipLayer.openRandom(), this);
         registeredSockets.add(socket);
         RTP4Connection connection = socket.connect(address, port);
         registeredConnections.add(connection);
