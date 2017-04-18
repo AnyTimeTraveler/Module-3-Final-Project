@@ -161,6 +161,9 @@ public class RTP4Connection implements Closeable, IReceiveListener {
                 if (packet.isAck()) {
                     receiveAcknowledge(packet);
                 }
+                if (packet.getData().length > 0) {
+                    receivedDataQueue.add(packet.getData());
+                }
                 break;
             case FIN_WAIT_2:
                 if (packet.isFin()) {
@@ -170,6 +173,9 @@ public class RTP4Connection implements Closeable, IReceiveListener {
                 }
                 if (packet.isAck()) {
                     receiveAcknowledge(packet);
+                }
+                if (packet.getData().length > 0) {
+                    receivedDataQueue.add(packet.getData());
                 }
                 break;
             case CLOSING:
@@ -288,6 +294,7 @@ public class RTP4Connection implements Closeable, IReceiveListener {
                                 System.err.print(acknowledgedPacket.toString() + " is in unacknowledgedPacketQueue but should not be");
                             }
                             break;
+                        case CLOSE_WAIT:
                         case ESTABLISHED:
                             unAcknowledgedDataQueue.remove(acknowledgedPacket.getData());
                             break;

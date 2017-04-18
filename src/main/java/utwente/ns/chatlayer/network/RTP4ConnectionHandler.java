@@ -39,7 +39,7 @@ public class RTP4ConnectionHandler implements Runnable {
             }
             if (requestBuffer.size() == 0) return;
             try {
-                conn.send(handler.handleData(Util.intToAddressString(conn.getRemoteHost().getAddress()), conn.getRemoteHost().getPort(), requestBuffer.toByteArray()));
+                conn.send(handler.handleData(Util.intToAddressString(conn.getRemoteHost().getAddress()), conn.getSocket().getPort(), requestBuffer.toByteArray()));
             } catch (UnknownHostException | TimeoutException e) {
                 e.printStackTrace();
             }
