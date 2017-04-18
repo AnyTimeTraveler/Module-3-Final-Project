@@ -7,6 +7,8 @@ import utwente.ns.tcp.RTP4Connection;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.sql.Time;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Created by Harindu Perera on 4/17/17.
@@ -28,17 +30,17 @@ public class RTP4ConnectionHandler implements Runnable {
         try (RTP4Connection conn = connection) {
             ByteArrayOutputStream requestBuffer = new ByteArrayOutputStream();
             try {
-                while (!conn.isClosed()) {
+                while (!conn.remoteIsClosed()) {
                     requestBuffer.write(conn.receive());
                 }
                 requestBuffer.close();
-            } catch (IOException | InterruptedException e) {
+            } catch (IOException | InterruptedException | TimeoutException e) {
                 return;
             }
             if (requestBuffer.size() == 0) return;
             try {
-                conn.send(handler.handleData(Util.intToAddressString(conn.getAddress()), conn.getPort(), requestBuffer.toByteArray()));
-            } catch (UnknownHostException e) {
+                conn.send(handler.handleData(Util.intToAddressString(conn.getRemoteHost().getAddress()), conn.getRemoteHost().getPort(), requestBuffer.toByteArray()));
+            } catch (UnknownHostException | TimeoutException e) {
                 e.printStackTrace();
             }
         } catch (IOException e) {

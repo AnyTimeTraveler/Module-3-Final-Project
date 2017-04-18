@@ -11,6 +11,7 @@ import utwente.ns.chatlayer.misc.CryptoUtil;
 import utwente.ns.chatlayer.network.IRequestHandler;
 import utwente.ns.chatlayer.network.RTP4SocketListener;
 import utwente.ns.chatlayer.protocol.ChatMessage;
+import utwente.ns.chatlayer.protocol.ChatMessageContent;
 import utwente.ns.chatlayer.protocol.GenericResponse;
 import utwente.ns.chatlayer.protocol.PeerIdentity;
 import utwente.ns.chatstructure.IChatController;
@@ -33,6 +34,7 @@ import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 
 /**
@@ -234,7 +236,7 @@ public class ChatClient implements IReceiveListener, IChatController, IRequestHa
     }
 
 
-    private void sendData(String toAddr, int port, byte[] data) throws IOException {
+    private void sendData(String toAddr, int port, byte[] data) throws IOException, TimeoutException {
         try (RTP4Connection conn = this.networkStack.getRtp4Layer().connect(toAddr, port)) {
             conn.send(data);
         }
@@ -247,7 +249,7 @@ public class ChatClient implements IReceiveListener, IChatController, IRequestHa
             if (sock != null) sock.send(data, Util.addressStringToInt(toAddr), toPort);
     }
 
-    public void sendChatMessage(ChatMessage message) throws IOException {
+    public void sendChatMessage(ChatMessage message) throws IOException, TimeoutException {
         PeerInfo recipient = this.connectedPeers.get(message.getRecipientId());
 
         if (recipient == null) {

@@ -17,6 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 
 /**
@@ -81,7 +82,7 @@ public abstract class ChatConversation implements Comparable<ChatConversation>, 
             this.client.sendChatMessage(message);
             message.setSent(true);
             this.client.getUi().update(message.toString());
-        } catch (IOException e) {
+        } catch (IOException | TimeoutException e) {
             e.printStackTrace();
         }
         this.addMessage(message);
