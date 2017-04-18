@@ -19,9 +19,20 @@ import java.util.List;
  */
 @Data
 public class HRP4Socket implements IHRP4Socket, IReceiveListener, Closeable {
+    /**
+     * All listeners that shall be called upon receiving data
+     */
     public List<IReceiveListener> listeners = new ArrayList<>();
+
+    /**
+     * The local port of this socket.
+     */
     @Getter
     public int dstPort;
+
+    /**
+     * The underlying IP layer that shall be used for the actual transmission of data
+     */
     private HRP4Layer ipLayer;
 
     /**
