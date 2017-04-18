@@ -27,7 +27,7 @@ import static utwente.ns.tcp.RTP4Layer.SocketState;
  */
 public class RTP4Socket implements IReceiveListener, Closeable {
     RTP4Layer rtp4Layer;
-    RTP4Layer.SocketState state;
+    SocketState state;
     private ReentrantLock stateLock = new ReentrantLock();
     private Condition stateChanged = stateLock.newCondition();
 
@@ -300,6 +300,15 @@ public class RTP4Socket implements IReceiveListener, Closeable {
                         }
                         sendControl(false,false,true);
                         break;
+                    case CLOSE_WAIT:
+                        try {
+                            stateLock.lock();
+                            state = SocketState.LAST_ACK;
+                            stateChanged.signal();
+                        } finally {
+                            stateLock.unlock();
+                        }
+                        sendControl(false,false,true);
                 }
                 break;
             case CONNECT:

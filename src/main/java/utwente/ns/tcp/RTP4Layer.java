@@ -132,7 +132,7 @@ public class RTP4Layer {
         LAST_ACK
     }
     enum SocketAction {
-        OPEN, ACCEPT, CLOSE, CONNECT
+        ACCEPT, CLOSE, CONNECT
     }
 
 

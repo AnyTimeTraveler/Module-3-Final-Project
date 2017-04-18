@@ -49,9 +49,8 @@ public class RTP4Connection implements Closeable{
     }
 
     public boolean isDone() {
-        return sendDataQueue.isEmpty();
+        return socket.unacknowledgedQueue.isEmpty() && sendDataQueue.isEmpty();
     }
-
     void receiveData(byte[] data) {
         receivedDataQueue.add(data);
     }
