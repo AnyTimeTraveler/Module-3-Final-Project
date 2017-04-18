@@ -65,6 +65,7 @@ public class RTP4Packet implements IPacket {
 
     /**
      * Construct a RTP4Packet with data passed from one layer down (this also decodes the data)
+     *
      * @param raw; Raw data passed from one layer down
      * @throws PacketMalformedException when packet is too short or contains invalid data
      */
@@ -76,7 +77,7 @@ public class RTP4Packet implements IPacket {
         }
         this.seqNum = buf.getInt();
         this.ackNum = buf.getInt();
-        BitArray flagByte = new BitArray(8,new byte[]{buf.get()});
+        BitArray flagByte = new BitArray(8, new byte[]{buf.get()});
         this.syn = flagByte.get(0);
         this.ack = flagByte.get(1);
         this.fin = flagByte.get(2);
@@ -89,6 +90,7 @@ public class RTP4Packet implements IPacket {
 
     /**
      * Convert the current layer to a byte[] to be passed to one layer down
+     *
      * @return binary representation of the current packet
      */
     public byte[] marshal() {
@@ -106,7 +108,7 @@ public class RTP4Packet implements IPacket {
         return out;
     }
 
-    public int getLength(){
+    public int getLength() {
         if (data.length > 0) {
             return data.length;
         } else if (syn || fin || rst) {
@@ -116,8 +118,8 @@ public class RTP4Packet implements IPacket {
         }
     }
 
-    public String toString(){
-        return "RTP4 <Seq=" + seqNum + (ack ? (", Ack=" + ackNum) : "") + (syn ? ", SYN" : "") + (fin ? ", FIN" : "") + (rst ? ", RST" : "") + ">" + (data.length > 0 ? " [" + new String(data) + "]" : "") ;
+    public String toString() {
+        return "RTP4 <Seq=" + seqNum + (ack ? (", Ack=" + ackNum) : "") + (syn ? ", SYN" : "") + (fin ? ", FIN" : "") + (rst ? ", RST" : "") + ">" + (data.length > 0 ? " [" + new String(data) + "]" : "");
     }
 }
 

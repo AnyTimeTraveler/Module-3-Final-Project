@@ -80,11 +80,11 @@ public class RTP4Socket implements IReceiveListener, Closeable {
         return rtp4Connection;
     }
 
-    private void addConnection(RemoteHost remoteHost, RTP4Connection connection){
+    private void addConnection(RemoteHost remoteHost, RTP4Connection connection) {
         remoteHostRTP4ConnectionMap.put(remoteHost, connection);
     }
 
-    void removeConnection(RemoteHost remoteHost){
+    void removeConnection(RemoteHost remoteHost) {
         remoteHostRTP4ConnectionMap.remove(remoteHost);
     }
 
@@ -105,7 +105,6 @@ public class RTP4Socket implements IReceiveListener, Closeable {
                 try {
                     RTP4Packet rtp4Packet = new RTP4Packet(hrp4Packet.getData());
                     if (rtp4Packet.isSyn()) {
-                        System.out.println(System.currentTimeMillis() + "> " + "Found SYN: " + rtp4Packet);
                         receivedSynQueue.add(hrp4Packet);
                     }
                 } catch (PacketMalformedException e) {
@@ -116,7 +115,7 @@ public class RTP4Socket implements IReceiveListener, Closeable {
         }
     }
 
-    public short getPort(){
+    public short getPort() {
         return ipSocket.getDstPort();
     }
 

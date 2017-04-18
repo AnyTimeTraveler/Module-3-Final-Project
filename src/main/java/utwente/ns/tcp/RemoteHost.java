@@ -8,20 +8,20 @@ import lombok.Data;
  */
 @Data
 @AllArgsConstructor
-public class RemoteHost{
+public class RemoteHost {
     private int address;
     private short port;
 
-    public boolean equals(Object object){
+    public boolean equals(Object object) {
         return
                 object instanceof RemoteHost
-                && ((RemoteHost) object).address == this.address
-                && ((RemoteHost) object).port == this.port;
+                        && ((RemoteHost) object).address == this.address
+                        && ((RemoteHost) object).port == this.port;
     }
 
-    public int hashCode(){
+    public int hashCode() {
         return 15 * address + port;
     }
 
-    
+
 }

@@ -23,12 +23,11 @@ public class RTP4Layer {
         this.ipLayer = ipLayer;
         registeredSockets = new ArrayList<>();
         registeredConnections = new ArrayList<>();
-        new Thread(this::run,Thread.currentThread().getName() + "-tcpLoop").start();
+        new Thread(this::run, Thread.currentThread().getName() + "-tcpLoop").start();
     }
 
     private synchronized void run() {
         while (true) {
-            System.out.println(Thread.currentThread().getName() + "> Scanning");
             registeredConnections.stream().filter(connection -> connection.getState() == ConnectionState.TIME_WAIT).forEach(RTP4Connection::clear);
             registeredConnections = registeredConnections.stream()
                     .filter(connection -> connection.getState() != ConnectionState.CLOSED || connection.getState() != ConnectionState.TIME_WAIT)
@@ -36,7 +35,6 @@ public class RTP4Layer {
             registeredConnections.forEach(RTP4Connection::handlePacket);
             registeredConnections.forEach(RTP4Connection::handleAction);
             registeredConnections.forEach(RTP4Connection::resendPacket);
-            registeredConnections.forEach(connection -> System.out.println(Thread.currentThread().getName() + "> " + connection.getRemoteHost().getPort() + "-" + connection.getState()));
             try {
                 Thread.sleep(500);
             } catch (InterruptedException e) {
@@ -80,6 +78,7 @@ public class RTP4Layer {
         LAST_ACK,
         CLOSED,
     }
+
     enum ConnectionAction {
         CLOSE, CONNECT, SEND
     }

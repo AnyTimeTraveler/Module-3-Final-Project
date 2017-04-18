@@ -102,17 +102,14 @@ public class RTP4Connection implements Closeable, IReceiveListener {
         } catch (PacketMalformedException e) {
             return;
         }
-        System.out.println(Thread.currentThread().getName() + "> " + "Found Packet! " + packet);
 
         if (tcpBlock.receiveInitialSeqNumIsSet) {
             if (packet.getSeqNum() < tcpBlock.receiveNext) {
-                System.out.println(Thread.currentThread().getName() + "> Nvm, outdated");
                 if (packet.getLength() > 0) {
                     sendAcknowledgement();
                 }
                 return;
             } else if (packet.getSeqNum() > tcpBlock.receiveNext) {
-                System.out.println(Thread.currentThread().getName() + "> Nvm, disordered");
                 receivedPacketQueue.add(hrp4Packet);
                 return;
             } else {
@@ -186,15 +183,13 @@ public class RTP4Connection implements Closeable, IReceiveListener {
         if (action == null) {
             return;
         }
-        System.out.println(Thread.currentThread().getName() + "> " + "Found action! " + action);
         switch (action) {
 //            case ACCEPT:
 //                HRP4Packet packet;
 //                try {
 //                    packet = receivedSynQueue.peek();
 //                    if (packet != null) {
-//                        System.out.println(Thread.currentThread().getName() + "> " + "Received Syn!");
-//                        receivedSynQueue.remove();
+//                        //                        receivedSynQueue.remove();
 //                        dstAddr = packet.getSrcAddr();
 //                        dstPort = packet.getSrcPort();
 //                        RTP4Packet rtp4Packet = new RTP4Packet(packet.getData());
@@ -208,15 +203,14 @@ public class RTP4Connection implements Closeable, IReceiveListener {
 //                            stateLock.unlock();
 //                        }
 //                    } else {
-//                        System.out.println(Thread.currentThread().getName() + "> " + "No Syn yet");
-//                        actionQueue.offer(action);
+//                        //                        actionQueue.offer(action);
 //                    }
 //                } catch (PacketMalformedException e) {
 //                    e.printStackTrace();
 //                }
 //                break;
             case CONNECT:
-                switch (state){
+                switch (state) {
                     case CLOSED:
                         sendControl(true, false, false);
                         state = RTP4Layer.ConnectionState.SYN_SENT;
@@ -259,7 +253,6 @@ public class RTP4Connection implements Closeable, IReceiveListener {
             if (entry == null || time - entry.getValue() < PACKET_TIMEOUT_MILLIS) {
                 break;
             }
-            System.out.println(Thread.currentThread().getName() + "> Found Timed out packet! " + entry.getKey());
             unacknowledgedPacketQueue.remove();
             send(entry.getKey());
         }
@@ -344,7 +337,6 @@ public class RTP4Connection implements Closeable, IReceiveListener {
     }
 
 
-
     public void send(byte[] data) throws IOException, TimeoutException {
         sendDataQueue.add(data);
         actionQueue.add(RTP4Layer.ConnectionAction.SEND);
@@ -378,18 +370,18 @@ public class RTP4Connection implements Closeable, IReceiveListener {
         return data;
     }
 
-    public boolean localIsClosed(){
+    public boolean localIsClosed() {
         return state == RTP4Layer.ConnectionState.FIN_WAIT_1
                 || state == RTP4Layer.ConnectionState.FIN_WAIT_2
                 || isClosed();
     }
 
-    public boolean remoteIsClosed(){
+    public boolean remoteIsClosed() {
         return state == RTP4Layer.ConnectionState.CLOSE_WAIT
                 || isClosed();
     }
 
-    public boolean isClosed(){
+    public boolean isClosed() {
         return state == RTP4Layer.ConnectionState.TIME_WAIT
                 || state == RTP4Layer.ConnectionState.CLOSING
                 || state == RTP4Layer.ConnectionState.LAST_ACK
