@@ -10,6 +10,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Created by simon on 17.04.17.
@@ -71,6 +72,8 @@ public class FileTransferer {
             }
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
         }
     }
 
@@ -94,7 +97,7 @@ public class FileTransferer {
             }
             gui.addFileTransferLogMessage("File received!");
             gui.setProgress(100,100);
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException | InterruptedException | TimeoutException e) {
             e.printStackTrace();
         }
     }

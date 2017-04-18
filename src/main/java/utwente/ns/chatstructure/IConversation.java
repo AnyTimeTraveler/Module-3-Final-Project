@@ -6,7 +6,7 @@ import utwente.ns.chatlayer.ChatMessage;
  * Created by simon on 14.04.17.
  */
 public interface IConversation {
-    void sendMessage(ChatMessage message);
+    void sendMessage(String message);
 
     String getName();
 

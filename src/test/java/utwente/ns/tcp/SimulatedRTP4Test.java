@@ -6,6 +6,7 @@ import org.junit.Test;
 import utwente.ns.ip.SimulatedHRP4Layer;
 
 import java.io.IOException;
+        import java.util.concurrent.TimeoutException;
 
 /**
  * Created by Niels Overkamp on 12-Apr-17.
@@ -25,12 +26,8 @@ public class SimulatedRTP4Test {
                         RTP4Socket socketA = rtp4LayerA.open(5000);
                         RTP4Connection connection = socketA.accept();
                         System.out.println(Thread.currentThread().getName() + "> " + "Message : " + new String(connection.receive()));
-                        connection.send("Hi Bae!".getBytes());
-                        while (!connection.isDone()) {
-                            Thread.sleep(1000);
-                        }
                         connection.close();
-                    } catch (IOException | InterruptedException e) {
+                    } catch (IOException | InterruptedException | TimeoutException e) {
                         e.printStackTrace();
                     }
                 },
@@ -41,22 +38,18 @@ public class SimulatedRTP4Test {
     }
 
     @Test
-    public void test(){
-        try {
-            connectionB = rtp4LayerB.connect("",5000);
-            connectionB.send("Hello Asshole".getBytes());
-            System.out.println(Thread.currentThread().getName() + "> " + "Message : " +new String(connectionB.receive()));
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
+    public void test() throws IOException, TimeoutException, InterruptedException {
+        connectionB = rtp4LayerB.connect("",5000);
+        connectionB.send("Hello Asshole".getBytes());
     }
 
     @After
     public void tearDown() throws Exception {
-        while (!connectionB.isDone()) {
+        connectionB.close();
+        while (connectionB.getState() != RTP4Layer.ConnectionState.CLOSED) {
             Thread.sleep(1000);
         }
-        connectionB.close();
+
     }
 
 }

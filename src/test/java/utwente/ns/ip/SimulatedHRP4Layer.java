@@ -58,7 +58,7 @@ public class SimulatedHRP4Layer implements IHRP4Layer {
     }
 
     @Override
-    public SimulatedHRPSocket open(short port) throws IOException {
+    public SimulatedHRPSocket open(int port) throws IOException {
         if (this.receiveListeners.parallelStream()
                 .filter(listener -> listener instanceof HRP4Socket)
                 .map(listener -> (HRP4Socket) listener)
@@ -72,7 +72,7 @@ public class SimulatedHRP4Layer implements IHRP4Layer {
 
 	@Override
 	public IHRP4Socket openRandom() throws IOException {
-		return this.open((short) Util.randomNotInSet(ports, 1024, 65535));
+		return this.open(Util.randomNotInSet(ports, 1024, 65535));
 	}
 
     @Override

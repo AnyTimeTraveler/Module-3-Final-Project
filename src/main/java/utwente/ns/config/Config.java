@@ -10,7 +10,7 @@ public class Config {
     // Configfile name
     private static final String CONFIGFILE = "config.json";
     private static Config instance;
-    
+
     public String multicastAddress;
     public int multicastPort;
     public int baconInterval;
@@ -20,6 +20,9 @@ public class Config {
     public int segmentBufferSize;
     public String name;
     public int maxSegmentLife;
+    public int tcpPacketTimeout;
+    public int tcpListenTimeout;
+    public int tcpPacketInterval;
 
     private Config() {
         multicastAddress = "228.0.0.1";
@@ -31,6 +34,10 @@ public class Config {
         segmentBufferSize = 2048;
         name = "UNSET";
         maxSegmentLife = 5;
+        maxSegmentLife = 2*60000;
+        tcpPacketTimeout = 5;
+        tcpListenTimeout = 60000;
+        tcpPacketInterval = 10;
     }
 
     public static Config getInstance() {
