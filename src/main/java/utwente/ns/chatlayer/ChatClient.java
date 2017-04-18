@@ -334,7 +334,7 @@ public class ChatClient implements IReceiveListener, IChatController {
 
     @Override
     public IUser getUserById(String id) {
-        return this.connectedPeers.get(id);
+        return id.equals(this.id) ? this.getIdentity() : this.connectedPeers.get(id);
     }
 
     public void sendMessage(IUser user, String message) {
