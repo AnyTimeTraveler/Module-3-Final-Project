@@ -55,9 +55,9 @@ public class ChatMessage implements IMessage {
         this.type = type;
     }
 
-    public ChatMessage(String senderId, String messageId, String recipientId, String groupId, String type, String text) {
-        this(senderId, messageId, recipientId, groupId, type);
-        this.content = new TextMessageContent(text);
+    public ChatMessage(String senderId, String messageId, String recipientId, String groupId, ChatMessageContent content) {
+        this(senderId, messageId, recipientId, groupId, content.getType());
+        this.content = content;
     }
 
     public ChatMessage() {

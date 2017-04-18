@@ -38,4 +38,9 @@ public class TextMessageContent extends ChatMessageContent {
     public String toString() {
         return this.text;
     }
+
+    @Override
+    public String getType() {
+        return ChatMessage.CONTENT_TYPE_TEXT;
+    }
 }

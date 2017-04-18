@@ -52,6 +52,7 @@ public class UniversalCommunicator implements IUserInterface {
     private JTextArea fileTransferLogTextArea;
     private JLabel restartNotice;
     private JPanel networkGraph;
+    private JLabel idField;
     private HashMap<String, Field> settings;
     private IConversation selectedConversation;
     private IChatController chatClient;
@@ -70,8 +71,6 @@ public class UniversalCommunicator implements IUserInterface {
 
     @Override
     public void update(String message) {
-        conversationList.setListData(new Vector<>(Arrays.stream(chatClient.getConversations())
-                .map(IConversation::getName).collect(Collectors.toSet())));
         if (selectedConversation != null)
             chatHistoryTextArea.setText(Arrays.stream(selectedConversation.getChatHistory()).map(msg -> msg.getSender() + " --> " + msg.getReceiver() + " : " + msg.getMessage()).collect(Collectors.joining("\n")));
     }
@@ -86,9 +85,27 @@ public class UniversalCommunicator implements IUserInterface {
         }
 
         // Chat
-        conversationList.setListData(new Vector<>(Arrays.stream(chatClient.getConversations())
-                .map(IConversation::getName).collect(Collectors.toSet())));
-
+        updateConversations(chatClient);
+        conversationList.addListSelectionListener(e -> {
+            for (IConversation con : chatClient.getConversations()) {
+                if (con.getName().equals(conversationList.getSelectedValue())) {
+                    selectedConversation = con;
+                    break;
+                }
+            }
+            if (selectedConversation != null)
+                chatHistoryTextArea.setText(Arrays.stream(selectedConversation.getChatHistory()).map(message -> message.getSender() + " : " + message.getMessage()).collect(Collectors.joining("\n")));
+        });
+        createGroupButton.addActionListener(e -> {
+            ConcurrentLinkedQueue<List<IUser>> selectionQueue = new ConcurrentLinkedQueue<>();
+            new UserListDialogue(chatClient.getConnectedUsers(), true, selectionQueue);
+            List<IUser> selection = selectionQueue.poll();
+            if (!selection.isEmpty()) {
+                String name = (String) JOptionPane.showInputDialog(null, "Please enter a name for the group: ", "Group Name", JOptionPane.QUESTION_MESSAGE, null, null, "Unnamed Group");
+                if (name != null)
+                    chatClient.addConversation(name, selection.toArray(new IUser[selection.size()]));
+            }
+        });
         messageTextField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -105,10 +122,20 @@ public class UniversalCommunicator implements IUserInterface {
             new UserListDialogue(chatClient.getNewUsers(), true, selectionQueue);
             List<IUser> selection = selectionQueue.poll();
             if (!selection.isEmpty()) {
-                selection.forEach(user -> chatClient.addPeerById(user.getUniqueID()));
+                selection.forEach(user -> {
+                    chatClient.addPeerById(user.getUniqueID());
+                    chatClient.addConversation(user.getName(), user);
+                });
             }
         });
-
+        confirmIDButton.addActionListener(e -> {
+            if (selectedConversation != null) {
+                if (selectedConversation.getParticipants().length == 1) {
+                    IUser user = selectedConversation.getParticipants()[0];
+                    JOptionPane.showConfirmDialog(getMainPanel(), "Is this fingerprint correct for " + user.getName() + ":\n" + user.getFingerprint(), "Fingerprint Varification", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                }
+            }
+        });
         // File transfer
         fileTransferFileButton.addActionListener(e -> {
             JFileChooser fc = new JFileChooser();
@@ -222,6 +249,11 @@ public class UniversalCommunicator implements IUserInterface {
         }, Config.getInstance().baconInterval, Config.getInstance().baconInterval);
     }
 
+    private void updateConversations(IChatController chatClient) {
+        conversationList.setListData(new Vector<>(Arrays.stream(chatClient.getConversations())
+                .map(IConversation::getName).collect(Collectors.toSet())));
+    }
+
     public void setProgress(int current, int max) {
         fileTransferProgressBar.setMinimum(0);
         fileTransferProgressBar.setMaximum((int) max);
@@ -237,7 +269,9 @@ public class UniversalCommunicator implements IUserInterface {
      */
     private void sendMessage() {
         if (selectedConversation != null && !messageTextField.getText().trim().isEmpty()) {
-            selectedConversation.sendMessage(messageTextField.getText());
+            // TODO: Implement something for this
+            // selectedConversation.sendMessage(new ChatMessage(chatClient.getId(),UUID.randomUUID().toString(),selectedConversation.getId(),null,ChatMessage.CONTENT_TYPE_TEXT,
+            // messageTextField.getText()));
         }
     }
 
@@ -261,7 +295,7 @@ public class UniversalCommunicator implements IUserInterface {
         tabbedPane = new JTabbedPane();
         mainPanel.add(tabbedPane, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, new Dimension(600, 500), null, 0, false));
         final JPanel panel1 = new JPanel();
-        panel1.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
+        panel1.setLayout(new GridLayoutManager(2, 2, new Insets(0, 0, 0, 0), -1, -1));
         tabbedPane.addTab("Chat", panel1);
         final JPanel panel2 = new JPanel();
         panel2.setLayout(new GridLayoutManager(5, 1, new Insets(0, 0, 0, 0), -1, -1));
@@ -300,6 +334,9 @@ public class UniversalCommunicator implements IUserInterface {
         messageTextField = new JTextField();
         messageTextField.setText("");
         panel3.add(messageTextField, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(343, 25), null, 0, false));
+        idField = new JLabel();
+        idField.setText("");
+        panel1.add(idField, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JPanel panel4 = new JPanel();
         panel4.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
         tabbedPane.addTab("File Transfer", panel4);

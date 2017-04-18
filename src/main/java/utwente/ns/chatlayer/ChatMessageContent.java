@@ -55,4 +55,6 @@ public abstract class ChatMessageContent {
 
     public abstract byte[] getData();
 
+    public abstract String getType();
+
 }

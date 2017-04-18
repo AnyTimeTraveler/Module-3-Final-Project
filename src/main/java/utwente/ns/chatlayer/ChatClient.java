@@ -282,6 +282,10 @@ public class ChatClient implements IReceiveListener, IChatController {
         }
     }
 
+    ChatMessage newMessage(String recipientId, ChatMessageContent content) {
+        return new ChatMessage(this.id, UUID.randomUUID().toString(), recipientId, null, content);
+    }
+
     public ChatConversation getDirectConversation(String userId) {
         if (this.conversationMap.get(userId) != null && this.conversationMap.get(userId).type == ChatConversation.ConversationType.DIRECT) {
             return this.conversationMap.get(userId);
@@ -325,7 +329,12 @@ public class ChatClient implements IReceiveListener, IChatController {
 
     public void sendMessage(IUser user, String message) {
         ChatConversation conversation = this.getDirectConversation(user.getUniqueID());
-        conversation.sendMessage(new ChatMessage(this.id, UUID.randomUUID().toString(), user.getUniqueID(), null, ChatMessage.CONTENT_TYPE_TEXT, message));
+        conversation.sendMessage(message);
+    }
+
+    @Override
+    public IUser getMyUser() {
+        return this.getIdentity();
     }
 
     @AllArgsConstructor
