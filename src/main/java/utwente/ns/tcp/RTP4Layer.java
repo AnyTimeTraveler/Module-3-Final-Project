@@ -32,7 +32,7 @@ public class RTP4Layer {
     private synchronized void run() {
         while (true) {
             System.out.println(Thread.currentThread().getName() + "> Scanning");
-            registeredSockets.stream().filter(socket -> socket.state == SocketState.TIME_WAIT).forEach(RTP4Socket::clear);
+            registeredSockets.stream().filter(socket -> socket.state == ConnectionState.TIME_WAIT).forEach(RTP4Socket::clear);
             registeredSockets = registeredSockets.stream().filter((socket1) -> !socket1.isClosed()).collect(Collectors.toList());
             registeredSockets.forEach(this::handleQueues);
             registeredSockets.forEach(this::resendIfTimeout);
@@ -56,7 +56,7 @@ public class RTP4Layer {
     }
 
     private void handleQueues(RTP4Socket socket)    {
-        SocketAction action = socket.actionQueue.poll();
+        ConnectionAction action = socket.actionQueue.poll();
         if (action != null) {
             System.out.println(Thread.currentThread().getName() + "> Found Action " + action);
             socket.handle(action);
@@ -110,7 +110,7 @@ public class RTP4Layer {
         return connection;
     }
 
-    enum SocketState {
+    enum ConnectionState {
         CLOSED,
         LISTEN,
         SYN_ACCEPTED,
@@ -123,7 +123,7 @@ public class RTP4Layer {
         CLOSE_WAIT,
         LAST_ACK
     }
-    enum SocketAction {
+    enum ConnectionAction {
         ACCEPT, CLOSE, CONNECT
     }
 

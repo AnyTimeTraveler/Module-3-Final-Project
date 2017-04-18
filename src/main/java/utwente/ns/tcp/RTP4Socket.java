@@ -1,6 +1,5 @@
 package utwente.ns.tcp;
 
-import lombok.Getter;
 import utwente.ns.IPacket;
 import utwente.ns.IReceiveListener;
 import utwente.ns.PacketMalformedException;
@@ -11,50 +10,38 @@ import utwente.ns.ip.IHRP4Socket;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.AbstractMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static utwente.ns.tcp.RTP4Layer.SocketState;
+import static utwente.ns.tcp.RTP4Layer.ConnectionState;
 
 /**
  * Created by simon on 07.04.17.
  */
 public class RTP4Socket implements IReceiveListener, Closeable {
     RTP4Layer rtp4Layer;
-    SocketState state;
+
+    Map<RemoteHost, RTP4Connection> remoteHostRTP4ConnectionMap;
+
     private ReentrantLock stateLock = new ReentrantLock();
     private Condition stateChanged = stateLock.newCondition();
 
     private final IHRP4Socket ipSocket;
 
-    BlockingQueue<HRP4Packet> receivedPacketQueue;
-    BlockingQueue<AbstractMap.Entry<RTP4Packet, Long>> unacknowledgedQueue;
-    BlockingQueue<RTP4Layer.SocketAction> actionQueue;
     private BlockingQueue<HRP4Packet> receivedSynQueue;
 
-    private List<RTP4Connection> listeningConnections;
-
     private TCPBlock tcpBlock;
-
-    @Getter
-    private int dstAddr;
-    @Getter
-    private short dstPort;
-
-    private long timeWaitStart;
 
 
     RTP4Socket(IHRP4Socket ipSocket, RTP4Layer rtp4Layer) {
         this.ipSocket = ipSocket;
         this.rtp4Layer = rtp4Layer;
         ipSocket.addReceiveListener(this);
-        state = SocketState.LISTEN;
+        state = ConnectionState.LISTEN;
         tcpBlock = new TCPBlock();
         receivedPacketQueue = new LinkedBlockingQueue<>();
         receivedSynQueue = new LinkedBlockingQueue<>(10);
@@ -63,68 +50,55 @@ public class RTP4Socket implements IReceiveListener, Closeable {
         listeningConnections = new LinkedList<>();
     }
 
-    RTP4Connection accept() throws IOException {
-        actionQueue.offer(RTP4Layer.SocketAction.ACCEPT);
-        try {
-            stateLock.lock();
-            while (state != SocketState.ESTABLISHED && state != SocketState.CLOSED) {
-                stateChanged.await();
+    RTP4Connection accept(long timeout) throws IOException, TimeoutException {
+        HRP4Packet synPacket;
+        long timeStart = System.currentTimeMillis();
+        while (true) {
+            synPacket = receivedSynQueue.poll();
+            if (synPacket != null) {
+                break;
             }
-            if (state == SocketState.CLOSED) {
-                throw new IOException("Socket got closed");
+            if (System.currentTimeMillis() - timeStart > timeout) {
+                throw new TimeoutException("Got no connection request within timeout");
             }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            return null;
-        } finally {
-            stateLock.unlock();
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ignored) {
+            }
         }
-        RTP4Connection rtp4Connection = new RTP4Connection(dstAddr, ((int) dstPort), this);
-        addConnection(rtp4Connection);
+        RTP4Connection rtp4Connection = new RTP4Connection(synPacket.getSrcAddr(), synPacket.getSrcPort(), this);
+        addConnection(new RemoteHost(synPacket.getSrcAddr(), synPacket.getSrcPort()), rtp4Connection);
         rtp4Layer.registerConnection(rtp4Connection);
+        //Todo might remove ^
         return rtp4Connection;
     }
 
     RTP4Connection connect(String address, int port) throws IOException {
-        dstAddr = Util.addressStringToInt(address);
-        dstPort = (short) port;
-        actionQueue.offer(RTP4Layer.SocketAction.CONNECT);
-        try {
-            stateLock.lock();
-            while (state != SocketState.ESTABLISHED && state != SocketState.CLOSED) {
-                stateChanged.await();
-            }
-            if (state == SocketState.CLOSED) {
-                throw new IOException("Socket got closed");
-            }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            return null;
-        } finally {
-            stateLock.unlock();
-        }
-        RTP4Connection rtp4Connection = new RTP4Connection(dstAddr, dstPort, this);
-        addConnection(rtp4Connection);
+        RemoteHost remoteHost = new RemoteHost(Util.addressStringToInt(address), (short) port);
+        RTP4Connection rtp4Connection = new RTP4Connection(remoteHost, this);
+        addConnection(remoteHost, rtp4Connection);
+        rtp4Layer.registerConnection(rtp4Connection);
+        //Todo might remove ^
         return rtp4Connection;
     }
 
-    void addConnection(RTP4Connection connection){
-        listeningConnections.add(connection);
+    private void addConnection(RemoteHost remoteHost, RTP4Connection connection){
+        remoteHostRTP4ConnectionMap.put(remoteHost, connection);
     }
 
-    void removeConnection(RTP4Connection connection){
-        listeningConnections.remove(connection);
+    void removeConnection(RemoteHost remoteHost){
+        remoteHostRTP4ConnectionMap.remove(remoteHost);
     }
 
     @Override
     public void close() throws IOException {
-        actionQueue.offer(RTP4Layer.SocketAction.CLOSE);
+        actionQueue.offer(RTP4Layer.ConnectionAction.CLOSE);
         try {
             stateLock.lock();
-            while (state != SocketState.CLOSED && state != SocketState.TIME_WAIT) {
+            while (state != ConnectionState.CLOSED && state != ConnectionState.TIME_WAIT) {
                 stateChanged.await();
             }
-            if (state == SocketState.CLOSED) {
+            if (state == ConnectionState.CLOSED) {
                 clear();
             }
         } catch (InterruptedException e) {
@@ -146,181 +120,11 @@ public class RTP4Socket implements IReceiveListener, Closeable {
                 if (System.currentTimeMillis() - timeWaitStart > Config.getInstance().getMaxSegmentLife()) {
                     try {
                         stateLock.lock();
-                        state = SocketState.CLOSED;
+                        state = ConnectionState.CLOSED;
                     } finally {
                         stateLock.unlock();
                     }
                 }
-        }
-    }
-
-    void handle(HRP4Packet ipPacket) {
-        if (state == SocketState.CLOSED || state == SocketState.TIME_WAIT) {
-            return;
-        }
-        //Create RTP4 packet from the data, if the dat is malformed, return
-        RTP4Packet packet;
-        try {
-            packet = new RTP4Packet(ipPacket.getData());
-        } catch (PacketMalformedException e) {
-            return;
-        }
-
-        if (tcpBlock.receiveInitialSeqNumIsSet) {
-            if (packet.getSeqNum() < tcpBlock.receiveNext ) {
-                System.out.println(Thread.currentThread().getName() + "> Nvm, outdated");
-                if (packet.getLength() > 0) {
-                    sendAcknowledgement();
-                }
-                return;
-            } else if (packet.getSeqNum() > tcpBlock.receiveNext) {
-                System.out.println(Thread.currentThread().getName() + "> Nvm, disordered");
-                receivedPacketQueue.add(ipPacket);
-                return;
-            } else {
-                tcpBlock.registerReceivedSequenceNumber(packet.getSeqNum(), packet.getLength());
-            }
-        }
-
-        stateLock.lock();
-        try {
-            switch (state) {
-                case LISTEN:
-                    if (packet.isSyn()) {
-                        receivedSynQueue.offer(ipPacket);
-                    }
-                    break;
-                case SYN_ACCEPTED:
-                    if (packet.isAck()) {
-                        receiveAcknowledge(packet);
-                    }
-                    break;
-                case SYN_SENT:
-                    if (packet.isSyn()) {
-                        tcpBlock.registerReceivedSequenceNumber(packet.getSeqNum(), packet.getLength());
-                        sendAcknowledgement();
-                        state = SocketState.SYN_ACCEPTED;
-                    }
-                    if (packet.isAck()) {
-                        receiveAcknowledge(packet);
-                    }
-                    break;
-                case ESTABLISHED:
-                    if (packet.isFin()) {
-                        sendAcknowledgement();
-                        state = SocketState.CLOSE_WAIT;
-                    } else {
-                        if (packet.getData().length > 0) {
-                            listeningConnections.forEach(connection -> connection.receiveData(packet.getData()));
-                        }
-                        if (packet.getLength() > 0){
-                            sendAcknowledgement();
-                        }
-                    }
-                    if (packet.isAck()) {
-                        receiveAcknowledge(packet);
-                    }
-                    break;
-                case FIN_WAIT_1:
-                    if (packet.isFin()) {
-                        state = SocketState.CLOSING;
-                        sendAcknowledgement();
-                    }
-                    if (packet.isAck()) {
-                        receiveAcknowledge(packet);
-                    }
-                    break;
-                case FIN_WAIT_2:
-                    if (packet.isFin()) {
-                        sendAcknowledgement();
-                        state = SocketState.TIME_WAIT;
-                        timeWaitStart = System.currentTimeMillis();
-                    }
-                    if (packet.isAck()) {
-                        receiveAcknowledge(packet);
-                    }
-                    break;
-                case CLOSING:
-                case CLOSE_WAIT:
-                case LAST_ACK:
-                    if (packet.isAck()) {
-                        receiveAcknowledge(packet);
-                    }
-                    break;
-            }
-            stateChanged.signal();
-        } finally {
-            stateLock.unlock();
-        }
-    }
-
-    void handle(RTP4Layer.SocketAction action){
-        switch (action) {
-            case ACCEPT:
-                HRP4Packet packet;
-                try {
-                    packet = receivedSynQueue.peek();
-                    if (packet != null) {
-                        System.out.println(Thread.currentThread().getName() + "> " + "Received Syn!");
-                        receivedSynQueue.remove();
-                        dstAddr = packet.getSrcAddr();
-                        dstPort = packet.getSrcPort();
-                        RTP4Packet rtp4Packet = new RTP4Packet(packet.getData());
-                        tcpBlock.registerReceivedSequenceNumber(rtp4Packet.getSeqNum(),rtp4Packet.getLength());
-                        sendControl(true, true, false);
-                        try {
-                            stateLock.lock();
-                            state = SocketState.SYN_ACCEPTED;
-                            stateChanged.signal();
-                        } finally {
-                            stateLock.unlock();
-                        }
-                    } else {
-                        System.out.println(Thread.currentThread().getName() + "> " + "No Syn yet");
-                        actionQueue.offer(action);
-                    }
-                } catch (PacketMalformedException e) {
-                    e.printStackTrace();
-                }
-                break;
-            case CLOSE:
-                switch (state) {
-                    case LISTEN:
-                    case SYN_SENT:
-                        actionQueue.offer(action);
-                        break;
-                    case SYN_ACCEPTED:
-                    case ESTABLISHED:
-                        try {
-                            stateLock.lock();
-                            state = SocketState.FIN_WAIT_1;
-                            stateChanged.signal();
-                        } finally {
-                            stateLock.unlock();
-                        }
-                        sendControl(false,false,true);
-                        break;
-                    case CLOSE_WAIT:
-                        try {
-                            stateLock.lock();
-                            state = SocketState.LAST_ACK;
-                            stateChanged.signal();
-                        } finally {
-                            stateLock.unlock();
-                        }
-                        sendControl(false,false,true);
-                }
-                break;
-            case CONNECT:
-                sendControl(true, false, false);
-                try {
-                    stateLock.lock();
-                    state = SocketState.SYN_SENT;
-                    stateChanged.signal();
-                } finally {
-                    stateLock.unlock();
-                }
-                break;
         }
     }
 
@@ -341,21 +145,21 @@ public class RTP4Socket implements IReceiveListener, Closeable {
                         case SYN_ACCEPTED:
                         case SYN_SENT:
                             if (acknowledgedPacket.isSyn()) {
-                                state = SocketState.ESTABLISHED;
+                                state = ConnectionState.ESTABLISHED;
                             }  else {
                                 System.err.print(acknowledgedPacket.toString() + " is in unacknowledgedQueue but should not be");
                             }
                             break;
                         case FIN_WAIT_1:
                             if (acknowledgedPacket.isFin()) {
-                                state = SocketState.FIN_WAIT_2;
+                                state = ConnectionState.FIN_WAIT_2;
                             }  else {
                                 System.err.print(acknowledgedPacket.toString() + " is in unacknowledgedQueue but should not be");
                             }
                             break;
                         case CLOSING:
                             if (acknowledgedPacket.isFin()) {
-                                state = SocketState.TIME_WAIT;
+                                state = ConnectionState.TIME_WAIT;
                                 timeWaitStart = System.currentTimeMillis();
                             }  else {
                                 System.err.print(acknowledgedPacket.toString() + " is in unacknowledgedQueue but should not be");
@@ -363,7 +167,7 @@ public class RTP4Socket implements IReceiveListener, Closeable {
                             break;
                         case LAST_ACK:
                             if (acknowledgedPacket.isFin()) {
-                                state = SocketState.CLOSED;
+                                state = ConnectionState.CLOSED;
                             }  else {
                                 System.err.print(acknowledgedPacket.toString() + " is in unacknowledgedQueue but should not be");
                             }
@@ -384,102 +188,39 @@ public class RTP4Socket implements IReceiveListener, Closeable {
         );
     }
 
-    void send(byte[] data, int dstAddr, short dstPort) {
-        send(
-                new RTP4Packet(tcpBlock.takeSendSequenceNumber(data.length), tcpBlock.receiveNext, false, false, false, false, (short) 0, data),
-                dstAddr,
-                dstPort
-        );
+    void send(byte[] data, int dstAddr, short dstPort) throws IOException {
+        ipSocket.send(data, dstAddr, dstPort);
     }
 
-    void send(RTP4Packet packet, int dstAddr, short dstPort) {
-        try {
-            ipSocket.send(packet.marshal(), dstAddr, dstPort);
-            if (packet.getLength() > 0) {
-                unacknowledgedQueue.add(new AbstractMap.SimpleEntry<>(packet, System.currentTimeMillis()));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    } 
-
-    private void sendControl(boolean syn, boolean ack, boolean fin) {
-        send(
-                new RTP4Packet(tcpBlock.takeSendSequenceNumber(syn || fin ? 1 : 0), tcpBlock.receiveNext, syn, ack, fin, false, tcpBlock.receiveWindow, new byte[0]),
-                dstAddr,
-                dstPort
-        );
-    }
 
     @Override
     public void receive(IPacket packet) {
-        if (state != SocketState.CLOSED) {
-            receivedPacketQueue.offer((HRP4Packet) packet);
+        if (!isClosed() && packet instanceof HRP4Packet) {
+            HRP4Packet hrp4Packet = ((HRP4Packet) packet);
+            RemoteHost remoteHost = new RemoteHost(hrp4Packet.getSrcAddr(), hrp4Packet.getSrcPort());
+            if (remoteHostRTP4ConnectionMap.containsKey(remoteHost)) {
+                remoteHostRTP4ConnectionMap.get(remoteHost).receive(packet);
+            } else {
+                try {
+                    RTP4Packet rtp4Packet = new RTP4Packet(hrp4Packet.getData());
+                    if (rtp4Packet.isSyn()) {
+                        receivedSynQueue.add(hrp4Packet);
+                    }
+                } catch (PacketMalformedException e) {
+                    e.printStackTrace();
+                }
+
+            }
         }
     }
 
+
     public boolean isClosed() {
-        return state == SocketState.CLOSED;
+        return state == ConnectionState.CLOSED;
     }
 
     public short getPort(){
         return ipSocket.getDstPort();
-    }
-
-    class TCPBlock {
-
-        private int sendUnacknowledged;
-        private int sendNext;
-        private short sendWindow;
-        private int sendWindowUpdateSeqNum;
-        private int sendWindowUpdateAckNum;
-        private final int sendInitialSeqNum;
-
-        private int receiveNext;
-        private boolean receiveInitialSeqNumIsSet;
-        private short receiveWindow;
-        private int receiveInitialSeqNum;
-
-        TCPBlock() {
-            //TODO reset to non debug init
-//            this.sendInitialSeqNum = (int) (System.nanoTime() / 4000);
-            this.sendInitialSeqNum = new Random().nextInt(100);
-            this.sendNext = this.sendInitialSeqNum;
-            this.sendUnacknowledged = this.sendInitialSeqNum - 1;
-            this.receiveInitialSeqNumIsSet = false;
-        }
-
-        int takeSendSequenceNumber(int length) {
-            int sequenceNumberCurrent = this.sendNext;
-            this.sendNext += length;
-            return sequenceNumberCurrent;
-        }
-
-        boolean registerReceivedSequenceNumber(int sequenceNumber, int length) {
-            if (receiveNext == sequenceNumber) {
-                receiveNext += length;
-                return true;
-            }  else if (!receiveInitialSeqNumIsSet){
-                receiveInitialSeqNum = sequenceNumber;
-                receiveInitialSeqNumIsSet = true;
-                receiveNext = receiveInitialSeqNum + length;
-                return true;
-            } if (sequenceNumber > receiveNext) {
-                return false;
-            } else {
-                return false;
-            }
-        }
-
-        public boolean registerReceivedAcknowledgeNumber(int acknowledgeNumber) {
-            if (acknowledgeNumber > sendUnacknowledged && acknowledgeNumber <= sendNext) {
-                sendUnacknowledged = acknowledgeNumber;
-                return true;
-            } else {
-                return false;
-            }
-        }
-
     }
 
 }
