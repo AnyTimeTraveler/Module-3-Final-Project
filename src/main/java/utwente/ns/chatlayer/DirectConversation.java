@@ -25,4 +25,8 @@ public class DirectConversation extends ChatConversation {
         return new ChatClient.PeerInfo[]{recipient};
     }
 
+    @Override
+    public String getName() {
+        return recipient.getName();
+    }
 }
