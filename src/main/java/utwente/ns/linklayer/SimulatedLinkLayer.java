@@ -25,7 +25,7 @@ public class SimulatedLinkLayer implements ILinkLayer {
 
     private SimulatedLinkLayer() throws IOException {
         packetListeners = new ArrayList<>();
-        socket = new MulticastSocket(Config.getInstance().getMulticastPort());
+        socket = new MulticastSocket(Config.getInstance().multicastPort);
         receiver = new Thread(this::waitForIncomingPackets);
         receiver.setDaemon(true);
         receiver.setName("LinkLayerReceiver");
@@ -36,7 +36,7 @@ public class SimulatedLinkLayer implements ILinkLayer {
         this();
         this.maxSegmentSize = maxSegmentSize;
         addresses = new InetAddress[1];
-        addresses[0] = InetAddress.getByName(Config.getInstance().getMulticastAddress());
+        addresses[0] = InetAddress.getByName(Config.getInstance().multicastAddress);
         socket.joinGroup(addresses[0]);
 
     }
@@ -58,7 +58,7 @@ public class SimulatedLinkLayer implements ILinkLayer {
     @Override
     public void send(byte[] data) throws IOException {
         for (InetAddress address : addresses) {
-            socket.send(new DatagramPacket(data, data.length, address, Config.getInstance().getMulticastPort()));
+            socket.send(new DatagramPacket(data, data.length, address, Config.getInstance().multicastPort));
         }
     }
     @Override

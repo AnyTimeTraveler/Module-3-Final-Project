@@ -63,7 +63,7 @@ public class RTP4Socket implements IReceiveListener, Closeable {
         listeningConnections = new LinkedList<>();
     }
 
-    RTP4Connection accept() throws IOException {
+    public RTP4Connection accept() throws IOException {
         actionQueue.offer(RTP4Layer.SocketAction.ACCEPT);
         try {
             stateLock.lock();
@@ -85,7 +85,7 @@ public class RTP4Socket implements IReceiveListener, Closeable {
         return rtp4Connection;
     }
 
-    RTP4Connection connect(String address, int port) throws IOException {
+    public RTP4Connection connect(String address, int port) throws IOException {
         dstAddr = Util.addressStringToInt(address);
         dstPort = (short) port;
         actionQueue.offer(RTP4Layer.SocketAction.CONNECT);
@@ -143,7 +143,7 @@ public class RTP4Socket implements IReceiveListener, Closeable {
             case CLOSED:
                 return;
             case TIME_WAIT:
-                if (System.currentTimeMillis() - timeWaitStart > Config.getInstance().getMaxSegmentLife()) {
+                if (System.currentTimeMillis() - timeWaitStart > Config.getInstance().maxSegmentLife) {
                     try {
                         stateLock.lock();
                         state = SocketState.CLOSED;
