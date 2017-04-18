@@ -1,7 +1,6 @@
 package utwente.ns.tcp;
 
 import lombok.Getter;
-import utwente.ns.PacketMalformedException;
 import utwente.ns.ip.HRP4Packet;
 import utwente.ns.ip.IHRP4Layer;
 
@@ -31,13 +30,11 @@ public class RTP4Layer {
 
     private synchronized void run() {
         while (true) {
-            System.out.println(Thread.currentThread().getName() + "> Scanning");
             registeredSockets.stream().filter(socket -> socket.state == SocketState.TIME_WAIT).forEach(RTP4Socket::clear);
             registeredSockets = registeredSockets.stream().filter((socket1) -> !socket1.isClosed()).collect(Collectors.toList());
             registeredSockets.forEach(this::handleQueues);
             registeredSockets.forEach(this::resendIfTimeout);
             registeredConnections.forEach(this::sendData);
-            registeredSockets.forEach(socket -> System.out.println(Thread.currentThread().getName() + "> " + socket.getPort() + "-" + socket.state));
             try {
                 Thread.sleep(500);
             } catch (InterruptedException e) {
@@ -58,21 +55,11 @@ public class RTP4Layer {
     private void handleQueues(RTP4Socket socket)    {
         SocketAction action = socket.actionQueue.poll();
         if (action != null) {
-            System.out.println(Thread.currentThread().getName() + "> Found Action " + action);
             socket.handle(action);
-        } else {
-            System.out.println(Thread.currentThread().getName() + "> No actions in queue ");
         }
         HRP4Packet packet = socket.receivedPacketQueue.poll();
         if (packet != null) {
-            try {
-                System.out.println(Thread.currentThread().getName() + "> Found Packet! " + new RTP4Packet(packet.getData()));
-            } catch (PacketMalformedException e) {
-                System.out.println(Thread.currentThread().getName() + "> Found Packet! ");
-            }
             socket.handle(packet);
-        } else {
-            System.out.println(Thread.currentThread().getName() + "> No Packets in queue ");
         }
 
     }
@@ -85,7 +72,6 @@ public class RTP4Layer {
             if (entry == null || time - entry.getValue() < TIMOUT_MILIS) {
                 break;
             }
-            System.out.println(Thread.currentThread().getName() + "> Found Timed out packet! " + entry.getKey());
             socket.unacknowledgedQueue.remove();
             socket.send(entry.getKey(), socket.getDstAddr(), socket.getDstPort());
         }
