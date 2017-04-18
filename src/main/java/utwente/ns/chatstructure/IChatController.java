@@ -17,7 +17,5 @@ public interface IChatController {
 
     IUser getUserById(String id);
 
-    String getMyFingerprint();
-
-    String getMyId();
+    IUser getMyUser();
 }

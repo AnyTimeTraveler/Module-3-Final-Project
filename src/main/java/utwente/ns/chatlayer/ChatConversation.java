@@ -67,7 +67,6 @@ public abstract class ChatConversation implements Comparable<ChatConversation>, 
      * Sends a message and adds message to conversation.
      * @param message the message
      */
-    @Override
     public void sendMessage(ChatMessage message) {
         message.encryptContent(encryptionKey);
         message.sign(this.signingKey);
@@ -79,6 +78,9 @@ public abstract class ChatConversation implements Comparable<ChatConversation>, 
         }
         this.addMessage(message);
     }
+
+    @Override
+    public abstract void sendMessage(String message);
 
     /**
      * Processes a new incoming message

@@ -29,4 +29,9 @@ public class DirectConversation extends ChatConversation {
     public String getName() {
         return recipient.getName();
     }
+
+    @Override
+    public void sendMessage(String message) {
+        this.sendMessage(this.client.newMessage(this.recipient.id, new TextMessageContent(message)));
+    }
 }
