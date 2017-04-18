@@ -410,7 +410,7 @@ public class RTP4Socket implements IReceiveListener, Closeable {
         return state == SocketState.CLOSED;
     }
 
-    public short getPort(){
+    public int getPort(){
         return ipSocket.getDstPort();
     }
 
