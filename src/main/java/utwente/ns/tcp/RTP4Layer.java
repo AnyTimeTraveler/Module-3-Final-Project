@@ -1,6 +1,7 @@
 package utwente.ns.tcp;
 
 import lombok.Getter;
+import utwente.ns.config.Config;
 import utwente.ns.ip.IHRP4Layer;
 
 import java.io.IOException;
@@ -13,6 +14,8 @@ import java.util.stream.Collectors;
  * Created by simon on 07.04.17.
  */
 public class RTP4Layer {
+    private static final int PACKET_INTERVAL = Config.getInstance().getTcpPacketInterval();
+
     @Getter
     private IHRP4Layer ipLayer;
     private List<RTP4Socket> registeredSockets;
@@ -36,9 +39,8 @@ public class RTP4Layer {
             registeredConnections.forEach(RTP4Connection::handleAction);
             registeredConnections.forEach(RTP4Connection::resendPacket);
             try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                Thread.sleep(PACKET_INTERVAL);
+            } catch (InterruptedException ignored) {
             }
         }
     }

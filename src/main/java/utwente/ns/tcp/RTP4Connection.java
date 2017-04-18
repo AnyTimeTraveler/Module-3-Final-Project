@@ -10,7 +10,6 @@ import utwente.ns.ip.HRP4Packet;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.AbstractMap;
-import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeoutException;
@@ -308,8 +307,6 @@ public class RTP4Connection implements Closeable, IReceiveListener {
                     }
                 }
             }
-        } else {
-            //TODO handle invalid acknowledgement
         }
     }
 
@@ -439,9 +436,7 @@ public class RTP4Connection implements Closeable, IReceiveListener {
         private int receiveInitialSeqNum;
 
         TCPBlock() {
-            //TODO reset to non debug init
-//            this.sendInitialSeqNum = (int) (System.nanoTime() / 4000);
-            this.sendInitialSeqNum = new Random().nextInt(100);
+            this.sendInitialSeqNum = (int) (System.nanoTime() / 4000);
             this.sendNext = this.sendInitialSeqNum;
             this.sendUnacknowledged = this.sendInitialSeqNum - 1;
             this.receiveInitialSeqNumIsSet = false;

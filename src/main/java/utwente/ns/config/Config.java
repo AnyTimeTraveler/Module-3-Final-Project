@@ -24,6 +24,7 @@ public class Config {
     private int maxSegmentLife;
     private int tcpPacketTimeout;
     private int tcpListenTimeout;
+    private int tcpPacketInterval;
 
     private Config() {
         multicastAddress = "228.0.0.1";
@@ -33,11 +34,10 @@ public class Config {
         myAddress = "CHANGE ME, I'M DEFINITELY NOT CONFIGURED YET!";
         defaultHRP4TTL = 6;
         segmentBufferSize = 2048;
-        //TODO up to 2 minutes
-        maxSegmentLife = 5;
+        maxSegmentLife = 2*60000;
         tcpPacketTimeout = 5;
-        //TODO set to positive
-        tcpListenTimeout = -1;
+        tcpListenTimeout = 60000;
+        tcpPacketInterval = 10;
     }
     
     public static Config getInstance() {
