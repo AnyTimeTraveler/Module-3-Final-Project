@@ -40,6 +40,7 @@ public class ChatMessage implements IMessage {
     private String type;
     @Getter
     private String data;
+    private byte[] encIV;
     private String signature;
 
     @Getter
@@ -64,7 +65,15 @@ public class ChatMessage implements IMessage {
     }
 
     public void encryptContent(Key key) {
-        this.data = this.content.getEncryptedContent(key);
+        SecureRandom randomSecureRandom = null;
+        try {
+            randomSecureRandom = SecureRandom.getInstance("SHA1PRNG");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        this.encIV  = new byte[16];
+        randomSecureRandom.nextBytes(encIV);
+        this.data = this.content.getEncryptedContent(key, encIV);
     }
 
     public void decryptContent(Key key) throws InvalidMessageException, UnsupportedMessageTypeException {
@@ -72,7 +81,7 @@ public class ChatMessage implements IMessage {
         switch (this.type) {
             case CONTENT_TYPE_TEXT:
                 this.content = new TextMessageContent();
-                this.content.setContent(key, this.data);
+                this.content.setContent(key, this.data, this.encIV);
             case CONTENT_TYPE_IMAGE:
                 throw new UnsupportedMessageTypeException();
             default:

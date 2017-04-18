@@ -3,6 +3,7 @@ package utwente.ns.chatlayer;
 import lombok.extern.java.Log;
 
 import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
 import java.security.Key;
 import java.util.Base64;
 import java.util.logging.Level;
@@ -13,15 +14,16 @@ import java.util.logging.Level;
 @Log
 public abstract class ChatMessageContent {
 
-    public abstract void setContent(Key key, String encData);
+    public abstract void setContent(Key key, String encData, byte[] encIV);
 
-    public static byte[] getDecryptedData(Key key, String encData) throws IllegalArgumentException {
+    public static byte[] getDecryptedData(Key key, String encData, byte[] ivBytes) throws IllegalArgumentException {
         try {
 
             byte[] messageBytes = Base64.getDecoder().decode(encData);
 
             Cipher aesCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-            aesCipher.init(Cipher.DECRYPT_MODE, key);
+            IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
+            aesCipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
 
             return aesCipher.doFinal(messageBytes);
 
@@ -32,11 +34,12 @@ public abstract class ChatMessageContent {
         }
     }
 
-    public String getEncryptedContent(Key key) {
+    public String getEncryptedContent(Key key, byte[] ivBytes) {
         try {
 
             Cipher aesCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-            aesCipher.init(Cipher.ENCRYPT_MODE, key);
+            IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
+            aesCipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
 
             byte[] encryptedBytes = aesCipher.doFinal(this.getData());
 
