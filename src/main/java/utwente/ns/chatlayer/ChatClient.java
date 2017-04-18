@@ -315,6 +315,7 @@ public class ChatClient implements IReceiveListener, IChatController {
     public void addConversation(String name, IUser... users) {
         if (users.length == 1) {
            this.addDirectConversation(users[0].getUniqueID());
+           this.getUi().update("New conversation");
            return;
         }
         // TODO: groups
