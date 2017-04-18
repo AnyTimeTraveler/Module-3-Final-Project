@@ -266,8 +266,10 @@ public class ChatClient implements IReceiveListener, IChatController {
                 } catch (UnknownHostException e) {
                     e.printStackTrace();
                 }
+                break;
             case MESSAGE_PORT:
                 this.onMessageData(hrp4Packet.getData());
+                break;
         }
     }
 
