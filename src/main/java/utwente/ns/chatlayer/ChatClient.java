@@ -1,6 +1,7 @@
 package utwente.ns.chatlayer;
 
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.extern.java.Log;
 import utwente.ns.IPacket;
 import utwente.ns.IReceiveListener;
@@ -324,9 +325,11 @@ public class ChatClient implements IReceiveListener, IChatController {
     public class PeerInfo implements IUser {
         public final String id;
         public final String name;
+        @Getter
         public final String address;
         public final Key peerSharedKey;
         public final PublicKey publicKey;
+        @Getter
         public final String fingerprint;
 
         public Date lastUpdateTime;
@@ -339,11 +342,6 @@ public class ChatClient implements IReceiveListener, IChatController {
         @Override
         public String getUniqueID() {
             return this.id;
-        }
-
-        @Override
-        public String getFingerprint() {
-            return this.fingerprint;
         }
 
         @Override
