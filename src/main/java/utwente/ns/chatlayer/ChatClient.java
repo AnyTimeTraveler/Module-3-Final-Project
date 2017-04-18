@@ -144,6 +144,10 @@ public class ChatClient implements IReceiveListener, IChatController {
         try {
             this.messageSocket = this.networkStack.getRtp4Layer().getIpLayer().open(MESSAGE_PORT);
             this.identitySocket = this.networkStack.getRtp4Layer().getIpLayer().open(IDENTITY_PORT);
+
+            this.messageSocket.addReceiveListener(this);
+            this.identitySocket.addReceiveListener(this);
+
             Timer broadcastTimer = new Timer();
             broadcastTimer.scheduleAtFixedRate(new TimerTask() {
                 @Override
