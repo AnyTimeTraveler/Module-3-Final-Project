@@ -2,24 +2,29 @@ package utwente.ns.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import lombok.Data;
 
 import java.io.*;
 
+@Data
 public class Config {
 
     // Configfile name
     private static final String CONFIGFILE = "config.json";
     private static Config instance;
-    
-    public String multicastAddress;
-    public int multicastPort;
-    public int baconInterval;
-    public byte baconPacketTTL;
-    public String myAddress;
-    public byte defaultHRP4TTL;
-    public int segmentBufferSize;
-    public String name;
-    public int maxSegmentLife;
+
+    private String multicastAddress;
+    private int multicastPort;
+    private int baconInterval;
+    private byte baconPacketTTL;
+    private String myAddress;
+    private byte defaultHRP4TTL;
+    private int segmentBufferSize;
+    private String name;
+    private int maxSegmentLife;
+    private int tcpPacketTimeout;
+    private int tcpListenTimeout;
+    private int tcpPacketInterval;
 
     private Config() {
         multicastAddress = "228.0.0.1";
@@ -30,7 +35,10 @@ public class Config {
         defaultHRP4TTL = 6;
         segmentBufferSize = 2048;
         name = "UNSET";
-        maxSegmentLife = 5;
+        maxSegmentLife = 2*60000;
+        tcpPacketTimeout = 5;
+        tcpListenTimeout = 60000;
+        tcpPacketInterval = 500;
     }
 
     public static Config getInstance() {

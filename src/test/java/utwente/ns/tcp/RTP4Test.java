@@ -7,6 +7,7 @@ import org.junit.Test;
 import utwente.ns.NetworkStack;
 
 import java.io.IOException;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Created by simon on 13.04.17.
@@ -23,15 +24,15 @@ public class RTP4Test {
     }
 
     @Test
-    public void client() throws IOException, InterruptedException {
-        RTP4Connection connection = stack.getRtp4Layer().connect(partner, 10);
+    public void client() throws IOException, InterruptedException, TimeoutException {
+        RTP4Connection connection = stack.getRtp4Layer().connect(partner, 10, -1);
 
         connection.send("Server: Hi!".getBytes());
         Assert.assertEquals("First message from client", "Client: Hello", new String(connection.receive()));
     }
 
     @Test
-    public void server() throws IOException, InterruptedException {
+    public void server() throws IOException, InterruptedException, TimeoutException {
         RTP4Connection connection = stack.getRtp4Layer().open(10).accept();
 
         Assert.assertEquals("First message from server", "Server: Hi!", new String(connection.receive()));
