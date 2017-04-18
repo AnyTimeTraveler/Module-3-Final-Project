@@ -73,6 +73,7 @@ public abstract class ChatConversation implements Comparable<ChatConversation>, 
         try {
             this.client.sendChatMessage(message);
             message.setSent(true);
+            this.client.getUi().update(message.toString());
         } catch (IOException e) {
             e.printStackTrace();
         }
