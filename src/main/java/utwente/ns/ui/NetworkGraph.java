@@ -51,11 +51,18 @@ public class NetworkGraph extends JPanel {
             f.setVisible(true);
 
             gp.updateNodes(Arrays.asList(new HRP4Router.BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry((byte) 1, (byte) 1, 1, 2)),
+                    new HRP4Router.BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry((byte) 1, (byte) 1, 2, 1)),
                     new HRP4Router.BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry((byte) 1, (byte) 1, 2, 3)),
+                    new HRP4Router.BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry((byte) 1, (byte) 1, 3, 2)),
+                    new HRP4Router.BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry((byte) 1, (byte) 1, 1, 3)),
+                    new HRP4Router.BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry((byte) 1, (byte) 1, 3, 1)),
+                    new HRP4Router.BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry((byte) 1, (byte) 1, 1, 4)),
+                    new HRP4Router.BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry((byte) 1, (byte) 1, 2, 4)),
                     new HRP4Router.BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry((byte) 1, (byte) 1, 3, 4)),
                     new HRP4Router.BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry((byte) 1, (byte) 1, 4, 1)),
-                    new HRP4Router.BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry((byte) 1, (byte) 1, 1, 3)),
-                    new HRP4Router.BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry((byte) 1, (byte) 1, 3, 1))));
+                    new HRP4Router.BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry((byte) 1, (byte) 1, 4, 2)),
+                    new HRP4Router.BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry((byte) 1, (byte) 1, 4, 3))
+            ));
         });
     }
 
@@ -80,6 +87,8 @@ public class NetworkGraph extends JPanel {
         int i = 0;
         HashMap<Integer, Node> nodes = new HashMap<>();
 
+        this.nodes.clear();
+        edges.clear();
         for (HRP4Router.BCN4RoutingEntryWrapper entry : routingEntries) {
             int[] addresses = entry.getBcn4Entry().getAddresses();
             if (!nodes.containsKey(addresses[0])) {
@@ -135,10 +144,22 @@ public class NetworkGraph extends JPanel {
             Graphics2D g2d = (Graphics2D) g;
             g2d.setColor(n1.color);
             g2d.setStroke(new BasicStroke(LINE_WIDTH));
-            if (p1.getX() > p2.getX())
-                g2d.drawLine(p1.x + LINE_WIDTH, p1.y, p2.x + LINE_WIDTH, p2.y);
-            else
-                g2d.drawLine(p1.x - LINE_WIDTH, p1.y, p2.x - LINE_WIDTH, p2.y);
+            System.out.println(n1.text + " --> " + n2.text);
+            int x1 = p1.x;
+            int y1 = p1.y;
+            int x2 = p2.x;
+            int y2 = p2.y;
+
+            if (p1.getY() == p2.getY()) {
+                int mody = p1.getX() < p2.getX() ? -LINE_WIDTH : LINE_WIDTH;
+                y1 += mody;
+                y2 += mody;
+            } else/* if (p1.getX() == p2.getX())*/ {
+                int modx = p1.getY() < p2.getY() ? -LINE_WIDTH : LINE_WIDTH;
+                x1 += modx;
+                x2 += modx;
+            }
+            g2d.drawLine(x1, y1, x2, y2);
         }
     }
 
@@ -192,7 +213,7 @@ public class NetworkGraph extends JPanel {
             g.setColor(Color.BLACK);
             g.setFont(new Font("default", Font.BOLD, 15));
             if (text != null)
-                g.drawString(text, b.x + r / 2, b.y + r / 2 + r / 3);
+                g.drawString(text, b.x + r / 4, b.y + r / 2 + r / 3);
         }
 
         /**

@@ -59,6 +59,7 @@ public class UniversalCommunicator implements IUserInterface {
     private NetworkStack networkStack;
     private boolean settingIsBoolean;
     private File selectedFile;
+    private NetworkGraph networkGrapher;
 
     @Override
     public void update(String message) {
@@ -205,6 +206,15 @@ public class UniversalCommunicator implements IUserInterface {
             // If settings were changed, save config.
             Config.getInstance().toFile();
         }
+        // Routing
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                networkGrapher.updateNodes(networkStack.getHrp4Layer().getRouter().getRoutingEntries());
+                networkGrapher.repaint();
+            }
+        }, Config.getInstance().baconInterval, Config.getInstance().baconInterval);
     }
 
     public void setProgress(int current, int max) {
@@ -230,16 +240,8 @@ public class UniversalCommunicator implements IUserInterface {
 
     private void createUIComponents() {
         networkGraph = new JPanel(new BorderLayout());
-        NetworkGraph ng = new NetworkGraph(networkGraph);
-        networkGraph.add(new JScrollPane(ng), BorderLayout.CENTER);
-        Timer timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                ng.updateNodes(networkStack.getHrp4Layer().getRouter().getRoutingEntries());
-                ng.repaint();
-            }
-        }, Config.getInstance().baconInterval, Config.getInstance().baconInterval);
+        networkGrapher = new NetworkGraph(networkGraph);
+        networkGraph.add(new JScrollPane(networkGrapher), BorderLayout.CENTER);
     }
 
     {
