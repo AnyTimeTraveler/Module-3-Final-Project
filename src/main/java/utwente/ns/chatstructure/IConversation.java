@@ -8,6 +8,9 @@ import utwente.ns.chatlayer.ChatMessage;
 public interface IConversation {
     void sendMessage(ChatMessage message);
 
+    String getName();
+
     IUser[] getParticipants();
+
     IMessage[] getChatHistory();
 }
