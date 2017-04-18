@@ -126,6 +126,9 @@ public abstract class ChatConversation implements Comparable<ChatConversation>, 
         return this.getMessages().toArray(new ChatMessage[this.messages.size()]);
     }
 
+    @Override
+    public abstract String getName();
+
     /**
      * Type of a chat
      */

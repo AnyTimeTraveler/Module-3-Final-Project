@@ -63,8 +63,8 @@ public class UniversalCommunicator implements IUserInterface {
 
     @Override
     public void update(String message) {
-        contactList.setListData(new Vector<>(Arrays.stream(chatClient.getConnectedUsers())
-                .map(user -> user.isConfirmed() ? "\\u2713" : "\\u2715" + user.getName())
+        contactList.setListData(new Vector<>(Arrays.stream(chatClient.getConversations())
+                .map(con -> con.)
                 .collect(Collectors.toList())));
         chatHistoryTextArea.setText(Arrays.stream(selectedConversation.getChatHistory()).map(msg -> msg.getSender() + " --> " + msg.getReceiver() + " : " + msg.getMessage()).collect(Collectors.joining("\n")));
     }
