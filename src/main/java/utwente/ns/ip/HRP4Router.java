@@ -2,7 +2,6 @@ package utwente.ns.ip;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import utwente.ns.Util;
 import utwente.ns.config.Config;
@@ -85,7 +84,7 @@ public class HRP4Router {
         }
 
         for (BCN4Packet.RoutingEntry entry : table) {
-            if (entry.getAddresses()[0] == myAddress) continue;
+            if (entry.getAddresses()[1] == myAddress) continue;
             processEntry(entry.getAddresses()[0], entry.getAddresses()[1], entry.getLinkCost(), entry.getTTL());
         }
     }
