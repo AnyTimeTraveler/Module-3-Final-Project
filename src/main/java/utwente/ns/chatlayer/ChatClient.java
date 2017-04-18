@@ -282,19 +282,20 @@ public class ChatClient implements IReceiveListener, IChatController {
         }
     }
 
+    private void addDirectConversation(String userId) {
+        ChatConversation conversation = new DirectConversation(this, this.connectedPeers.get(userId), keyPair.getPrivate());
+        this.addConversation(userId, conversation);
+    }
+
     ChatMessage newMessage(String recipientId, ChatMessageContent content) {
         return new ChatMessage(this.id, UUID.randomUUID().toString(), recipientId, null, content);
     }
 
     public ChatConversation getDirectConversation(String userId) {
-        if (this.conversationMap.get(userId) != null && this.conversationMap.get(userId).type == ChatConversation.ConversationType.DIRECT) {
-            return this.conversationMap.get(userId);
-        } else if (this.connectedPeers.get(userId) != null) {
-            ChatConversation conversation = new DirectConversation(this, this.connectedPeers.get(userId), keyPair.getPrivate());
-            this.addConversation(userId, conversation);
-            return conversation;
+        if (this.conversationMap.get(userId) == null && this.connectedPeers.get(userId) != null) {
+            this.addDirectConversation(userId);
         }
-        return null;
+        return this.conversationMap.get(userId);
     }
 
     public ChatConversation getGroupConversation(String groupId) {
@@ -309,7 +310,11 @@ public class ChatClient implements IReceiveListener, IChatController {
 
     @Override
     public void addConversation(String name, IUser... users) {
-        // TODO: support group chats
+        if (users.length == 1) {
+           this.addDirectConversation(users[0].getUniqueID());
+        }
+        // TODO: groups
+        log.log(Level.WARNING, "Creating group conversations are not supported yet!");
     }
 
     @Override
