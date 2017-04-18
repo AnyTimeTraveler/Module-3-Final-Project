@@ -1,6 +1,7 @@
 package utwente.ns.ip;
 
 import lombok.Data;
+import lombok.Getter;
 import utwente.ns.IPacket;
 import utwente.ns.IReceiveListener;
 import utwente.ns.Util;
@@ -19,22 +20,27 @@ import java.util.List;
 @Data
 public class HRP4Socket implements IHRP4Socket, IReceiveListener, Closeable {
     public List<IReceiveListener> listeners = new ArrayList<>();
-    public short dstPort;
+    @Getter
+    public int dstPort;
     private HRP4Layer ipLayer;
 
     /**
-     * Deliberately package-private. In order to construct, call {@link HRP4Layer#open(short)}.
+     * Deliberately package-private. In order to construct, call {@link HRP4Layer#open(int)}.
      *
      * @param ipLayer the underlying IP layer that is responsible for sending/receiving raw data
      * @param dstPort the local listener port
      *
      * @see HRP4Layer
      */
-    HRP4Socket(HRP4Layer ipLayer, short dstPort) {
+    HRP4Socket(HRP4Layer ipLayer, int dstPort) {
         this.dstPort = dstPort;
         this.ipLayer = ipLayer;
     }
 
+    /**
+     * Receive is usually called by a {@link IHRP4Layer}. This is done upon receiving a packet.
+     * @param packet the packet that was received.
+     */
     @Override
     public void receive(IPacket packet) {
         if (!(packet instanceof HRP4Packet)) {
@@ -48,26 +54,44 @@ public class HRP4Socket implements IHRP4Socket, IReceiveListener, Closeable {
         listeners.parallelStream().forEach(listener -> listener.receive(packet));
     }
 
-    public void send(byte[] data, int dstAddress, short dstPort) throws IOException {
+    /**
+     * Send sends the data provided to the given dstAddress to the given port.
+     * @param data The data to be sent
+     * @param dstAddress The destination host
+     * @param dstPort The destination port
+     * @throws IOException when sending has failed (this does not include packet loss)
+     */
+    public void send(byte[] data, int dstAddress, int dstPort) throws IOException {
         HRP4Packet hrp4Packet = new HRP4Packet(
                 Util.addressToInt(InetAddress.getByName(Config.getInstance().myAddress)),
                 dstAddress,
-                this.dstPort,
-                dstPort,
+                (short) this.dstPort,
+                (short) dstPort,
                 Config.getInstance().defaultHRP4TTL,
                 data
         );
         ipLayer.send(hrp4Packet);
     }
 
+    /**
+     * Add a listener to listen for incoming packets
+     * @param listener is called upon receiving incoming packets
+     */
     public void addReceiveListener(IReceiveListener listener) {
         listeners.add(listener);
     }
 
+    /**
+     * Removes the provided listener
+     * @param listener removes the receiveListener
+     */
     public void removeReceiveListener(IReceiveListener listener) {
         listeners.remove(listener);
     }
 
+    /**
+     * Closes the socket
+     */
     @Override
     public void close() {
         this.ipLayer.close(this);

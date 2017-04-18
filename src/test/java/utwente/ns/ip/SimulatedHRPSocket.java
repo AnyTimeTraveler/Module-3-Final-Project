@@ -1,5 +1,6 @@
 package utwente.ns.ip;
 
+import lombok.Getter;
 import utwente.ns.IPacket;
 import utwente.ns.IReceiveListener;
 import utwente.ns.config.Config;
@@ -14,21 +15,23 @@ import java.util.List;
 public class SimulatedHRPSocket implements IHRP4Socket {
     public List<IReceiveListener> listeners = new ArrayList<>();
     private final SimulatedHRP4Layer simulatedHRP4Layer;
-    public short dstPort;
+
+    @Getter
+    public int dstPort;
 
 
-    public SimulatedHRPSocket(SimulatedHRP4Layer simulatedHRP4Layer, short port) {
+    public SimulatedHRPSocket(SimulatedHRP4Layer simulatedHRP4Layer, int port) {
         this.simulatedHRP4Layer = simulatedHRP4Layer;
         this.dstPort = port;
     }
 
     @Override
-    public void send(byte[] data, int dstAddress, short dstPort) throws IOException {
+    public void send(byte[] data, int dstAddress, int dstPort) throws IOException {
         HRP4Packet hrp4Packet = new HRP4Packet(
                 0,
                 0,
-                this.dstPort,
-                dstPort,
+                (short) this.dstPort,
+                (short) dstPort,
                 Config.getInstance().defaultHRP4TTL,
                 data
         );
@@ -43,11 +46,6 @@ public class SimulatedHRPSocket implements IHRP4Socket {
     @Override
     public void removeReceiveListener(IReceiveListener listener) {
         listeners.remove(listener);
-    }
-
-    @Override
-    public short getDstPort() {
-        return dstPort;
     }
 
     @Override

@@ -13,22 +13,36 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.*;
 
+/**
+ * HRP4Layer is the management class for HRP4 data connections and routing them.
+ */
 public class HRP4Layer implements IReceiveListener, IHRP4Layer {
 
     /**
-     *
+     * The next layer down (an ILinkLayer)
      */
     @Getter
     private final ILinkLayer lowerLayer;
 
+    /**
+     * The router that is responsible for figuring out optimal routes to certain hosts.
+     */
     @Getter
     private HRP4Router router = new HRP4Router();
 
+    /**
+     * All the listeners that are listening for incoming data.
+     */
     private List<IReceiveListener> receiveListeners;
+
+    /**
+     * Set of opened ports
+     */
     private NavigableSet<Integer> ports = new TreeSet<>();
 
     /**
-     * @param linkLayer
+     * Constructs a new HRP4Layer that uses the parameter as the sending layer
+     * @param linkLayer the layer that is used to send raw data.
      */
     public HRP4Layer(ILinkLayer linkLayer) {
         receiveListeners = new ArrayList<>();
@@ -44,7 +58,7 @@ public class HRP4Layer implements IReceiveListener, IHRP4Layer {
     }
 
     /**
-     *
+     * sendBeaconPacket sends a beacon packet containing all routing entries.
      */
     private void sendBeaconPacket() {
         try {
@@ -59,11 +73,19 @@ public class HRP4Layer implements IReceiveListener, IHRP4Layer {
         }
     }
 
-
+    /**
+     * Send sends the specific packet from the lower layer. This is equivalent to calling {@link HRP4Layer#getLowerLayer()#send(IPacket)}
+     * @param packet the packet to be sent
+     * @throws IOException when sending fails
+     */
     public void send(IPacket packet) throws IOException {
         lowerLayer.send(packet);
     }
 
+    /**
+     * Adds a receive listener that is called upon receiving an HRP4-compatible packet.
+     * @param receiver is called upon receiving a packet.
+     */
     public void addReceiveListener(IReceiveListener receiver) {
         receiveListeners.add(receiver);
         if (receiver instanceof IHRP4Socket) {
@@ -71,7 +93,13 @@ public class HRP4Layer implements IReceiveListener, IHRP4Layer {
         }
     }
 
-    public HRP4Socket open(short port) throws IOException {
+    /**
+     * Opens a socket on the provided port, and registers it on this layer as a listener.
+     * @param port the port to be opened
+     * @return the socket that resulted by opening the port.
+     * @throws IOException when the port is already opened
+     */
+    public HRP4Socket open(int port) throws IOException {
         if (this.receiveListeners.parallelStream()
                                  .filter(listener -> listener instanceof HRP4Socket)
                                  .map(listener -> (HRP4Socket) listener)
@@ -84,9 +112,14 @@ public class HRP4Layer implements IReceiveListener, IHRP4Layer {
         return socket;
     }
 
+    /**
+     * Opens a random port in the range of 1024..65535
+     * @return the opend socket
+     * @throws IOException when failing to open a socket (usually meaning a failure).
+     */
     @Override
     public IHRP4Socket openRandom() throws IOException {
-        return this.open((short) Util.randomNotInSet(ports, 1024, 65535));
+        return this.open(Util.randomNotInSet(ports, 1024, 65535));
     }
 
     void close(HRP4Socket socket) {
