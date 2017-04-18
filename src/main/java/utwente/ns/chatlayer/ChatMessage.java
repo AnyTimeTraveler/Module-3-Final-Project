@@ -82,6 +82,7 @@ public class ChatMessage implements IMessage {
             case CONTENT_TYPE_TEXT:
                 this.content = new TextMessageContent();
                 this.content.setContent(key, this.data, this.encIV);
+                break;
             case CONTENT_TYPE_IMAGE:
                 throw new UnsupportedMessageTypeException();
             default:

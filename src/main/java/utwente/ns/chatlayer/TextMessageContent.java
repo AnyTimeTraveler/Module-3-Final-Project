@@ -34,4 +34,8 @@ public class TextMessageContent extends ChatMessageContent {
             return new byte[0];
         }
     }
+
+    public String toString() {
+        return this.text;
+    }
 }

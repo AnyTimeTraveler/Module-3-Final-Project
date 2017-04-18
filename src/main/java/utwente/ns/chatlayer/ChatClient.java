@@ -42,6 +42,7 @@ public class ChatClient implements IReceiveListener, IChatController {
     private final NetworkStack networkStack;
     private final String name;
     private final boolean isGUI;
+    @Getter
     private final IUserInterface ui;
     private IHRP4Socket messageSocket;
     private IHRP4Socket identitySocket;
