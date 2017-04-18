@@ -18,15 +18,19 @@ public class SimpleTUI implements IUserInterface {
 
     public SimpleTUI(ChatClient chatClient) {
         this.chatClient = chatClient;
-
-        System.out.println(HELP);
-        new BufferedReader(new InputStreamReader(System.in)).lines().forEach(line -> {
-            try {
-                exec(line);
-            } catch (ArrayIndexOutOfBoundsException e) {
-                e.printStackTrace();
-            }
+        Thread tuiThread = new Thread(() -> {
+            System.out.println(HELP);
+            new BufferedReader(new InputStreamReader(System.in)).lines().forEach(line -> {
+                try {
+                    exec(line);
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    e.printStackTrace();
+                }
+            });
         });
+        tuiThread.setName("TUI");
+        tuiThread.setDaemon(true);
+        tuiThread.start();
     }
 
     private void exec(String command) {
@@ -74,6 +78,6 @@ public class SimpleTUI implements IUserInterface {
 
     @Override
     public void update(String message) {
-
+        System.out.println(message);
     }
 }

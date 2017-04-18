@@ -17,7 +17,7 @@ public class BetterChat implements IApplication {
             NetworkStack networkStack = new NetworkStack();
             ChatClient chatClient = new ChatClient(Config.getInstance().name, networkStack);
             Thread chatThread = new Thread(chatClient::run);
-            chatThread.setDaemon(true);
+            chatThread.setDaemon(false);
             chatThread.setName("ChatThreat");
             chatThread.start();
         } catch (IOException e) {
