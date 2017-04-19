@@ -229,12 +229,15 @@ public class UniversalCommunicator implements IUserInterface {
                         switch (setting.getType().toString().toLowerCase()) {
                             case "class java.lang.string":
                                 setting.set(Config.getInstance(), settingsTextField.getText());
+                                restartNotice.setVisible(true);
                                 break;
                             case "int":
                                 setting.setInt(Config.getInstance(), Integer.parseInt(settingsTextField.getText()));
+                                restartNotice.setVisible(true);
                                 break;
                             case "byte":
                                 setting.setByte(Config.getInstance(), Byte.parseByte(settingsTextField.getText()));
+                                restartNotice.setVisible(true);
                                 break;
                             default:
                                 System.err.println("Type not defined!");
@@ -246,11 +249,12 @@ public class UniversalCommunicator implements IUserInterface {
             } catch (NumberFormatException e1) {
                 JOptionPane.showMessageDialog(this.getMainPanel(), "Please enter something sensible!", "Incorrect Input!", JOptionPane.ERROR_MESSAGE);
             }
+
+            if (restartNotice.isVisible()) {
+                // If settings were changed, save config.
+                Config.getInstance().toFile();
+            }
         });
-        if (restartNotice.isVisible()) {
-            // If settings were changed, save config.
-            Config.getInstance().toFile();
-        }
         // Routing
         Timer timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
