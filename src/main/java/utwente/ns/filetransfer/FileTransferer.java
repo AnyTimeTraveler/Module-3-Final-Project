@@ -98,6 +98,8 @@ public class FileTransferer {
             gui.addFileTransferLogMessage("File received!");
             gui.setProgress(100, 100);
             connection.close();
+            fos.flush();
+            fos.close();
         } catch (IOException | InterruptedException | TimeoutException e) {
             e.printStackTrace();
         }
