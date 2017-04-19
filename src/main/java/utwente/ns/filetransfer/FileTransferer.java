@@ -66,13 +66,11 @@ public class FileTransferer {
                     connection.send(smallerSendBuffer);
                     connection.close();
                     gui.addFileTransferLogMessage("File sent!");
-                    gui.setProgress(100,100);
+                    gui.setProgress(100, 100);
                 } else
                     connection.send(sendBuffer);
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (TimeoutException e) {
+        } catch (IOException | TimeoutException e) {
             e.printStackTrace();
         }
     }
@@ -91,12 +89,14 @@ public class FileTransferer {
             FileOutputStream fos = new FileOutputStream(selectedFile);
             for (int i = 0; i < fileInfo.parts; i++) {
                 byte[] part = connection.receive();
+                if (part == null)
+                    continue;
                 fos.write(part, i * PART_SIZE, part.length);
                 gui.addFileTransferLogMessage("Received Packet! (" + i + 1 + "/" + fileInfo.parts + ")");
                 gui.setProgress(i, fileInfo.parts);
             }
             gui.addFileTransferLogMessage("File received!");
-            gui.setProgress(100,100);
+            gui.setProgress(100, 100);
         } catch (IOException | InterruptedException | TimeoutException e) {
             e.printStackTrace();
         }
@@ -107,7 +107,7 @@ public class FileTransferer {
         private final int size;
         private final int parts;
 
-        public FileInfoPacket(String name, int size) {
+        FileInfoPacket(String name, int size) {
             this.name = name;
             this.size = size;
             parts = size / PART_SIZE + 1;
