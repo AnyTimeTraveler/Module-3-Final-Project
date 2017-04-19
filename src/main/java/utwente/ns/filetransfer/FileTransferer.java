@@ -17,7 +17,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class FileTransferer {
     private static final int PORT = 21;
-    private static final int PART_SIZE = 10 * 1024;
+    private static final int PART_SIZE = 1024;
     private final UniversalCommunicator gui;
     private File file;
     private String address;
@@ -57,7 +57,7 @@ public class FileTransferer {
             FileInputStream fis = new FileInputStream(file);
             byte[] sendBuffer = new byte[PART_SIZE];
             for (int i = 0; i < file.length() / PART_SIZE + 1; i++) {
-                gui.addFileTransferLogMessage("Sending Packet! (" + i + 1 + "/" + file.length() / PART_SIZE + 1 + ")");
+                gui.addFileTransferLogMessage("Sending Packet! (" + (i + 1) + "/" + (file.length() / PART_SIZE + 1) + ")");
                 gui.setProgress(i, ((int) file.length()) / PART_SIZE + 1);
                 int read = fis.read(sendBuffer);
                 if (read < PART_SIZE) {
@@ -97,6 +97,7 @@ public class FileTransferer {
             }
             gui.addFileTransferLogMessage("File received!");
             gui.setProgress(100, 100);
+            connection.close();
         } catch (IOException | InterruptedException | TimeoutException e) {
             e.printStackTrace();
         }
