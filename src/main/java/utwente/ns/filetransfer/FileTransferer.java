@@ -67,6 +67,7 @@ public class FileTransferer {
                     connection.close();
                     gui.addFileTransferLogMessage("File sent!");
                     gui.setProgress(100, 100);
+                    fis.close();
                 } else
                     connection.send(sendBuffer);
             }
