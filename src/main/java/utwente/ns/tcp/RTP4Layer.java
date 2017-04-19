@@ -5,9 +5,7 @@ import utwente.ns.config.Config;
 import utwente.ns.ip.IHRP4Layer;
 
 import java.io.IOException;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeoutException;
@@ -38,7 +36,7 @@ public class RTP4Layer {
     private void run() {
         while (true) {
             synchronized (registeredConnections) {
-                if (DEBUG) System.out.println(Thread.currentThread().getName() + "> Scanning");
+                //if (DEBUG) System.out.println(Thread.currentThread().getName() + "> Scanning");
                 registeredConnections.stream().filter(connection -> connection.getState() == ConnectionState.TIME_WAIT).forEach(RTP4Connection::clear);
                 registeredConnections.removeAll(registeredConnections.stream()
                         .filter(connection -> connection.getState() == ConnectionState.CLOSED)
@@ -55,7 +53,7 @@ public class RTP4Layer {
                 registeredConnections.forEach(RTP4Connection::handleAction);
                 registeredConnections.forEach(RTP4Connection::resendPacket);
                 if (DEBUG)
-                    registeredConnections.forEach(connection -> System.out.println(Thread.currentThread().getName() + "> " + connection.getRemoteHost().getPort() + "-" + connection.getState()));
+                    log();
             }
             try {
                 Thread.sleep(SEND_INTERVAL);
@@ -104,5 +102,14 @@ public class RTP4Layer {
         CLOSE, CONNECT, SEND
     }
 
-
+    private Map<RTP4Connection, String> conLogTuples = new HashMap<>();
+    private void log() {
+        for (RTP4Connection registeredConnection : registeredConnections) {
+            String logVal = Thread.currentThread().getName() + "> " + registeredConnection.getRemoteHost().getPort() + "-" + registeredConnection.getState();
+            if (!conLogTuples.containsKey(registeredConnection) || !conLogTuples.get(registeredConnection).equals(logVal)) {
+                System.out.println(logVal);
+                conLogTuples.put(registeredConnection, logVal);
+            }
+        }
+    }
 }
