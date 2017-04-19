@@ -348,7 +348,7 @@ public class UniversalCommunicator implements IUserInterface {
         final JScrollPane scrollPane1 = new JScrollPane();
         panel3.add(scrollPane1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         conversationList = new JList();
-        conversationList.setSelectionMode(2);
+        conversationList.setSelectionMode(0);
         scrollPane1.setViewportView(conversationList);
         sendButton = new JButton();
         sendButton.setText("Send");
