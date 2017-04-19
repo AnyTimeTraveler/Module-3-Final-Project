@@ -63,13 +63,26 @@ public class FileTransferer {
                 if (read < Config.getInstance().filePartSize) {
                     byte[] smallerSendBuffer = new byte[read];
                     System.arraycopy(sendBuffer, 0, smallerSendBuffer, 0, read);
-                    connection.send(smallerSendBuffer);
+                    try {
+                        connection.send(smallerSendBuffer);
+                    } catch (TimeoutException e) {
+                        System.err.println("---> Retrying...");
+                        e.printStackTrace();
+                        // Retrying
+                    }
                     connection.close();
                     gui.addFileTransferLogMessage("File sent!");
                     gui.setProgress(100, 100);
                     fis.close();
-                } else
-                    connection.send(sendBuffer);
+                } else {
+                    try {
+                        connection.send(sendBuffer);
+                    } catch (TimeoutException e) {
+                        System.err.println("---> Retrying...");
+                        e.printStackTrace();
+                        // Retrying
+                    }
+                }
             }
         } catch (IOException | TimeoutException e) {
             e.printStackTrace();
@@ -81,7 +94,17 @@ public class FileTransferer {
         try {
             RTP4Socket socket = gui.getNetworkStack().getRtp4Layer().open(PORT);
             RTP4Connection connection = socket.accept();
-            FileInfoPacket fileInfo = new FileInfoPacket(connection.receive());
+            byte[] fileInfoData = null;
+            while (fileInfoData == null) {
+                try {
+                    fileInfoData = connection.receive();
+                } catch (TimeoutException e) {
+                    System.err.println("---> Retrying...");
+                    e.printStackTrace();
+                    // Retrying
+                }
+            }
+            FileInfoPacket fileInfo = new FileInfoPacket(fileInfoData);
             gui.addFileTransferLogMessage("Received FileInfo!");
             JFileChooser fc = new JFileChooser();
             fc.setName(fileInfo.name);
@@ -89,7 +112,14 @@ public class FileTransferer {
             File selectedFile = fc.getSelectedFile();
             FileOutputStream fos = new FileOutputStream(selectedFile);
             for (int i = 0; i < fileInfo.parts; i++) {
-                byte[] part = connection.receive();
+                byte[] part = new byte[0];
+                try {
+                    part = connection.receive();
+                } catch (TimeoutException e) {
+                    System.err.println("---> Retrying...");
+                    e.printStackTrace();
+                    // Retrying
+                }
                 if (part == null)
                     continue;
                 fos.write(part);
