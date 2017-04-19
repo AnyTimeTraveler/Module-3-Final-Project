@@ -91,8 +91,8 @@ public class FileTransferer {
                 byte[] part = connection.receive();
                 if (part == null)
                     continue;
-                fos.write(part, i * PART_SIZE, part.length);
-                gui.addFileTransferLogMessage("Received Packet! (" + i + 1 + "/" + fileInfo.parts + ")");
+                fos.write(part);
+                gui.addFileTransferLogMessage("Received Packet! (" + (i + 1) + "/" + fileInfo.parts + ")");
                 gui.setProgress(i, fileInfo.parts);
             }
             gui.addFileTransferLogMessage("File received!");
