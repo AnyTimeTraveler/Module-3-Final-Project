@@ -1,4 +1,4 @@
-package utwente.ns.chatlayer;
+package utwente.ns.chatlayer.misc;
 
 import javax.crypto.KeyAgreement;
 import javax.crypto.SecretKeyFactory;

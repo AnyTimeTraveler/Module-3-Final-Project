@@ -1,4 +1,4 @@
-package utwente.ns.chatlayer;
+package utwente.ns.chatlayer.protocol;
 
 import lombok.extern.java.Log;
 

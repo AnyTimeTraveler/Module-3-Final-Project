@@ -1,6 +1,7 @@
-package utwente.ns.chatlayer;
+package utwente.ns.chatlayer.protocol;
 
 import lombok.NoArgsConstructor;
+import utwente.ns.chatlayer.misc.CryptoUtil;
 import utwente.ns.chatstructure.IUser;
 
 import java.util.Date;
@@ -30,7 +31,7 @@ public class PeerIdentity implements Comparable, IUser {
         // TODO: Fingerprint is never set. Intentional?
         if (fingerprint != null) return fingerprint;
 
-        byte[] hash = CryptoUtil.getSHA256Hash((id+name+address+publicKey).getBytes());
+        byte[] hash = CryptoUtil.getSHA256Hash((id + name + address + publicKey).getBytes());
 
         String id = String.format("%02x", hash[0]);
 

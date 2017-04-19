@@ -1,6 +1,7 @@
 package utwente.ns;
 
 import org.reflections.Reflections;
+import utwente.ns.applications.GUIChat;
 import utwente.ns.applications.IApplication;
 
 import java.util.ArrayList;
@@ -13,7 +14,15 @@ import java.util.Scanner;
  *         Created on 4/10/17
  */
 public class Start {
+
+    public static final Class<? extends IApplication> AUTOSTART = GUIChat.class;
+
     public static void main(String[] args) {
+        if (AUTOSTART != null) {
+            startApplicationByClass(AUTOSTART);
+            return;
+        }
+
         Reflections applications = new Reflections("utwente.ns.applications");
         List<Class<? extends IApplication>> applicationClasses = new ArrayList<>(applications.getSubTypesOf(IApplication.class));
         int n;
@@ -39,8 +48,12 @@ public class Start {
         
         Class<? extends IApplication> application = applicationClasses.get(n);
         
+        startApplicationByClass(application);
+    }
+
+    private static void startApplicationByClass(Class<? extends IApplication> clazz) {
         try {
-            application.newInstance().start();
+            clazz.newInstance().start();
         } catch (InstantiationException | IllegalAccessException e) {
             e.printStackTrace();
         }

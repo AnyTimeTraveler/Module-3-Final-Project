@@ -4,7 +4,6 @@ import utwente.ns.IPacket;
 import utwente.ns.IReceiveListener;
 import utwente.ns.PacketMalformedException;
 import utwente.ns.Util;
-import utwente.ns.config.Config;
 import utwente.ns.ip.HRP4Packet;
 import utwente.ns.ip.IHRP4Socket;
 
@@ -41,15 +40,10 @@ public class RTP4Socket implements IReceiveListener, Closeable {
         RemoteHost remoteHost;
         while (true) {
             HRP4Packet synPacket;
-            long timeStart = System.currentTimeMillis();
-            long timeout = Config.getInstance().tcpListenTimeout;
             while (true) {
                 synPacket = receivedSynQueue.poll();
                 if (synPacket != null) {
                     break;
-                }
-                if (timeout >= 0 && System.currentTimeMillis() - timeStart > timeout) {
-                    throw new TimeoutException("Got no connection request within timeout");
                 }
                 try {
                     Thread.sleep(100);
@@ -98,7 +92,7 @@ public class RTP4Socket implements IReceiveListener, Closeable {
     public void receive(IPacket packet) {
         if (packet instanceof HRP4Packet) { //TODO Check if not closed
             HRP4Packet hrp4Packet = ((HRP4Packet) packet);
-            RemoteHost remoteHost = new RemoteHost(hrp4Packet.getSrcAddr(), hrp4Packet.getSrcPort());
+            RemoteHost remoteHost = new RemoteHost(hrp4Packet.getSrcAddr(), hrp4Packet.getSrcPort() & 0xFFFF);
             if (remoteHostRTP4ConnectionMap.containsKey(remoteHost)) {
                 remoteHostRTP4ConnectionMap.get(remoteHost).receive(packet);
             } else {

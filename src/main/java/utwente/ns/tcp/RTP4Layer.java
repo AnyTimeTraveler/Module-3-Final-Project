@@ -18,7 +18,8 @@ import java.util.stream.Collectors;
  */
 public class RTP4Layer {
     private static final int SEND_INTERVAL = Config.getInstance().tcpPacketInterval;
-    public static final boolean DEBUG = false;
+    public static final boolean DEBUG = true;
+    //TODO remove
 
     @Getter
     private IHRP4Layer ipLayer;

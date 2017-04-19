@@ -35,8 +35,8 @@ public class Config {
         name = "UNSET";
         maxSegmentLife = 5;
         maxSegmentLife = 2*60000;
-        tcpPacketTimeout = 5;
-        tcpListenTimeout = 60000;
+        tcpPacketTimeout = 1000;
+        tcpListenTimeout = 3500;
         tcpPacketInterval = 10;
     }
 

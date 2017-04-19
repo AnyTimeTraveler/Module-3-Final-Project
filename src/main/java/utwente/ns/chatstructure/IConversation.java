@@ -1,6 +1,6 @@
 package utwente.ns.chatstructure;
 
-import utwente.ns.chatlayer.ChatMessage;
+import utwente.ns.chatlayer.protocol.ChatMessage;
 
 /**
  * Created by simon on 14.04.17.

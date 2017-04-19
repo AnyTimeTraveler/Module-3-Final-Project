@@ -7,6 +7,13 @@ import utwente.ns.IPacket;
 import utwente.ns.IReceiveListener;
 import utwente.ns.NetworkStack;
 import utwente.ns.Util;
+import utwente.ns.chatlayer.misc.CryptoUtil;
+import utwente.ns.chatlayer.network.IRequestHandler;
+import utwente.ns.chatlayer.network.RTP4SocketListener;
+import utwente.ns.chatlayer.protocol.ChatMessage;
+import utwente.ns.chatlayer.protocol.ChatMessageContent;
+import utwente.ns.chatlayer.protocol.GenericResponse;
+import utwente.ns.chatlayer.protocol.PeerIdentity;
 import utwente.ns.chatstructure.IChatController;
 import utwente.ns.chatstructure.IConversation;
 import utwente.ns.chatstructure.IUser;
@@ -14,6 +21,8 @@ import utwente.ns.chatstructure.IUserInterface;
 import utwente.ns.config.Config;
 import utwente.ns.ip.HRP4Packet;
 import utwente.ns.ip.IHRP4Socket;
+import utwente.ns.tcp.RTP4Connection;
+import utwente.ns.tcp.RTP4Socket;
 import utwente.ns.ui.SimpleTUI;
 
 import java.io.IOException;
@@ -25,13 +34,14 @@ import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 
 /**
  * Created by Harindu Perera on 4/12/17.
  */
 @Log
-public class ChatClient implements IReceiveListener, IChatController {
+public class ChatClient implements IReceiveListener, IChatController, IRequestHandler {
 
     public static final int MAX_AVAILABLE_PEER_COUNT = 10;
     public static final short IDENTITY_PORT = 1024;
@@ -41,10 +51,10 @@ public class ChatClient implements IReceiveListener, IChatController {
 
     private final NetworkStack networkStack;
     private final String name;
+    private RTP4Socket messageSocket;
     private final boolean isGUI;
     @Getter
     private final IUserInterface ui;
-    private IHRP4Socket messageSocket;
     private IHRP4Socket identitySocket;
     private String id;
     private List<ChatConversation> conversations = new LinkedList<>();
@@ -81,7 +91,7 @@ public class ChatClient implements IReceiveListener, IChatController {
         return new PeerIdentity(id, name, this.getOwnAddress(), CryptoUtil.encodePublicKey(this.keyPair.getPublic()));
     }
 
-    public void addPeer(PeerIdentity identity) throws InvalidKeySpecException, InvalidKeyException {
+    private void addPeer(PeerIdentity identity) throws InvalidKeySpecException, InvalidKeyException {
 
         // decode the public key of the peer
         PublicKey peerPublicKey = CryptoUtil.decodePublicKey(identity.publicKey);
@@ -164,9 +174,12 @@ public class ChatClient implements IReceiveListener, IChatController {
 
     public void run() {
         try {
-            this.messageSocket = this.networkStack.getRtp4Layer().getIpLayer().open(MESSAGE_PORT);
             this.identitySocket = this.networkStack.getRtp4Layer().getIpLayer().open(IDENTITY_PORT);
-            this.messageSocket.addReceiveListener(this);
+            this.messageSocket = this.networkStack.getRtp4Layer().open(MESSAGE_PORT);
+
+            RTP4SocketListener msgListener = new RTP4SocketListener(messageSocket, this);
+            new Thread(msgListener).start();
+
             this.identitySocket.addReceiveListener(this);
 
             Timer broadcastTimer = new Timer();
@@ -213,28 +226,30 @@ public class ChatClient implements IReceiveListener, IChatController {
         this.onPeerIdentity(identity, fromAddr);
     }
 
-    private void onMessageData(byte[] data) {
+    private void onMessageData(byte[] data) throws IllegalArgumentException {
         ChatMessage message = Util.fromJsonBytes(data, ChatMessage.class);
-        if (message == null) {
+        if (message == null || message.getMessageId() == null || message.getSenderId() == null) {
             log.log(Level.WARNING, "Message JSON unmarshal was null");
-            return;
+            throw new IllegalArgumentException();
         }
-
         this.onMessage(message);
     }
 
+
+    private void sendData(String toAddr, int port, byte[] data) throws IOException, TimeoutException {
+        try (RTP4Connection conn = this.networkStack.getRtp4Layer().connect(toAddr, port)) {
+            conn.send(data);
+        }
+    }
+
     private void sendData(IHRP4Socket sock, String toAddr, short toPort, byte[] data) throws IOException {
-        if (sock == null)
-            this.messageSocket.send(data, Util.addressStringToInt(toAddr), toPort);
-        else
-            sock.send(data, Util.addressStringToInt(toAddr), toPort);
+//        if (sock == null)
+//            //this.messageSocket.send(data, Util.addressStringToInt(toAddr), toPort);
+//        else
+            if (sock != null) sock.send(data, Util.addressStringToInt(toAddr), toPort);
     }
 
-    private void sendData(String toAddr, short toPort, byte[] data) throws IOException {
-        this.sendData(null, toAddr, toPort, data);
-    }
-
-    public void sendChatMessage(ChatMessage message) throws IOException {
+    public void sendChatMessage(ChatMessage message) throws IOException, TimeoutException {
         PeerInfo recipient = this.connectedPeers.get(message.getRecipientId());
 
         if (recipient == null) {
@@ -250,7 +265,7 @@ public class ChatClient implements IReceiveListener, IChatController {
 
         if (conversation == null) {
             log.log(Level.WARNING, "Message from unknown group or unconnected sender; dropped");
-            return;
+            throw new IllegalArgumentException();
         }
 
         conversation.onNewMessage(message);
@@ -270,10 +285,6 @@ public class ChatClient implements IReceiveListener, IChatController {
                 } catch (UnknownHostException e) {
                     e.printStackTrace();
                 }
-                break;
-            case MESSAGE_PORT:
-                this.onMessageData(hrp4Packet.getData());
-                break;
         }
     }
 
@@ -345,6 +356,20 @@ public class ChatClient implements IReceiveListener, IChatController {
     @Override
     public IUser getMyUser() {
         return this.getIdentity();
+    }
+
+    @Override
+    public byte[] handleData(String addr, int port, byte[] data) {
+        switch (port) {
+            case MESSAGE_PORT:
+                try {
+                    onMessageData(data);
+                } catch (IllegalArgumentException e) {
+                    return Util.toJsonBytes(GenericResponse.failureResponse("Invalid message data"));
+                }
+                return Util.toJsonBytes(GenericResponse.successResponse());
+        }
+        return Util.toJsonBytes(GenericResponse.failureResponse("Invalid request port"));
     }
 
     @AllArgsConstructor

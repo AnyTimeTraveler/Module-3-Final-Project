@@ -1,5 +1,8 @@
 package utwente.ns.chatlayer;
 
+import utwente.ns.chatlayer.protocol.ChatMessage;
+import utwente.ns.chatlayer.protocol.TextMessageContent;
+
 import java.security.PrivateKey;
 
 /**
