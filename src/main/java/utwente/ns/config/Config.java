@@ -37,7 +37,7 @@ public class Config {
         maxSegmentLife = 5;
         maxSegmentLife = 2*60000;
         tcpPacketTimeout = 1000;
-        tcpListenTimeout = -1;
+        tcpListenTimeout = 5000;
         tcpPacketInterval = 10;
         filePartSize = 1024;
     }
