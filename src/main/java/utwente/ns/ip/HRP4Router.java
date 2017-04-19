@@ -39,7 +39,9 @@ public class HRP4Router {
      */
     public List<BCN4RoutingEntryWrapper> getRoutingEntries() {
         List<BCN4RoutingEntryWrapper> entries = new ArrayList<>();
-        linkTable.forEach((m, n) -> n.forEach((o, p) -> entries.add(p)));
+        synchronized (this) {
+            linkTable.forEach((m, n) -> n.forEach((o, p) -> entries.add(p)));
+        }
         return entries;
     }
 
@@ -98,19 +100,21 @@ public class HRP4Router {
      * @param ttl The time before expiry of this record
      */
     private void processEntry(int addr1, int addr2, byte weight, byte ttl) {
-        if (!linkTable.containsKey(addr1)) {
-            linkTable.put(addr1, new HashMap<>());
-        }
-        Map<Integer, BCN4RoutingEntryWrapper> routes = linkTable.get(addr1);
-        if (routes.containsKey(addr2)) {
-            BCN4RoutingEntryWrapper route = routes.get(addr2);
-            if (route.getRemaining() < TTL_MULTIPLIER * ((int) ttl)) {
-                route.setTimeSince(System.currentTimeMillis());
-                route.getBcn4Entry().setLinkCost(weight);
-                route.getBcn4Entry().setTTL(ttl);
+        synchronized (this) {
+            if (!linkTable.containsKey(addr1)) {
+                linkTable.put(addr1, new HashMap<>());
             }
-        } else {
-            routes.put(addr2, new BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry(weight, ttl, addr1, addr2)));
+            Map<Integer, BCN4RoutingEntryWrapper> routes = linkTable.get(addr1);
+            if (routes.containsKey(addr2)) {
+                BCN4RoutingEntryWrapper route = routes.get(addr2);
+                if (route.getRemaining() < TTL_MULTIPLIER * ((int) ttl)) {
+                    route.setTimeSince(System.currentTimeMillis());
+                    route.getBcn4Entry().setLinkCost(weight);
+                    route.getBcn4Entry().setTTL(ttl);
+                }
+            } else {
+                routes.put(addr2, new BCN4RoutingEntryWrapper(new BCN4Packet.RoutingEntry(weight, ttl, addr1, addr2)));
+            }
         }
     }
 
@@ -118,15 +122,17 @@ public class HRP4Router {
      * updateTTL checks expiry of records in the routing table, and removes them.
      */
     private void updateTTL() {
-        for (Map.Entry<Integer, Map<Integer, BCN4RoutingEntryWrapper>> node: linkTable.entrySet()) {
-            List<Integer> toRemove = new LinkedList<>();
-            for (Map.Entry<Integer, BCN4RoutingEntryWrapper> entry: node.getValue().entrySet()) {
-                if (entry.getValue().isExpired()) {
-                    toRemove.add(entry.getKey());
+        synchronized (this) {
+            for (Map.Entry<Integer, Map<Integer, BCN4RoutingEntryWrapper>> node : linkTable.entrySet()) {
+                List<Integer> toRemove = new LinkedList<>();
+                for (Map.Entry<Integer, BCN4RoutingEntryWrapper> entry : node.getValue().entrySet()) {
+                    if (entry.getValue().isExpired()) {
+                        toRemove.add(entry.getKey());
+                    }
                 }
-            }
-            for (Integer rem : toRemove) {
-                node.getValue().remove(rem);
+                for (Integer rem : toRemove) {
+                    node.getValue().remove(rem);
+                }
             }
         }
     }
@@ -147,9 +153,9 @@ public class HRP4Router {
 
         while(open.size() > 0) {
 
-        	// Find the first node in the open set
+            // Find the first node in the open set
             RoutingEntry lowest = null;
-            for (RoutingEntry entry: open) {
+            for (RoutingEntry entry : open) {
                 if (lowest == null || entry.cost < lowest.cost) lowest = entry;
             }
 
@@ -158,39 +164,41 @@ public class HRP4Router {
             closed.add(lowest);
             visited.add(lowest.destination);
 
-            if (linkTable.get(lowest.destination) == null) {
-                continue;
-            }
-
-            // Loop through all routes from that node to all other nodes
-            for (Map.Entry<Integer, BCN4RoutingEntryWrapper> entry: linkTable.get(lowest.destination).entrySet()) {
-                int alt = lowest.cost + entry.getValue().getBcn4Entry().getLinkCost();
-
-                // Find whether that node is already in the open set
-                int index = -1;
-                for (int i = 0; i < open.size(); i++) {
-                    if(open.get(i).destination == entry.getKey()) {
-                        index = i;
-                        break;
-                    }
-                }
-
-                // If it is already visited, continue
-                if (visited.contains(entry.getKey())) {
+            synchronized (this) {
+                if (linkTable.get(lowest.destination) == null) {
                     continue;
                 }
 
-                // If the node wasn't opened yet, open it
-                if (index == -1) {
-                    open.add(new RoutingEntry(entry.getKey(), lowest.hop == -1 ? entry.getKey() : lowest.hop, alt));
-                }else if (alt < open.get(index).cost) {
-                	// Otherwise, if the link-cost is lower, replace it.
-                    open.get(index).cost = alt;
-                    open.get(index).hop = lowest.hop;
+                // Loop through all routes from that node to all other nodes
+                for (Map.Entry<Integer, BCN4RoutingEntryWrapper> entry : linkTable.get(lowest.destination).entrySet()) {
+                    int alt = lowest.cost + entry.getValue().getBcn4Entry().getLinkCost();
 
-                    // If the first-hop is still -1, replace it with the current node, to denote the first/next hop
-                    if(lowest.hop == -1) {
-                        open.get(index).hop = entry.getKey();
+                    // Find whether that node is already in the open set
+                    int index = -1;
+                    for (int i = 0; i < open.size(); i++) {
+                        if (open.get(i).destination == entry.getKey()) {
+                            index = i;
+                            break;
+                        }
+                    }
+
+                    // If it is already visited, continue
+                    if (visited.contains(entry.getKey())) {
+                        continue;
+                    }
+
+                    // If the node wasn't opened yet, open it
+                    if (index == -1) {
+                        open.add(new RoutingEntry(entry.getKey(), lowest.hop == -1 ? entry.getKey() : lowest.hop, alt));
+                    } else if (alt < open.get(index).cost) {
+                        // Otherwise, if the link-cost is lower, replace it.
+                        open.get(index).cost = alt;
+                        open.get(index).hop = lowest.hop;
+
+                        // If the first-hop is still -1, replace it with the current node, to denote the first/next hop
+                        if (lowest.hop == -1) {
+                            open.get(index).hop = entry.getKey();
+                        }
                     }
                 }
             }
