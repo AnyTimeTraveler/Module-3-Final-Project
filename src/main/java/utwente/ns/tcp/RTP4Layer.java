@@ -87,7 +87,8 @@ public class RTP4Layer {
 
     enum ConnectionState {
         SYN_ACCEPTED,
-        SYN_SENT,
+        SYN_SENT_1,
+        SYN_SENT_2,
         ESTABLISHED,
         FIN_WAIT_1,
         FIN_WAIT_2,

@@ -49,7 +49,6 @@ public class SimulatedRTP4Test {
         while (connectionB.getState() != RTP4Layer.ConnectionState.CLOSED) {
             Thread.sleep(1000);
         }
-
     }
 
 }

@@ -7,10 +7,7 @@ import utwente.ns.Util;
 import utwente.ns.tcp.RTP4Packet;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NavigableSet;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * Created by Niels Overkamp on 13-Apr-17.
@@ -38,6 +35,10 @@ public class SimulatedHRP4Layer implements IHRP4Layer {
         } catch (PacketMalformedException e) {
             return;
         }
+        if (new Random().nextBoolean()) {
+            System.out.println(Thread.currentThread().getName() + "> " + "Dropped packet " + rtp4Packet);
+            return;
+        }
         System.out.print(Thread.currentThread().getName() + "> ");
         if (packet instanceof HRP4Packet){
             HRP4Packet hrp4Packet = ((HRP4Packet) packet);
@@ -53,7 +54,7 @@ public class SimulatedHRP4Layer implements IHRP4Layer {
     public synchronized void addReceiveListener(IReceiveListener receiver) {
         this.receiveListeners.add(receiver);
         if (receiver instanceof IHRP4Socket) {
-        	ports.add((int) ((IHRP4Socket) receiver).getDstPort());
+        	ports.add(((IHRP4Socket) receiver).getDstPort());
 		}
     }
 
@@ -72,7 +73,7 @@ public class SimulatedHRP4Layer implements IHRP4Layer {
 
 	@Override
 	public IHRP4Socket openRandom() throws IOException {
-		return this.open(Util.randomNotInSet(ports, 1024, 65535));
+		return this.open(Util.randomNotInSet(ports, 1024, 2048));
 	}
 
     @Override

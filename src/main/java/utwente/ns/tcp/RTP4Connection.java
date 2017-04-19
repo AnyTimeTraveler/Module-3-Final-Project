@@ -134,11 +134,21 @@ public class RTP4Connection implements Closeable, IReceiveListener {
                     sendAcknowledgement();
                 }
                 break;
-            case SYN_SENT:
+            case SYN_SENT_1:
                 if (packet.isSyn()) {
                     tcpBlock.registerReceivedSequenceNumber(packet.getSeqNum(), packet.getLength());
                     sendAcknowledgement();
                     state = RTP4Layer.ConnectionState.SYN_ACCEPTED;
+                }
+                if (packet.isAck()) {
+                    receiveAcknowledge(packet);
+                }
+                break;
+            case SYN_SENT_2:
+                if (packet.isSyn()) {
+                    tcpBlock.registerReceivedSequenceNumber(packet.getSeqNum(), packet.getLength());
+                    sendAcknowledgement();
+                    state = RTP4Layer.ConnectionState.ESTABLISHED;
                 }
                 if (packet.isAck()) {
                     receiveAcknowledge(packet);
@@ -236,11 +246,11 @@ public class RTP4Connection implements Closeable, IReceiveListener {
                 switch (state){
                     case CLOSED:
                         sendControl(true, false, false);
-                        state = RTP4Layer.ConnectionState.SYN_SENT;
+                        state = RTP4Layer.ConnectionState.SYN_SENT_1;
                         break;
                     case SYN_ACCEPTED:
                         sendControl(true, true, false);
-                        state = RTP4Layer.ConnectionState.SYN_SENT;
+                        state = RTP4Layer.ConnectionState.SYN_SENT_1;
                 }
                 break;
             case SEND:
@@ -252,7 +262,7 @@ public class RTP4Connection implements Closeable, IReceiveListener {
                 break;
             case CLOSE:
                 switch (state) {
-                    case SYN_SENT:
+                    case SYN_SENT_1:
                         actionQueue.offer(action);
                         break;
                     case SYN_ACCEPTED:
@@ -297,9 +307,15 @@ public class RTP4Connection implements Closeable, IReceiveListener {
                     unacknowledgedPacketQueue.remove();
                     switch (state) {
                         case SYN_ACCEPTED:
-                        case SYN_SENT:
                             if (acknowledgedPacket.isSyn()) {
                                 state = RTP4Layer.ConnectionState.ESTABLISHED;
+                            } else {
+                                System.err.print(acknowledgedPacket.toString() + " is in unacknowledgedPacketQueue but should not be");
+                            }
+                            break;
+                        case SYN_SENT_1:
+                            if (acknowledgedPacket.isSyn()) {
+                                state = RTP4Layer.ConnectionState.SYN_SENT_2;
                             } else {
                                 System.err.print(acknowledgedPacket.toString() + " is in unacknowledgedPacketQueue but should not be");
                             }
@@ -382,7 +398,15 @@ public class RTP4Connection implements Closeable, IReceiveListener {
     }
 
     public byte[] receive() throws InterruptedException, TimeoutException {
-        return receivedDataQueue.poll(LISTEN_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        if (LISTEN_TIMEOUT_MILLIS >= 0) {
+            byte[] data = receivedDataQueue.poll(LISTEN_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+            if (data == null || data.length <= 0) {
+                throw new TimeoutException("Did not receive packet within timeout");
+            }
+            return data;
+        } else {
+            return receivedDataQueue.take();
+        }
     }
 
     public boolean localIsClosed(){
