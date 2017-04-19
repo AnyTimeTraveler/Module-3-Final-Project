@@ -72,12 +72,9 @@ public class UniversalCommunicator implements IUserInterface {
         $$$setupUI$$$();
     }
 
-    public UniversalCommunicator() {
-
-    }
-
     @Override
     public void update(String msg) {
+        System.out.println(msg);
         if (selectedConversation != null)
             chatHistoryTextArea.setText(Arrays.stream(selectedConversation.getChatHistory()).map(message -> ((chatClient.getUserById(message.getSender())) != null ? chatClient.getUserById(message.getSender()).getName() : "ERROR") + " : " + message.getMessage()).collect(Collectors.joining("\n")));
         updateConversations(chatClient.getConversations());
@@ -128,14 +125,17 @@ public class UniversalCommunicator implements IUserInterface {
         messageTextField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
-                if (e.getKeyChar() == '\n') {
+                if (e.getKeyChar() == '\n' && selectedConversation != null && !messageTextField.getText().trim().isEmpty()) {
                     sendMessage();
-                    messageTextField.setText("");
                 } else
                     super.keyPressed(e);
             }
         });
-        sendButton.addActionListener(e -> sendMessage());
+        sendButton.addActionListener(e -> {
+            if (selectedConversation != null && !messageTextField.getText().trim().isEmpty()) {
+                sendMessage();
+            }
+        });
         addContactButton.addActionListener(e -> {
             Thread t = new Thread(() -> {
                 LinkedBlockingQueue<List<IUser>> selectionQueue = new LinkedBlockingQueue<>();
@@ -306,9 +306,8 @@ public class UniversalCommunicator implements IUserInterface {
      */
     private void sendMessage() {
         Thread sendMessageThread = new Thread(() -> {
-            if (selectedConversation != null && !messageTextField.getText().trim().isEmpty()) {
-                selectedConversation.sendMessage(messageTextField.getText());
-            }
+            selectedConversation.sendMessage(messageTextField.getText());
+            messageTextField.setText("");
         });
         sendMessageThread.setDaemon(true);
         sendMessageThread.setName("MessageSinding Thread");
