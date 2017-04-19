@@ -13,6 +13,7 @@ import java.util.AbstractMap;
 import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -89,7 +90,7 @@ public class RTP4Connection implements Closeable, IReceiveListener {
     }
 
     void handlePacket() {
-        if (state == RTP4Layer.ConnectionState.CLOSED || state == RTP4Layer.ConnectionState.TIME_WAIT) {
+        if (state == RTP4Layer.ConnectionState.CLOSED) {
             return;
         }
         HRP4Packet hrp4Packet = receivedPacketQueue.poll();
@@ -125,6 +126,12 @@ public class RTP4Connection implements Closeable, IReceiveListener {
             case SYN_ACCEPTED:
                 if (packet.isAck()) {
                     receiveAcknowledge(packet);
+                }
+                if (packet.getData().length > 0) {
+                    receivedDataQueue.add(packet.getData());
+                }
+                if (packet.getLength() > 0) {
+                    sendAcknowledgement();
                 }
                 break;
             case SYN_SENT:
@@ -183,6 +190,7 @@ public class RTP4Connection implements Closeable, IReceiveListener {
             case CLOSING:
             case CLOSE_WAIT:
             case LAST_ACK:
+            case TIME_WAIT:
                 if (packet.isAck()) {
                     receiveAcknowledge(packet);
                 }
@@ -331,7 +339,7 @@ public class RTP4Connection implements Closeable, IReceiveListener {
     }
 
     private void sendData(byte[] data) {
-        send(new RTP4Packet(tcpBlock.takeSendSequenceNumber(data.length), tcpBlock.receiveNext, false, false, false, false, tcpBlock.receiveWindow, data));
+        send(new RTP4Packet(tcpBlock.takeSendSequenceNumber(data.length), tcpBlock.receiveNext, false, true, false, false, tcpBlock.receiveWindow, data));
     }
 
     private void send(RTP4Packet packet) {
@@ -374,18 +382,7 @@ public class RTP4Connection implements Closeable, IReceiveListener {
     }
 
     public byte[] receive() throws InterruptedException, TimeoutException {
-        long timeStart = System.currentTimeMillis();
-        byte[] data = receivedDataQueue.take();
-        while (!remoteIsClosed()) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException ignored) {
-            }
-            if (LISTEN_TIMEOUT_MILLIS >= 0 && System.currentTimeMillis() - timeStart > LISTEN_TIMEOUT_MILLIS) {
-                throw new TimeoutException("Timed out while receiving");
-            }
-        }
-        return data;
+        return receivedDataQueue.poll(LISTEN_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
     }
 
     public boolean localIsClosed(){
