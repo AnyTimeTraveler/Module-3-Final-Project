@@ -83,6 +83,7 @@ public class RTP4Connection implements Closeable, IReceiveListener {
             } catch (InterruptedException ignored) {
             }
             if (timeout >= 0 && System.currentTimeMillis() - timeStart > timeout) {
+                forceClose();
                 throw new TimeoutException("Could not create connection within timeout");
             }
         }
@@ -262,8 +263,9 @@ public class RTP4Connection implements Closeable, IReceiveListener {
             case CLOSE:
                 switch (state) {
                     case SYN_SENT_1:
-                        actionQueue.offer(action);
+                        state = RTP4Layer.ConnectionState.TIME_WAIT;
                         break;
+                    case SYN_SENT_2:
                     case SYN_ACCEPTED:
                     case ESTABLISHED:
                         state = RTP4Layer.ConnectionState.FIN_WAIT_1;
@@ -467,6 +469,21 @@ public class RTP4Connection implements Closeable, IReceiveListener {
         }
     }
 
+    private synchronized void forceClose(){
+        unacknowledgedPacketQueue.clear();
+        unAcknowledgedDataQueue.clear();
+        receivedDataQueue.clear();
+        sendDataQueue.clear();
+        receivedPacketQueue.clear();
+        actionQueue.clear();
+        timeWaitStart = System.currentTimeMillis();
+        state = RTP4Layer.ConnectionState.TIME_WAIT;
+        try {
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     class TCPBlock {
 
