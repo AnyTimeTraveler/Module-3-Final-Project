@@ -1,5 +1,6 @@
 package utwente.ns.filetransfer;
 
+import utwente.ns.config.Config;
 import utwente.ns.tcp.RTP4Connection;
 import utwente.ns.tcp.RTP4Socket;
 import utwente.ns.ui.UniversalCommunicator;
@@ -17,7 +18,6 @@ import java.util.concurrent.TimeoutException;
  */
 public class FileTransferer {
     private static final int PORT = 21;
-    private static final int PART_SIZE = 1024;
     private final UniversalCommunicator gui;
     private File file;
     private String address;
@@ -55,12 +55,12 @@ public class FileTransferer {
             gui.addFileTransferLogMessage("Sending FileInfo...");
             connection.send(new FileInfoPacket(file.getName(), (int) file.length()).toBytes());
             FileInputStream fis = new FileInputStream(file);
-            byte[] sendBuffer = new byte[PART_SIZE];
-            for (int i = 0; i < file.length() / PART_SIZE + 1; i++) {
-                gui.addFileTransferLogMessage("Sending Packet! (" + (i + 1) + "/" + (file.length() / PART_SIZE + 1) + ")");
-                gui.setProgress(i, ((int) file.length()) / PART_SIZE + 1);
+            byte[] sendBuffer = new byte[Config.getInstance().filePartSize];
+            for (int i = 0; i < file.length() / Config.getInstance().filePartSize + 1; i++) {
+                gui.addFileTransferLogMessage("Sending Packet! (" + (i + 1) + "/" + (file.length() / Config.getInstance().filePartSize + 1) + ")");
+                gui.setProgress(i, ((int) file.length()) / Config.getInstance().filePartSize + 1);
                 int read = fis.read(sendBuffer);
-                if (read < PART_SIZE) {
+                if (read < Config.getInstance().filePartSize) {
                     byte[] smallerSendBuffer = new byte[read];
                     System.arraycopy(sendBuffer, 0, smallerSendBuffer, 0, read);
                     connection.send(smallerSendBuffer);
@@ -114,7 +114,7 @@ public class FileTransferer {
         FileInfoPacket(String name, int size) {
             this.name = name;
             this.size = size;
-            parts = size / PART_SIZE + 1;
+            parts = size / Config.getInstance().filePartSize + 1;
         }
 
         private FileInfoPacket(byte[] bytes) {
@@ -123,7 +123,7 @@ public class FileTransferer {
             byte[] nameData = new byte[bytes.length - 4];
             System.arraycopy(bytes, 4, nameData, 0, nameData.length);
             name = new String(nameData);
-            parts = size / PART_SIZE + 1;
+            parts = size / Config.getInstance().filePartSize + 1;
         }
 
         private byte[] toBytes() {
