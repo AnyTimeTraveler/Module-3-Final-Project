@@ -66,7 +66,7 @@ public class FileTransferer {
                     try {
                         connection.send(smallerSendBuffer);
                     } catch (TimeoutException e) {
-                        if (connection.isClosed()) {
+                        if (connection.remoteIsClosed()) {
                             gui.addFileTransferLogMessage("Error!");
                             return;
                         }
@@ -82,7 +82,7 @@ public class FileTransferer {
                     try {
                         connection.send(sendBuffer);
                     } catch (TimeoutException e) {
-                        if (connection.isClosed()) {
+                        if (connection.remoteIsClosed()) {
                             gui.addFileTransferLogMessage("Error!");
                             return;
                         }
@@ -107,7 +107,7 @@ public class FileTransferer {
                 try {
                     fileInfoData = connection.receive();
                 } catch (TimeoutException e) {
-                    if (connection.isClosed()) {
+                    if (connection.remoteIsClosed()) {
                         gui.addFileTransferLogMessage("Error!");
                         return;
                     }
@@ -128,7 +128,7 @@ public class FileTransferer {
                 try {
                     part = connection.receive();
                 } catch (TimeoutException e) {
-                    if (connection.isClosed()) {
+                    if (connection.remoteIsClosed()) {
                         gui.addFileTransferLogMessage("Error!");
                         return;
                     }

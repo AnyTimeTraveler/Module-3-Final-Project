@@ -363,6 +363,7 @@ public class UniversalCommunicator implements IUserInterface {
         scrollPane2.setVerticalScrollBarPolicy(22);
         panel4.add(scrollPane2, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, new Dimension(343, 17), null, 0, false));
         chatHistoryTextArea = new JTextArea();
+        chatHistoryTextArea.setEditable(false);
         chatHistoryTextArea.setLineWrap(true);
         chatHistoryTextArea.setText("");
         chatHistoryTextArea.setWrapStyleWord(true);

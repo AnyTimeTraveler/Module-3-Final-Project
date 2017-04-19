@@ -125,6 +125,7 @@
                       <component id="63520" class="javax.swing.JTextArea" binding="chatHistoryTextArea" default-binding="true">
                         <constraints/>
                         <properties>
+                          <editable value="false"/>
                           <lineWrap value="true"/>
                           <text value=""/>
                           <wrapStyleWord value="true"/>
