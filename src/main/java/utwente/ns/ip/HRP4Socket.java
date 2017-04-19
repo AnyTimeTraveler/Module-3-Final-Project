@@ -40,7 +40,6 @@ public class HRP4Socket implements IHRP4Socket, IReceiveListener, Closeable {
      *
      * @param ipLayer the underlying IP layer that is responsible for sending/receiving raw data
      * @param dstPort the local listener port
-     *
      * @see HRP4Layer
      */
     HRP4Socket(HRP4Layer ipLayer, int dstPort) {
@@ -50,6 +49,7 @@ public class HRP4Socket implements IHRP4Socket, IReceiveListener, Closeable {
 
     /**
      * Receive is usually called by a {@link IHRP4Layer}. This is done upon receiving a packet.
+     *
      * @param packet the packet that was received.
      */
     @Override
@@ -67,9 +67,10 @@ public class HRP4Socket implements IHRP4Socket, IReceiveListener, Closeable {
 
     /**
      * Send sends the data provided to the given dstAddress to the given port.
-     * @param data The data to be sent
+     *
+     * @param data       The data to be sent
      * @param dstAddress The destination host
-     * @param dstPort The destination port
+     * @param dstPort    The destination port
      * @throws IOException when sending has failed (this does not include packet loss)
      */
     public void send(byte[] data, int dstAddress, int dstPort) throws IOException {
@@ -86,6 +87,7 @@ public class HRP4Socket implements IHRP4Socket, IReceiveListener, Closeable {
 
     /**
      * Add a listener to listen for incoming packets
+     *
      * @param listener is called upon receiving incoming packets
      */
     public void addReceiveListener(IReceiveListener listener) {
@@ -94,6 +96,7 @@ public class HRP4Socket implements IHRP4Socket, IReceiveListener, Closeable {
 
     /**
      * Removes the provided listener
+     *
      * @param listener removes the receiveListener
      */
     public void removeReceiveListener(IReceiveListener listener) {

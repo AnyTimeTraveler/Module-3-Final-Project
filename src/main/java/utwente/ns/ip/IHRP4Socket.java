@@ -11,8 +11,11 @@ import java.io.IOException;
 public interface IHRP4Socket extends IReceiveListener, Closeable {
 
     void send(byte[] data, int dstAddress, int dstPort) throws IOException;
+
     void addReceiveListener(IReceiveListener listener);
+
     void removeReceiveListener(IReceiveListener listener);
+
     int getDstPort();
-    
+
 }

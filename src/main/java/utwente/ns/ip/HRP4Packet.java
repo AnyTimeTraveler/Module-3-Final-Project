@@ -55,6 +55,7 @@ public class HRP4Packet implements IPacket {
 
     /**
      * Construct a HRP4Packet with data passed from one layer down (this also unmarshalls)
+     *
      * @param raw; Raw data passed from one layer down
      * @throws PacketMalformedException when packet is too short or contains invalid data
      */
@@ -73,13 +74,15 @@ public class HRP4Packet implements IPacket {
         this.srcPort = buf.getShort();
         this.dstPort = buf.getShort();
         this.TTL = buf.get();
-        buf.getShort();buf.get();
+        buf.getShort();
+        buf.get();
         data = new byte[buf.remaining()];
         buf.get(data);
     }
 
     /**
      * Convert the current layer to a byte[] to be passed to one layer down
+     *
      * @return binary representation of the current packet
      */
     @Override

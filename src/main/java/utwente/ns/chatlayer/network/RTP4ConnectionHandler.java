@@ -31,7 +31,9 @@ public class RTP4ConnectionHandler implements Runnable {
             ByteArrayOutputStream requestBuffer = new ByteArrayOutputStream();
             try {
                 while (!conn.remoteIsClosed()) {
-                    requestBuffer.write(conn.receive());
+                    byte[] data = conn.receive();
+                    if (data == null || data.length == 0) continue;
+                    requestBuffer.write(data);
                 }
                 requestBuffer.close();
             } catch (IOException | InterruptedException | TimeoutException e) {

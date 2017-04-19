@@ -42,6 +42,7 @@ public class HRP4Layer implements IReceiveListener, IHRP4Layer {
 
     /**
      * Constructs a new HRP4Layer that uses the parameter as the sending layer
+     *
      * @param linkLayer the layer that is used to send raw data.
      */
     public HRP4Layer(ILinkLayer linkLayer) {
@@ -75,6 +76,7 @@ public class HRP4Layer implements IReceiveListener, IHRP4Layer {
 
     /**
      * Send sends the specific packet from the lower layer. This is equivalent to calling {@link HRP4Layer#getLowerLayer()#send(IPacket)}
+     *
      * @param packet the packet to be sent
      * @throws IOException when sending fails
      */
@@ -84,6 +86,7 @@ public class HRP4Layer implements IReceiveListener, IHRP4Layer {
 
     /**
      * Adds a receive listener that is called upon receiving an HRP4-compatible packet.
+     *
      * @param receiver is called upon receiving a packet.
      */
     public void addReceiveListener(IReceiveListener receiver) {
@@ -95,15 +98,16 @@ public class HRP4Layer implements IReceiveListener, IHRP4Layer {
 
     /**
      * Opens a socket on the provided port, and registers it on this layer as a listener.
+     *
      * @param port the port to be opened
      * @return the socket that resulted by opening the port.
      * @throws IOException when the port is already opened
      */
     public HRP4Socket open(int port) throws IOException {
         if (this.receiveListeners.parallelStream()
-                                 .filter(listener -> listener instanceof HRP4Socket)
-                                 .map(listener -> (HRP4Socket) listener)
-                                 .anyMatch(listener -> listener.getDstPort() == port)) {
+                .filter(listener -> listener instanceof HRP4Socket)
+                .map(listener -> (HRP4Socket) listener)
+                .anyMatch(listener -> listener.getDstPort() == port)) {
             throw new IOException("Port already opened");
         }
 
@@ -114,6 +118,7 @@ public class HRP4Layer implements IReceiveListener, IHRP4Layer {
 
     /**
      * Opens a random port in the range of 1024..65535
+     *
      * @return the opend socket
      * @throws IOException when failing to open a socket (usually meaning a failure).
      */
