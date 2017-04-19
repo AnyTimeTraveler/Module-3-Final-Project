@@ -66,6 +66,10 @@ public class FileTransferer {
                     try {
                         connection.send(smallerSendBuffer);
                     } catch (TimeoutException e) {
+                        if (connection.isClosed()) {
+                            gui.addFileTransferLogMessage("Error!");
+                            return;
+                        }
                         System.err.println("---> Retrying...");
                         e.printStackTrace();
                         // Retrying
@@ -78,6 +82,10 @@ public class FileTransferer {
                     try {
                         connection.send(sendBuffer);
                     } catch (TimeoutException e) {
+                        if (connection.isClosed()) {
+                            gui.addFileTransferLogMessage("Error!");
+                            return;
+                        }
                         System.err.println("---> Retrying...");
                         e.printStackTrace();
                         // Retrying
@@ -99,6 +107,10 @@ public class FileTransferer {
                 try {
                     fileInfoData = connection.receive();
                 } catch (TimeoutException e) {
+                    if (connection.isClosed()) {
+                        gui.addFileTransferLogMessage("Error!");
+                        return;
+                    }
                     System.err.println("---> Retrying...");
                     e.printStackTrace();
                     // Retrying
@@ -116,6 +128,10 @@ public class FileTransferer {
                 try {
                     part = connection.receive();
                 } catch (TimeoutException e) {
+                    if (connection.isClosed()) {
+                        gui.addFileTransferLogMessage("Error!");
+                        return;
+                    }
                     System.err.println("---> Retrying...");
                     e.printStackTrace();
                     // Retrying
