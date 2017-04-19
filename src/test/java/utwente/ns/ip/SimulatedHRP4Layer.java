@@ -54,7 +54,7 @@ public class SimulatedHRP4Layer implements IHRP4Layer {
     public synchronized void addReceiveListener(IReceiveListener receiver) {
         this.receiveListeners.add(receiver);
         if (receiver instanceof IHRP4Socket) {
-        	ports.add(((IHRP4Socket) receiver).getDstPort());
+        	ports.add((int) ((IHRP4Socket) receiver).getDstPort());
 		}
     }
 
