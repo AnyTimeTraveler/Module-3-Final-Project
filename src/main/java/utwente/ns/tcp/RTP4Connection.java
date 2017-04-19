@@ -13,7 +13,6 @@ import java.util.AbstractMap;
 import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -398,14 +397,20 @@ public class RTP4Connection implements Closeable, IReceiveListener {
     }
 
     public byte[] receive() throws InterruptedException, TimeoutException {
-        if (LISTEN_TIMEOUT_MILLIS >= 0) {
-            byte[] data = receivedDataQueue.poll(LISTEN_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-            if (data == null || data.length <= 0) {
+        long timeStart = System.currentTimeMillis();
+        while (true) {
+            byte[] data = receivedDataQueue.poll();
+            if (data != null && data.length > 0) {
+                return data;
+            }
+            if (LISTEN_TIMEOUT_MILLIS >= 0 && System.currentTimeMillis() - timeStart > LISTEN_TIMEOUT_MILLIS) {
                 throw new TimeoutException("Did not receive packet within timeout");
             }
-            return data;
-        } else {
-            return receivedDataQueue.take();
+            if (remoteIsClosed()) {
+                return null;
+            }
+            Thread.sleep(10);
+
         }
     }
 
