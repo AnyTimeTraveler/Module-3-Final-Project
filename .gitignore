@@ -18,3 +18,4 @@ Module-3-Final-Project.iml
 # For program configs (different user configs)
 config.json
 debug_3.lua
+*.pcapng
