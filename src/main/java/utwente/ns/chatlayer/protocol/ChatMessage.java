@@ -153,4 +153,13 @@ public class ChatMessage implements IMessage {
     public long getTimeOfReceiving() {
         return this.getReceiveTime();
     }
+
+    @Override
+    public String toString() {
+        return "ChatMessage{" +
+                "type='" + type + '\'' +
+                ", data='" + data + '\'' +
+                ", content=" + content +
+                '}';
+    }
 }
