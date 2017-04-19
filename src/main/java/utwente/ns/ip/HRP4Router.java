@@ -35,6 +35,7 @@ public class HRP4Router {
 
     /**
      * Get all single-duplex connections available
+     *
      * @return a list of single-duplex BCN4RoutingEntryWrapper.
      */
     public List<BCN4RoutingEntryWrapper> getRoutingEntries() {
@@ -65,7 +66,7 @@ public class HRP4Router {
         int linkcost = 1;
 
         // Update cost to neighbour
-		processEntry(neighbour, myAddress, (byte) linkcost, DEFAULT_TTL);
+        processEntry(neighbour, myAddress, (byte) linkcost, DEFAULT_TTL);
 
         List<BCN4Packet.RoutingEntry> routingEntries = packet.getRoutingTable();
         processDataTable(routingEntries);
@@ -73,6 +74,7 @@ public class HRP4Router {
 
     /**
      * Process a list of routing entries sent to me
+     *
      * @param table the table of routing entries to be put into the master table
      */
     private void processDataTable(List<BCN4Packet.RoutingEntry> table) {
@@ -94,10 +96,10 @@ public class HRP4Router {
     /**
      * Process one specific routing entry
      *
-     * @param addr1 One endpoint of this connection
-     * @param addr2 The other endpoint of this connection
+     * @param addr1  One endpoint of this connection
+     * @param addr2  The other endpoint of this connection
      * @param weight The link-weight of this connection
-     * @param ttl The time before expiry of this record
+     * @param ttl    The time before expiry of this record
      */
     private void processEntry(int addr1, int addr2, byte weight, byte ttl) {
         synchronized (this) {
@@ -151,7 +153,7 @@ public class HRP4Router {
 
         open.add(new RoutingEntry(sourceAddress, -1, 0));
 
-        while(open.size() > 0) {
+        while (open.size() > 0) {
 
             // Find the first node in the open set
             RoutingEntry lowest = null;
@@ -206,7 +208,7 @@ public class HRP4Router {
 
         HashMap<Integer, Integer> result = new HashMap<>();
 
-        for(RoutingEntry e : closed) {
+        for (RoutingEntry e : closed) {
             if (e.hop != -1) {
                 result.put(e.destination, e.hop);
             }
@@ -238,10 +240,10 @@ public class HRP4Router {
         private int cost;
     }
 
-	/**
-	 * Wrapper for managing routing entries and their TTL.
-	 */
-	@Data
+    /**
+     * Wrapper for managing routing entries and their TTL.
+     */
+    @Data
     @RequiredArgsConstructor
     public static class BCN4RoutingEntryWrapper {
         private final BCN4Packet.RoutingEntry bcn4Entry;
@@ -258,6 +260,7 @@ public class HRP4Router {
 
         /**
          * Gets the adjusted TTL value (should be used over <code>this.getBcn4Entry().getTTL()</code>
+         *
          * @return the actual TTL value
          */
         byte getTTL() {
@@ -269,6 +272,7 @@ public class HRP4Router {
 
         /**
          * Returns <code>this.getTTL() == 0</code>
+         *
          * @return <code>this.getTTL() == 0</code>
          */
         boolean isExpired() {

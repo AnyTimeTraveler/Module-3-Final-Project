@@ -30,8 +30,9 @@ public class BCN4Packet implements IPacket {
 
     /**
      * Construct a new BCN4Packet from raw data and its encapsulating {@link HRP4Packet}
+     *
      * @param hip4Packet the packet that encapsulates this data
-     * @param data that shall be demarshalled into a BCN4Packet
+     * @param data       that shall be demarshalled into a BCN4Packet
      * @throws PacketMalformedException if the packet format does not match
      */
     public BCN4Packet(HRP4Packet hip4Packet, byte[] data) throws PacketMalformedException {
@@ -54,7 +55,8 @@ public class BCN4Packet implements IPacket {
 
     /**
      * Construct a new BCN4Packet from an encapsulating hip4Packet and a list of routing entries.
-     * @param hip4Packet the encapsulating {@link HRP4Packet}
+     *
+     * @param hip4Packet     the encapsulating {@link HRP4Packet}
      * @param routingEntries the routing entries that shall be put into this packet.
      */
     public BCN4Packet(HRP4Packet hip4Packet, List<RoutingEntry> routingEntries) {
@@ -64,8 +66,9 @@ public class BCN4Packet implements IPacket {
 
     /**
      * Create a BCN4Packet from {@link HRP4Router.BCN4RoutingEntryWrapper} and an encapsulating {@link HRP4Packet}
+     *
      * @param routingEntries the routing entries that shall be put into this packet.
-     * @param hip4Packet the encapsulating {@link HRP4Packet}
+     * @param hip4Packet     the encapsulating {@link HRP4Packet}
      */
     public BCN4Packet(List<HRP4Router.BCN4RoutingEntryWrapper> routingEntries, HRP4Packet hip4Packet) {
         this.hip4Packet = hip4Packet;
@@ -79,6 +82,7 @@ public class BCN4Packet implements IPacket {
 
     /**
      * Convert the current packet into a byte[]
+     *
      * @return a byte[] that is ready to send over the network.
      */
     public byte[] marshal() {
@@ -94,8 +98,8 @@ public class BCN4Packet implements IPacket {
     }
 
     /**
-     * @throws UnsupportedOperationException always, this operation is unsupported!
      * @return the content of this packet
+     * @throws UnsupportedOperationException always, this operation is unsupported!
      */
     @Override
     public byte[] getData() {
@@ -124,6 +128,7 @@ public class BCN4Packet implements IPacket {
 
         /**
          * Demarshall a {@link RoutingEntry} from raw data received from the network.
+         *
          * @param data the raw data received from the interwebs.
          */
         @SuppressWarnings("WeakerAccess")
@@ -138,10 +143,11 @@ public class BCN4Packet implements IPacket {
 
         /**
          * Construct a routing entry from linkcost, ttl, and two addresses.
+         *
          * @param linkCost the link-cost of this link
-         * @param TTL the TTL of this link
-         * @param addr0 The first address
-         * @param addr1 The second address
+         * @param TTL      the TTL of this link
+         * @param addr0    The first address
+         * @param addr1    The second address
          */
         @SuppressWarnings("WeakerAccess")
         public RoutingEntry(byte linkCost, byte TTL, int addr0, int addr1) {
@@ -153,6 +159,7 @@ public class BCN4Packet implements IPacket {
 
         /**
          * Convert this entry to a ready-to-send byte[]
+         *
          * @return byte[] that is ready to send and can be demarshalled again into this exact structure.
          */
         @SuppressWarnings("WeakerAccess")
@@ -170,6 +177,7 @@ public class BCN4Packet implements IPacket {
 
         /**
          * Decrement the TTL by a set amount
+         *
          * @param by how much the TTL should be decremented by.
          */
         public void decrementTTL(int by) {
