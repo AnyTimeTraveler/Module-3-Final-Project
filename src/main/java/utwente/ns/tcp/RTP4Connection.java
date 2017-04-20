@@ -19,8 +19,6 @@ import java.util.concurrent.TimeoutException;
  * Created by simon on 07.04.17.
  */
 public class RTP4Connection implements Closeable, IReceiveListener {
-    private static final long PACKET_TIMEOUT_MILLIS = Config.getInstance().tcpPacketTimeout;
-    private static final long LISTEN_TIMEOUT_MILLIS = Config.getInstance().tcpListenTimeout;
     @Getter
     private RemoteHost remoteHost;
     @Getter
@@ -63,7 +61,7 @@ public class RTP4Connection implements Closeable, IReceiveListener {
 
     void connect() throws TimeoutException {
         actionQueue.offer(RTP4Layer.ConnectionAction.CONNECT);
-        waitForEstablishment(LISTEN_TIMEOUT_MILLIS);
+        waitForEstablishment(Config.getInstance().tcpListenTimeout);
     }
 
     void accept(HRP4Packet synPacket) throws PacketMalformedException, TimeoutException {
@@ -72,7 +70,7 @@ public class RTP4Connection implements Closeable, IReceiveListener {
         tcpBlock.registerReceivedSequenceNumber(rtp4Packet.getSeqNum(), rtp4Packet.getLength());
         sendControl(true, true, false);
         state = RTP4Layer.ConnectionState.SYN_ACCEPTED;
-        waitForEstablishment(LISTEN_TIMEOUT_MILLIS);
+        waitForEstablishment(Config.getInstance().tcpListenTimeout);
     }
 
     private void waitForEstablishment(long timeout) throws TimeoutException {
@@ -284,7 +282,7 @@ public class RTP4Connection implements Closeable, IReceiveListener {
         AbstractMap.Entry<RTP4Packet, Long> entry;
         while (true) {
             entry = unacknowledgedPacketQueue.peek();
-            if (entry == null || time - entry.getValue() < PACKET_TIMEOUT_MILLIS) {
+            if (entry == null || time - entry.getValue() < Config.getInstance().tcpPacketTimeout) {
                 break;
             }
             if (RTP4Layer.DEBUG) System.out.println(Thread.currentThread().getName() + "> Found Timed out packet! " + entry.getKey());
@@ -388,7 +386,7 @@ public class RTP4Connection implements Closeable, IReceiveListener {
             if (localIsClosed()) {
                 throw new IOException("Connection closed while sending");
             }
-            if (LISTEN_TIMEOUT_MILLIS >= 0 && System.currentTimeMillis() - timeStart > LISTEN_TIMEOUT_MILLIS) {
+            if (Config.getInstance().tcpListenTimeout >= 0 && System.currentTimeMillis() - timeStart > Config.getInstance().tcpListenTimeout) {
                 throw new TimeoutException("Timed out while sending");
             }
             try {
@@ -405,7 +403,7 @@ public class RTP4Connection implements Closeable, IReceiveListener {
             if (data != null && data.length > 0) {
                 return data;
             }
-            if (LISTEN_TIMEOUT_MILLIS >= 0 && System.currentTimeMillis() - timeStart > LISTEN_TIMEOUT_MILLIS) {
+            if (Config.getInstance().tcpListenTimeout >= 0 && System.currentTimeMillis() - timeStart > Config.getInstance().tcpListenTimeout) {
                 throw new TimeoutException("Did not receive packet within timeout");
             }
             if (remoteIsClosed()) {

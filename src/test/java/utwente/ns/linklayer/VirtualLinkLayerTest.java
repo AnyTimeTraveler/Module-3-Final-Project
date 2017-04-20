@@ -15,7 +15,7 @@ public class VirtualLinkLayerTest {
 
     @Before
     public void setUp() throws Exception {
-        linkLayer = new VirtualLinkLayer(2048);
+        linkLayer = new VirtualLinkLayer(() -> 2048);
         sent = false;
     }
 

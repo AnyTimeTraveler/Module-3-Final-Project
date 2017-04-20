@@ -11,6 +11,7 @@ import utwente.ns.chatstructure.IConversation;
 import utwente.ns.chatstructure.IUser;
 import utwente.ns.chatstructure.IUserInterface;
 import utwente.ns.config.Config;
+import utwente.ns.config.RequiresRestart;
 import utwente.ns.filetransfer.FileTransferer;
 
 import javax.swing.*;
@@ -253,25 +254,34 @@ public class UniversalCommunicator implements IUserInterface {
     private void saveConfigIfNeeded() {
         try {
             Field setting = settings.get(settingsList.getSelectedValue());
+            boolean isRestartRequired = setting.getAnnotationsByType(RequiresRestart.class).length != 0;
             if (settingIsBoolean) {
                 if ((boolean) setting.get(Config.getInstance()) != settingsCheckBox.isSelected()) {
                     setting.setBoolean(Config.getInstance(), settingsCheckBox.isSelected());
-                    restartNotice.setVisible(true);
+                    if (isRestartRequired) {
+                        restartNotice.setVisible(true);
+                    }
                 }
             } else {
                 if (!String.valueOf(setting.get(Config.getInstance())).equals(settingsTextField.getText())) {
                     switch (setting.getType().toString().toLowerCase()) {
                         case "class java.lang.string":
                             setting.set(Config.getInstance(), settingsTextField.getText());
-                            restartNotice.setVisible(true);
+                            if (isRestartRequired) {
+                                restartNotice.setVisible(true);
+                            }
                             break;
                         case "int":
                             setting.setInt(Config.getInstance(), Integer.parseInt(settingsTextField.getText()));
-                            restartNotice.setVisible(true);
+                            if (isRestartRequired) {
+                                restartNotice.setVisible(true);
+                            }
                             break;
                         case "byte":
                             setting.setByte(Config.getInstance(), Byte.parseByte(settingsTextField.getText()));
-                            restartNotice.setVisible(true);
+                            if (isRestartRequired) {
+                                restartNotice.setVisible(true);
+                            }
                             break;
                         default:
                             System.err.println("Type not defined!");

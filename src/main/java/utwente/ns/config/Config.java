@@ -11,35 +11,59 @@ public class Config {
     private static final String CONFIGFILE = "config.json";
     private static Config instance;
 
+    // Transport stuff
+    @RequiresRestart
     public String multicastAddress;
+    @RequiresRestart
     public int multicastPort;
+
+    // Routing stuff
+    @RequiresRestart
     public int baconInterval;
-    public byte baconPacketTTL;
-    public String myAddress;
+    public int defaultRoutingEntryTTL;
     public byte defaultHRP4TTL;
+    public String myAddress;
+    public boolean smartRouting;
+
+    // TCP stuff
     public int segmentBufferSize;
-    public String name;
     public int maxSegmentLife;
     public int tcpPacketTimeout;
     public int tcpListenTimeout;
     public int tcpPacketInterval;
+
+    // Application stuff
     public int filePartSize;
+    @RequiresRestart
+    public String name;
+    public long availablePeerTimeout;
+    public long connectedPeerTimeout;
 
     private Config() {
+
+        // Transport stuff
         multicastAddress = "228.0.0.1";
         multicastPort = 1337;
+
+        // Routing stuff
         baconInterval = 1000;
-        baconPacketTTL = 4;
-        myAddress = "CHANGE ME, I'M DEFINITELY NOT CONFIGURED YET!";
+        defaultRoutingEntryTTL = 3200;
         defaultHRP4TTL = 6;
+        myAddress = "UNSET";
+        smartRouting = true;
+
+        // TCP stuff
         segmentBufferSize = 2048;
-        name = "UNSET";
-        maxSegmentLife = 5;
-        maxSegmentLife = 2*60000;
+        maxSegmentLife = 2 * 60000;
         tcpPacketTimeout = 1000;
         tcpListenTimeout = 5000;
         tcpPacketInterval = 10;
+
+        // Application stuff
         filePartSize = 1024;
+        name = "UNSET";
+        availablePeerTimeout = 60 * 1000;
+        connectedPeerTimeout = 120 * 1000;
     }
 
     public static Config getInstance() {

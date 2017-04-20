@@ -9,6 +9,7 @@ import utwente.ns.tcp.RTP4Layer;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.function.IntSupplier;
 
 /**
  * Created by simon on 12.04.17.
@@ -22,16 +23,16 @@ public class NetworkStack {
     private RTP4Layer rtp4Layer;
     
     public NetworkStack() throws IOException {
-        this(Config.getInstance().segmentBufferSize);
+        this(() -> Config.getInstance().segmentBufferSize);
     }
     
-    public NetworkStack(int maxSegmentSize, InetAddress... multicastAddresses) throws IOException {
+    public NetworkStack(IntSupplier maxSegmentSize, InetAddress... multicastAddresses) throws IOException {
         linkLayer = new VirtualLinkLayer(maxSegmentSize, multicastAddresses);
         hrp4Layer = new HRP4Layer(linkLayer);
         rtp4Layer = new RTP4Layer(hrp4Layer);
     }
     
-    public NetworkStack(int maxSegmentSize) throws IOException {
+    public NetworkStack(IntSupplier maxSegmentSize) throws IOException {
         linkLayer = new VirtualLinkLayer(maxSegmentSize);
         hrp4Layer = new HRP4Layer(linkLayer);
         rtp4Layer = new RTP4Layer(hrp4Layer);

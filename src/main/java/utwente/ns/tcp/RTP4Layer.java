@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
  * Created by simon on 07.04.17.
  */
 public class RTP4Layer {
-    private static final int SEND_INTERVAL = Config.getInstance().tcpPacketInterval;
     public static final boolean DEBUG = true;
     //TODO remove
 
@@ -56,7 +55,7 @@ public class RTP4Layer {
                     log();
             }
             try {
-                Thread.sleep(SEND_INTERVAL);
+                Thread.sleep(Config.getInstance().tcpPacketInterval);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
