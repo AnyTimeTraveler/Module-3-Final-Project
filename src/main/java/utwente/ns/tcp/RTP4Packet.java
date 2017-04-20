@@ -48,11 +48,13 @@ public class RTP4Packet implements IPacket {
      */
     private boolean fin;
 
+    //Currently unused
     /**
      * Reset flag: indicates the resetting of the connection
      */
     private boolean rst;
 
+    //Currently unused
     /**
      * The size of the sliding window
      */

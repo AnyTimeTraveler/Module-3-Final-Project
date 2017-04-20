@@ -120,7 +120,6 @@ public class RTP4Socket implements IReceiveListener, Closeable {
                 entry.getValue().close();
             } catch (IOException e) {
                 e.printStackTrace();
-                //TODO throw exception up
             }
         });
         ipSocket.close();

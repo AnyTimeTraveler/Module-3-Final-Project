@@ -10,7 +10,6 @@ import utwente.ns.ip.HRP4Packet;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.AbstractMap;
-import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeoutException;
@@ -263,7 +262,7 @@ public class RTP4Connection implements Closeable, IReceiveListener {
             case CLOSE:
                 switch (state) {
                     case SYN_SENT_1:
-                        state = RTP4Layer.ConnectionState.TIME_WAIT;
+                        state = RTP4Layer.ConnectionState.CLOSED;
                         break;
                     case SYN_SENT_2:
                     case SYN_ACCEPTED:
@@ -350,8 +349,6 @@ public class RTP4Connection implements Closeable, IReceiveListener {
                     }
                 }
             }
-        } else {
-            //TODO handle invalid acknowledgement
         }
     }
 
@@ -437,10 +434,14 @@ public class RTP4Connection implements Closeable, IReceiveListener {
 
     @Override
     public void close() throws IOException {
+        long timeStart = System.currentTimeMillis();
         actionQueue.offer(RTP4Layer.ConnectionAction.CLOSE);
         try {
             while (state != RTP4Layer.ConnectionState.CLOSED && state != RTP4Layer.ConnectionState.TIME_WAIT) {
                 Thread.sleep(100);
+                if (System.currentTimeMillis() - timeStart > LISTEN_TIMEOUT_MILLIS) {
+                    throw new IOException("Timed out while closing");
+                }
             }
             if (state == RTP4Layer.ConnectionState.CLOSED) {
                 clear();
@@ -489,20 +490,20 @@ public class RTP4Connection implements Closeable, IReceiveListener {
 
         private int sendUnacknowledged;
         private int sendNext;
+        private final int sendInitialSeqNum;
+        //Currently unused
         private short sendWindow;
         private int sendWindowUpdateSeqNum;
         private int sendWindowUpdateAckNum;
-        private final int sendInitialSeqNum;
 
         private int receiveNext;
         private boolean receiveInitialSeqNumIsSet;
-        private short receiveWindow;
         private int receiveInitialSeqNum;
+        //Currently unused
+        private short receiveWindow;
 
         TCPBlock() {
-            //TODO reset to non debug init
-//            this.sendInitialSeqNum = (int) (System.nanoTime() / 4000);
-            this.sendInitialSeqNum = new Random().nextInt(100);
+            this.sendInitialSeqNum = (int) (System.nanoTime() / 4000);
             this.sendNext = this.sendInitialSeqNum;
             this.sendUnacknowledged = this.sendInitialSeqNum - 1;
             this.receiveInitialSeqNumIsSet = false;
