@@ -19,11 +19,8 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.*;
 import java.util.List;
 import java.util.Timer;
@@ -90,17 +87,18 @@ public class UniversalCommunicator implements IUserInterface {
         } catch (ClassNotFoundException | InstantiationException | UnsupportedLookAndFeelException | IllegalAccessException e) {
             e.printStackTrace();
         }
-        Font awesome = new JLabel().getFont();
-        try {
-            URL fp = getClass().getClassLoader().getResource("font-awesome.ttf");
-            File file = new File(fp.toURI());
-            awesome = Font.createFont(Font.TRUETYPE_FONT, file);
-        } catch (FontFormatException | IOException | NullPointerException | URISyntaxException e) {
-            e.printStackTrace();
-        }
+//        Font awesome = new JLabel().getFont();
+//        try {
+//            URL fp = getClass().getClassLoader().getResource("font-awesome.ttf");
+//            File file = new File(fp.toURI());
+//            awesome = Font.createFont(Font.TRUETYPE_FONT, file);
+//            awesome = awesome.deriveFont(Font.PLAIN, 14);
+//        } catch (FontFormatException | IOException | NullPointerException | URISyntaxException e) {
+//            e.printStackTrace();
+//        }
 
         // Chat
-        chatHistoryTextArea.setFont(awesome);
+//        chatHistoryTextArea.setFont(awesome);
         updateConversations(chatClient.getConversations());
         conversationList.addListSelectionListener(e -> {
             for (IConversation con : chatClient.getConversations()) {
@@ -121,7 +119,7 @@ public class UniversalCommunicator implements IUserInterface {
                     super.keyPressed(e);
             }
         });
-        messageTextField.setFont(awesome);
+//        messageTextField.setFont(awesome);
         sendButton.addActionListener(e -> {
             if (selectedConversation != null && !messageTextField.getText().trim().isEmpty()) {
                 sendMessage();
