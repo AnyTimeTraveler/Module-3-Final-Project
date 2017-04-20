@@ -23,6 +23,11 @@ public class GUIChat implements IApplication {
 //            //Handle exception
 //        }
 
+        if (Config.getInstance().myAddress.equals("UNCONFIGURED")) {
+            Config.getInstance().myAddress = JOptionPane.showInputDialog("Enter your IP Address:");
+            Config.getInstance().toFile();
+        }
+
         try {
             // Start the GUI
             UniversalCommunicator universalComminucator = new UniversalCommunicator();

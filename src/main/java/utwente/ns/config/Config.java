@@ -40,7 +40,7 @@ public class Config {
         multicastPort = 1337;
         baconInterval = 1000;
         baconPacketTTL = 4;
-        myAddress = "CHANGE ME, I'M DEFINITELY NOT CONFIGURED YET!";
+        myAddress = "UNCONFIGURED";
         defaultHRP4TTL = 6;
         segmentBufferSize = 2048;
         name = "UNSET";
@@ -67,8 +67,8 @@ public class Config {
         // no config file found
         if (instance == null) {
             instance = fromDefaults();
-            instance.toFile(CONFIGFILE);
-            throw new RuntimeException("Set values in config file according to your settings!");
+//            instance.toFile(CONFIGFILE);
+//            throw new RuntimeException("Set values in config file according to your settings!");
         }
     }
 
