@@ -46,8 +46,6 @@ public class ChatClient implements IReceiveListener, IChatController, IRequestHa
     public static final int MAX_AVAILABLE_PEER_COUNT = 10;
     public static final short IDENTITY_PORT = 1024;
     public static final short MESSAGE_PORT = 1025;
-    public static final long AVAILABLE_PEER_EXPIRY_TIME_MS = 1000 * 6; // 6 seconds
-    public static final long CONNECTED_PEER_EXPIR_TIME_MS = 1000 * 30; // 30 seconds
 
     private final NetworkStack networkStack;
     private final String name;
@@ -147,7 +145,7 @@ public class ChatClient implements IReceiveListener, IChatController, IRequestHa
 
     private void dropExpiredPeers() {
         List<String> expiredAvailableIDs = new LinkedList<>();
-        final Date availableExpiryTime = new Date(System.currentTimeMillis() - AVAILABLE_PEER_EXPIRY_TIME_MS);
+        final Date availableExpiryTime = new Date(System.currentTimeMillis() - Config.getInstance().availablePeerTimeout);
         this.availablePeers.forEach((id, peer) -> {
             if (peer.updateTime.before(availableExpiryTime))
                 expiredAvailableIDs.add(id);
@@ -157,7 +155,7 @@ public class ChatClient implements IReceiveListener, IChatController, IRequestHa
         });
 
         List<String> expiredConnectedIDs = new LinkedList<>();
-        Date connectionExpiryTime = new Date(System.currentTimeMillis() - CONNECTED_PEER_EXPIR_TIME_MS);
+        Date connectionExpiryTime = new Date(System.currentTimeMillis() - Config.getInstance().connectedPeerTimeout);
         this.connectedPeers.forEach((id, peer) -> {
             if (peer.lastUpdateTime.before(connectionExpiryTime))
                 expiredConnectedIDs.add(id);

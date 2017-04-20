@@ -4,7 +4,7 @@ import utwente.ns.Util;
 import utwente.ns.config.Config;
 import utwente.ns.ip.HRP4Layer;
 import utwente.ns.ip.HRP4Socket;
-import utwente.ns.linklayer.SimulatedLinkLayer;
+import utwente.ns.linklayer.VirtualLinkLayer;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -21,7 +21,7 @@ public class Chat implements IApplication {
         HRP4Layer layer;
         HRP4Socket socket;
         try {
-            layer = new HRP4Layer(new SimulatedLinkLayer(2048));
+            layer = new HRP4Layer(new VirtualLinkLayer(2048));
             socket = layer.open((short) 25565);
         } catch (IOException e) {
             e.printStackTrace();

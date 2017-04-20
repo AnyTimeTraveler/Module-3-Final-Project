@@ -17,24 +17,25 @@ import java.util.List;
  */
 public class NetworkGraph extends JPanel {
 
-    public static final int LINE_WIDTH = 5;
+    private static final int LINE_WIDTH = 5;
     private final int WIDE;
     private final int HIGH;
     private final int RADIUS = 50;
     private List<Node> nodes = new ArrayList<>();
     private List<Edge> edges = new ArrayList<>();
-    private Rectangle mouseRect = new Rectangle();
-    private Node[] presetNodes = new Node[]{new Node(new Point(150, 150), RADIUS, Color.BLUE, Kind.Circular),
+    private Node[] presetNodes = new Node[]{
+            new Node(new Point(150, 150), RADIUS, Color.BLUE, Kind.Circular),
             new Node(new Point(300, 150), RADIUS, Color.GREEN, Kind.Circular),
             new Node(new Point(300, 300), RADIUS, Color.RED, Kind.Circular),
-            new Node(new Point(150, 300), RADIUS, Color.YELLOW, Kind.Circular)};
+            new Node(new Point(150, 300), RADIUS, Color.YELLOW, Kind.Circular)
+    };
 
-    public NetworkGraph() {
+    private NetworkGraph() {
         WIDE = 640;
         HIGH = 480;
     }
 
-    public NetworkGraph(JPanel networkGraph) {
+    NetworkGraph(JPanel networkGraph) {
         this.setOpaque(true);
         WIDE = networkGraph.getWidth();
         HIGH = networkGraph.getHeight();
@@ -91,7 +92,7 @@ public class NetworkGraph extends JPanel {
         edges.clear();
         for (HRP4Router.BCN4RoutingEntryWrapper entry : routingEntries) {
             int[] addresses = entry.getBcn4Entry().getAddresses();
-            if (!nodes.containsKey(addresses[0])) {
+            if (i < 4 && !nodes.containsKey(addresses[0])) {
                 try {
                     presetNodes[i].text = Util.intToAddressString(addresses[0]);
                 } catch (UnknownHostException e) {
@@ -99,7 +100,7 @@ public class NetworkGraph extends JPanel {
                 }
                 nodes.put(addresses[0], presetNodes[i++]);
             }
-            if (!nodes.containsKey(addresses[1])) {
+            if (i < 4 && !nodes.containsKey(addresses[1])) {
                 try {
                     presetNodes[i].text = Util.intToAddressString(addresses[1]);
                 } catch (UnknownHostException e) {
@@ -110,19 +111,13 @@ public class NetworkGraph extends JPanel {
             edges.add(new Edge(nodes.get(addresses[0]), nodes.get(addresses[1])));
         }
         this.nodes.addAll(nodes.values());
-
-        /*
-        // Random
-        Point p = new Point(rnd.nextInt(getWidth()), rnd.nextInt(getHeight()));
-        this.nodes.add(new Node(p, radius, new Color(rnd.nextInt()), kind));
-        */
     }
 
     /**
      * The kinds of node in a graph.
      */
     private enum Kind {
-        Circular, Rounded, Square;
+        Circular, Rounded, Square
     }
 
     /**
@@ -133,12 +128,12 @@ public class NetworkGraph extends JPanel {
         private Node n1;
         private Node n2;
 
-        public Edge(Node n1, Node n2) {
+        private Edge(Node n1, Node n2) {
             this.n1 = n1;
             this.n2 = n2;
         }
 
-        public void draw(Graphics g) {
+        private void draw(Graphics g) {
             Point p1 = n1.getLocation();
             Point p2 = n2.getLocation();
             Graphics2D g2d = (Graphics2D) g;
@@ -179,7 +174,7 @@ public class NetworkGraph extends JPanel {
         /**
          * Construct a new node.
          */
-        public Node(Point p, int r, Color color, Kind kind) {
+        private Node(Point p, int r, Color color, Kind kind) {
             this.p = p;
             this.r = r;
             this.color = color;
@@ -197,7 +192,7 @@ public class NetworkGraph extends JPanel {
         /**
          * Draw this node.
          */
-        public void draw(Graphics g) {
+        private void draw(Graphics g) {
             g.setColor(this.color);
             if (this.kind == Kind.Circular) {
                 g.fillOval(b.x, b.y, b.width, b.height);
@@ -219,7 +214,7 @@ public class NetworkGraph extends JPanel {
         /**
          * Return this node's location.
          */
-        public Point getLocation() {
+        private Point getLocation() {
             return p;
         }
     }
