@@ -23,11 +23,12 @@ public class NetworkGraph extends JPanel {
     private final int RADIUS = 50;
     private List<Node> nodes = new ArrayList<>();
     private List<Edge> edges = new ArrayList<>();
-    private Rectangle mouseRect = new Rectangle();
-    private Node[] presetNodes = new Node[]{new Node(new Point(150, 150), RADIUS, Color.BLUE, Kind.Circular),
+    private Node[] presetNodes = new Node[]{
+            new Node(new Point(150, 150), RADIUS, Color.BLUE, Kind.Circular),
             new Node(new Point(300, 150), RADIUS, Color.GREEN, Kind.Circular),
             new Node(new Point(300, 300), RADIUS, Color.RED, Kind.Circular),
-            new Node(new Point(150, 300), RADIUS, Color.YELLOW, Kind.Circular)};
+            new Node(new Point(150, 300), RADIUS, Color.YELLOW, Kind.Circular)
+    };
 
     public NetworkGraph() {
         WIDE = 640;
@@ -91,7 +92,7 @@ public class NetworkGraph extends JPanel {
         edges.clear();
         for (HRP4Router.BCN4RoutingEntryWrapper entry : routingEntries) {
             int[] addresses = entry.getBcn4Entry().getAddresses();
-            if (!nodes.containsKey(addresses[0])) {
+            if (i < 4 && !nodes.containsKey(addresses[0])) {
                 try {
                     presetNodes[i].text = Util.intToAddressString(addresses[0]);
                 } catch (UnknownHostException e) {
@@ -99,7 +100,7 @@ public class NetworkGraph extends JPanel {
                 }
                 nodes.put(addresses[0], presetNodes[i++]);
             }
-            if (!nodes.containsKey(addresses[1])) {
+            if (i < 4 && !nodes.containsKey(addresses[1])) {
                 try {
                     presetNodes[i].text = Util.intToAddressString(addresses[1]);
                 } catch (UnknownHostException e) {
