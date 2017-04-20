@@ -3,6 +3,7 @@ package utwente.ns.ip;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import utwente.ns.ByteSupplier;
 import utwente.ns.Util;
 import utwente.ns.config.Config;
 
@@ -27,7 +28,7 @@ public class HRP4Router {
     /**
      * The default (uncorrected) TTL that shall be used as initialization for routing entries.
      */
-    private static final byte DEFAULT_TTL = (byte) (Config.getInstance().defaultRoutingEntryTTL / TTL_MULTIPLIER);
+    private static final ByteSupplier DEFAULT_TTL = () -> ((byte) (Config.getInstance().defaultRoutingEntryTTL / TTL_MULTIPLIER));
 
     /**
      * The table containing all available point-point (single duplex) connections.
@@ -67,7 +68,7 @@ public class HRP4Router {
         int linkcost = 1;
 
         // Update cost to neighbour
-        processEntry(neighbour, myAddress, (byte) linkcost, DEFAULT_TTL);
+        processEntry(neighbour, myAddress, (byte) linkcost, DEFAULT_TTL.getAsByte());
 
         List<BCN4Packet.RoutingEntry> routingEntries = packet.getRoutingTable();
         processDataTable(routingEntries);
