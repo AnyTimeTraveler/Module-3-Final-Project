@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * Created by simon on 07.04.17.
  */
-public class SimulatedLinkLayer implements ILinkLayer {
+public class VirtualLinkLayer implements ILinkLayer {
 
     private List<IReceiveListener> packetListeners;
     private InetAddress[] addresses;
@@ -23,7 +23,7 @@ public class SimulatedLinkLayer implements ILinkLayer {
     private boolean closed;
     private int maxSegmentSize;
 
-    private SimulatedLinkLayer() throws IOException {
+    private VirtualLinkLayer() throws IOException {
         packetListeners = new ArrayList<>();
         socket = new MulticastSocket(Config.getInstance().multicastPort);
         receiver = new Thread(this::waitForIncomingPackets);
@@ -32,7 +32,7 @@ public class SimulatedLinkLayer implements ILinkLayer {
         receiver.start();
     }
 
-    public SimulatedLinkLayer(int maxSegmentSize) throws IOException {
+    public VirtualLinkLayer(int maxSegmentSize) throws IOException {
         this();
         this.maxSegmentSize = maxSegmentSize;
         addresses = new InetAddress[1];
@@ -41,7 +41,7 @@ public class SimulatedLinkLayer implements ILinkLayer {
 
     }
 
-    public SimulatedLinkLayer(int maxSegmentSize, InetAddress... multicastAddresses) throws IOException {
+    public VirtualLinkLayer(int maxSegmentSize, InetAddress... multicastAddresses) throws IOException {
         this();
         this.maxSegmentSize = maxSegmentSize;
         this.addresses = multicastAddresses;
@@ -79,7 +79,7 @@ public class SimulatedLinkLayer implements ILinkLayer {
             try {
                 socket.receive(receivedPacket);
                 for (IReceiveListener listener : packetListeners) {
-                    listener.receive(new SimulatedLinkPacket(receivedPacket));
+                    listener.receive(new VirtualLinkPacket(receivedPacket));
                 }
             } catch (IOException e) {
                 e.printStackTrace();
