@@ -78,9 +78,6 @@ public class PeerIdentity implements Comparable, IUser {
 
     @Override
     public String toString() {
-        return "ID: " + id + "\n" +
-                "Name: " + name + "\n" +
-                "Address: " + address + "\n" +
-                "Fingerprint: " + getFingerprint();
+        return name + "@" + address + "    Fingerprint: " + getFingerprint();
     }
 }
