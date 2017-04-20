@@ -47,6 +47,9 @@ public class SimulatedRTP4Test {
                         assertEquals(count, 50);
                         connection.close();
                         assertTrue(connection.localIsClosed());
+                        while (connection.getState() != RTP4Layer.ConnectionState.CLOSED) {
+                            Thread.sleep(1000);
+                        }
                     } catch (IOException | InterruptedException | TimeoutException e) {
                         e.printStackTrace();
                     }
