@@ -21,7 +21,7 @@ public class HRP4Router {
     /**
      * The default (uncorrected) TTL that shall be used as initialization for routing entries.
      */
-    private static final byte DEFAULT_TTL = 100;
+    private static final byte DEFAULT_TTL = (byte) (Config.getInstance().defaultRoutingEntryTTL / 32);
 
     /**
      * The value the TTL shall be multiplied with to get milliseconds of TTL for routing entries.
