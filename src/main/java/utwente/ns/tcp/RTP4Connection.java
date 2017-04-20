@@ -342,6 +342,7 @@ public class RTP4Connection implements Closeable, IReceiveListener {
                         case LAST_ACK:
                             if (acknowledgedPacket.isFin()) {
                                 state = RTP4Layer.ConnectionState.TIME_WAIT;
+                                timeWaitStart = System.currentTimeMillis();
                             } else {
                                 System.err.print(acknowledgedPacket.toString() + " is in unacknowledgedPacketQueue but should not be");
                             }
