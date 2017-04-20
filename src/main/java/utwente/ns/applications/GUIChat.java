@@ -16,6 +16,13 @@ public class GUIChat implements IApplication {
 
     @Override
     public void start() {
+//        try {
+//            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+//            ge.registerFont();
+//        } catch (IOException | FontFormatException e) {
+//            //Handle exception
+//        }
+
         try {
             // Start the GUI
             UniversalCommunicator universalComminucator = new UniversalCommunicator();
