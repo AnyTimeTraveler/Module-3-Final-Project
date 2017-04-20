@@ -18,15 +18,16 @@ import java.util.concurrent.ConcurrentHashMap;
  *         Created on 4/10/17
  */
 public class HRP4Router {
-    /**
-     * The default (uncorrected) TTL that shall be used as initialization for routing entries.
-     */
-    private static final byte DEFAULT_TTL = (byte) (Config.getInstance().defaultRoutingEntryTTL / 32);
 
     /**
      * The value the TTL shall be multiplied with to get milliseconds of TTL for routing entries.
      */
-    private static final int TTL_MULTIPLIER = 32;
+    private static final int TTL_MULTIPLIER = 128;
+
+    /**
+     * The default (uncorrected) TTL that shall be used as initialization for routing entries.
+     */
+    private static final byte DEFAULT_TTL = (byte) (Config.getInstance().defaultRoutingEntryTTL / TTL_MULTIPLIER);
 
     /**
      * The table containing all available point-point (single duplex) connections.
