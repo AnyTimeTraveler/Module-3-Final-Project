@@ -17,7 +17,6 @@ public class Config {
 
     // Routing stuff
     public int baconInterval;
-    public byte baconPacketTTL;
     public int defaultRoutingEntryTTL;
     public byte defaultHRP4TTL;
     public String myAddress;
@@ -36,23 +35,29 @@ public class Config {
     public long connectedPeerTimeout;
 
     private Config() {
+
+        // Transport stuff
         multicastAddress = "228.0.0.1";
         multicastPort = 1337;
+
+        // Routing stuff
         baconInterval = 1000;
-        baconPacketTTL = 4;
-        myAddress = "UNCONFIGURED";
+        defaultRoutingEntryTTL = 3200;
         defaultHRP4TTL = 6;
+        myAddress = "UNCONFIGURED";
+
+        // TCP stuff
         segmentBufferSize = 2048;
-        name = "UNSET";
-        maxSegmentLife = 5;
-        maxSegmentLife = 2*60000;
+        maxSegmentLife = 2 * 60000;
         tcpPacketTimeout = 1000;
         tcpListenTimeout = 5000;
         tcpPacketInterval = 10;
+
+        // Application stuff
         filePartSize = 1024;
+        name = "UNSET";
         availablePeerTimeout = 60 * 1000;
         connectedPeerTimeout = 120 * 1000;
-        defaultRoutingEntryTTL = 3200;
     }
 
     public static Config getInstance() {

@@ -278,7 +278,7 @@ public class RTP4Connection implements Closeable, IReceiveListener {
         }
     }
 
-    void resendPacket() {
+    synchronized void resendPacket() {
         long time = System.currentTimeMillis();
         AbstractMap.Entry<RTP4Packet, Long> entry;
         while (true) {
@@ -287,7 +287,7 @@ public class RTP4Connection implements Closeable, IReceiveListener {
                 break;
             }
             if (RTP4Layer.DEBUG) System.out.println(Thread.currentThread().getName() + "> Found Timed out packet! " + entry.getKey());
-            unacknowledgedPacketQueue.remove();
+            unacknowledgedPacketQueue.poll();
             send(entry.getKey());
         }
     }
