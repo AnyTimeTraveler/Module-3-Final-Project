@@ -24,6 +24,8 @@ public class Config {
     public int tcpListenTimeout;
     public int tcpPacketInterval;
     public int filePartSize;
+    public long availablePeerTimeout;
+    public long connectedPeerTimeout;
 
     private Config() {
         multicastAddress = "228.0.0.1";
@@ -40,6 +42,8 @@ public class Config {
         tcpListenTimeout = 5000;
         tcpPacketInterval = 10;
         filePartSize = 1024;
+        availablePeerTimeout = 60 * 1000;
+        connectedPeerTimeout = 120 * 1000;
     }
 
     public static Config getInstance() {
