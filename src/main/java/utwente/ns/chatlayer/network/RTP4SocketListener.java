@@ -25,7 +25,6 @@ public class RTP4SocketListener implements Runnable {
                 RTP4ConnectionHandler.handleConnection(connection, this.requestHandler);
             } catch (IOException | TimeoutException e) {
                 e.printStackTrace();
-                return;
             }
         }
     }
