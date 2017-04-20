@@ -130,7 +130,7 @@ public class ChatClient implements IReceiveListener, IChatController, IRequestHa
         }
         boolean available = availablePeers.containsKey(identity.id);
         this.availablePeers.put(identity.id, identity);
-        if (!available) this.getUi().update(identity.getName() + " is now available with ID " + identity.getFingerprint() + " and FP " +identity.getFingerprint());
+        if (!available) this.getUi().update(identity.getName() + " is now available with ID " + identity.id + " and FP " +identity.getFingerprint());
         this.dropOldestPeer();
     }
 

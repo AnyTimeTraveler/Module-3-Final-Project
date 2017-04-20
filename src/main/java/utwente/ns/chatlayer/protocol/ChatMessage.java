@@ -139,7 +139,7 @@ public class ChatMessage implements IMessage {
     @Override
     public String getMessage() {
         if (this.content instanceof TextMessageContent) {
-            return ((TextMessageContent) this.content).text;
+            return this.isSent() ? ((TextMessageContent) this.content).text : "[FAILED] " + ((TextMessageContent) this.content).text;
         }
         return null;
     }
