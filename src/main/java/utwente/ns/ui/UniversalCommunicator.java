@@ -230,7 +230,6 @@ public class UniversalCommunicator implements IUserInterface {
                     break;
             }
         });
-        settingsSaveButton.addActionListener(e -> saveConfigIfNeeded());
         tabbedPane.addChangeListener(e -> saveConfigIfNeeded());
         // Routing
         Timer timer = new Timer();
@@ -246,6 +245,9 @@ public class UniversalCommunicator implements IUserInterface {
     private void saveConfigIfNeeded() {
         try {
             Field setting = settings.get(settingsList.getSelectedValue());
+            if (setting == null) {
+                return;
+            }
             boolean isRestartRequired = setting.getAnnotationsByType(RequiresRestart.class).length != 0;
             if (settingIsBoolean) {
                 if ((boolean) setting.get(Config.getInstance()) != settingsCheckBox.isSelected()) {

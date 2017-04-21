@@ -438,7 +438,7 @@ public class RTP4Connection implements Closeable, IReceiveListener {
         try {
             while (state != RTP4Layer.ConnectionState.CLOSED && state != RTP4Layer.ConnectionState.TIME_WAIT) {
                 Thread.sleep(100);
-                if (System.currentTimeMillis() - timeStart > LISTEN_TIMEOUT_MILLIS) {
+                if (System.currentTimeMillis() - timeStart > Config.getInstance().tcpListenTimeout) {
                     forceClose();
                     throw new IOException("Timed out while closing");
                 }
