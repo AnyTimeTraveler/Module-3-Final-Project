@@ -11,6 +11,7 @@ import utwente.ns.chatstructure.IConversation;
 import utwente.ns.chatstructure.IUser;
 import utwente.ns.chatstructure.IUserInterface;
 import utwente.ns.config.Config;
+import utwente.ns.config.RequiresRestart;
 import utwente.ns.filetransfer.FileTransferer;
 
 import javax.swing.*;
@@ -187,10 +188,9 @@ public class UniversalCommunicator implements IUserInterface {
         }
         settingsList.setListData(new Vector<>(settings.keySet()));
         settingsList.addListSelectionListener(e -> {
-            System.out.println("Selected!");
-            System.out.print("Type: ");
+//            System.out.print("Type: ");
             Field setting = settings.get(settingsList.getSelectedValue());
-            System.out.println(setting.getType().toString().toLowerCase());
+//            System.out.println(setting.getType().toString().toLowerCase());
             switch (setting.getType().toString().toLowerCase()) {
                 case "class java.lang.string":
                 case "int":
@@ -222,54 +222,16 @@ public class UniversalCommunicator implements IUserInterface {
                     settingIsBoolean = true;
                     break;
                 default:
+                    settingsLabel.setVisible(false);
+                    settingsTextField.setVisible(false);
+                    settingsCheckBox.setVisible(false);
                     System.err.print("Unknown Type: ");
                     System.err.println(setting.getType().toString().toLowerCase());
                     break;
             }
         });
-        settingsSaveButton.addActionListener(e -> {
-            try {
-                Field setting = settings.get(settingsList.getSelectedValue());
-                if (settingIsBoolean) {
-                    if ((boolean) setting.get(Config.getInstance()) != settingsCheckBox.isSelected()) {
-                        setting.setBoolean(Config.getInstance(), settingsCheckBox.isSelected());
-                        restartNotice.setVisible(true);
-                    }
-                } else {
-                    if (!String.valueOf(setting.get(Config.getInstance())).equals(settingsTextField.getText())) {
-                        switch (setting.getType().toString().toLowerCase()) {
-                            case "class java.lang.string":
-                                setting.set(Config.getInstance(), settingsTextField.getText());
-                                restartNotice.setVisible(true);
-                                break;
-                            case "int":
-                                setting.setInt(Config.getInstance(), Integer.parseInt(settingsTextField.getText()));
-                                restartNotice.setVisible(true);
-                                break;
-                            case "byte":
-                                setting.setByte(Config.getInstance(), Byte.parseByte(settingsTextField.getText()));
-                                restartNotice.setVisible(true);
-                                break;
-                            case "long":
-                                setting.setLong(Config.getInstance(), Long.parseLong(settingsTextField.getText()));
-                                restartNotice.setVisible(true);
-                                break;
-                            default:
-                                System.err.println("Type not defined!");
-                        }
-                    }
-                }
-            } catch (IllegalAccessException e1) {
-                e1.printStackTrace();
-            } catch (NumberFormatException e1) {
-                JOptionPane.showMessageDialog(this.getMainPanel(), "Please enter something sensible!", "Incorrect Input!", JOptionPane.ERROR_MESSAGE);
-            }
-
-            if (restartNotice.isVisible()) {
-                // If settings were changed, save config.
-                Config.getInstance().toFile();
-            }
-        });
+        settingsSaveButton.addActionListener(e -> saveConfigIfNeeded());
+        tabbedPane.addChangeListener(e -> saveConfigIfNeeded());
         // Routing
         Timer timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
@@ -279,6 +241,55 @@ public class UniversalCommunicator implements IUserInterface {
                 networkGrapher.repaint();
             }
         }, Config.getInstance().baconInterval, Config.getInstance().baconInterval);
+    }
+
+    private void saveConfigIfNeeded() {
+        try {
+            Field setting = settings.get(settingsList.getSelectedValue());
+            boolean isRestartRequired = setting.getAnnotationsByType(RequiresRestart.class).length != 0;
+            if (settingIsBoolean) {
+                if ((boolean) setting.get(Config.getInstance()) != settingsCheckBox.isSelected()) {
+                    setting.setBoolean(Config.getInstance(), settingsCheckBox.isSelected());
+                    if (isRestartRequired) {
+                        restartNotice.setVisible(true);
+                    }
+                }
+            } else {
+                if (!String.valueOf(setting.get(Config.getInstance())).equals(settingsTextField.getText())) {
+                    switch (setting.getType().toString().toLowerCase()) {
+                        case "class java.lang.string":
+                            setting.set(Config.getInstance(), settingsTextField.getText());
+                            if (isRestartRequired) {
+                                restartNotice.setVisible(true);
+                            }
+                            break;
+                        case "int":
+                            setting.setInt(Config.getInstance(), Integer.parseInt(settingsTextField.getText()));
+                            if (isRestartRequired) {
+                                restartNotice.setVisible(true);
+                            }
+                            break;
+                        case "byte":
+                            setting.setByte(Config.getInstance(), Byte.parseByte(settingsTextField.getText()));
+                            if (isRestartRequired) {
+                                restartNotice.setVisible(true);
+                            }
+                            break;
+                        default:
+                            System.err.println("Type not defined!");
+                    }
+                }
+            }
+        } catch (IllegalAccessException e1) {
+            e1.printStackTrace();
+        } catch (NumberFormatException e1) {
+            JOptionPane.showMessageDialog(this.getMainPanel(), "Please enter something sensible!", "Incorrect Input!", JOptionPane.ERROR_MESSAGE);
+        }
+
+        if (restartNotice.isVisible()) {
+            // If settings were changed, save config.
+            Config.getInstance().toFile();
+        }
     }
 
     private void updateConversations(IConversation[] conversations) {

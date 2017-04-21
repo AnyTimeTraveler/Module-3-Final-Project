@@ -21,7 +21,7 @@ public class Chat implements IApplication {
         HRP4Layer layer;
         HRP4Socket socket;
         try {
-            layer = new HRP4Layer(new VirtualLinkLayer(2048));
+            layer = new HRP4Layer(new VirtualLinkLayer(() -> 2048));
             socket = layer.open((short) 25565);
         } catch (IOException e) {
             e.printStackTrace();

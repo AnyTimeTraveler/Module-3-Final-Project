@@ -12,10 +12,13 @@ public class Config {
     private static Config instance;
 
     // Transport stuff
+    @RequiresRestart
     public String multicastAddress;
+    @RequiresRestart
     public int multicastPort;
 
     // Routing stuff
+    @RequiresRestart
     public int baconInterval;
     public int defaultRoutingEntryTTL;
     public byte defaultHRP4TTL;
@@ -31,6 +34,7 @@ public class Config {
 
     // Application stuff
     public int filePartSize;
+    @RequiresRestart
     public String name;
     public long availablePeerTimeout;
     public long connectedPeerTimeout;
@@ -45,7 +49,7 @@ public class Config {
         baconInterval = 1000;
         defaultRoutingEntryTTL = 3200;
         defaultHRP4TTL = 6;
-        myAddress = "UNCONFIGURED";
+        myAddress = "UNSET";
         smartRouting = true;
 
         // TCP stuff

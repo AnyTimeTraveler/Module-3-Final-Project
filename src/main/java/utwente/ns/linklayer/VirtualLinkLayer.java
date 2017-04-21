@@ -10,6 +10,7 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.IntSupplier;
 
 /**
  * Created by simon on 07.04.17.
@@ -21,7 +22,7 @@ public class VirtualLinkLayer implements ILinkLayer {
     private MulticastSocket socket;
     private Thread receiver;
     private boolean closed;
-    private int maxSegmentSize;
+    private IntSupplier maxSegmentSize;
 
     private VirtualLinkLayer() throws IOException {
         packetListeners = new ArrayList<>();
@@ -32,7 +33,7 @@ public class VirtualLinkLayer implements ILinkLayer {
         receiver.start();
     }
 
-    public VirtualLinkLayer(int maxSegmentSize) throws IOException {
+    public VirtualLinkLayer(IntSupplier maxSegmentSize) throws IOException {
         this();
         this.maxSegmentSize = maxSegmentSize;
         addresses = new InetAddress[1];
@@ -41,7 +42,7 @@ public class VirtualLinkLayer implements ILinkLayer {
 
     }
 
-    public VirtualLinkLayer(int maxSegmentSize, InetAddress... multicastAddresses) throws IOException {
+    public VirtualLinkLayer(IntSupplier maxSegmentSize, InetAddress... multicastAddresses) throws IOException {
         this();
         this.maxSegmentSize = maxSegmentSize;
         this.addresses = multicastAddresses;
@@ -74,8 +75,8 @@ public class VirtualLinkLayer implements ILinkLayer {
     private void waitForIncomingPackets() {
         closed = false;
         while (!closed) {
-            byte[] receivedData = new byte[maxSegmentSize];
-            DatagramPacket receivedPacket = new DatagramPacket(receivedData, maxSegmentSize);
+            byte[] receivedData = new byte[maxSegmentSize.getAsInt()];
+            DatagramPacket receivedPacket = new DatagramPacket(receivedData, maxSegmentSize.getAsInt());
             try {
                 socket.receive(receivedPacket);
                 for (IReceiveListener listener : packetListeners) {
