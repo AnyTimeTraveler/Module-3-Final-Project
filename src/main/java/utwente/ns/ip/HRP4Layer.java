@@ -147,12 +147,11 @@ public class HRP4Layer implements IReceiveListener, IHRP4Layer {
                 }
             }
 
-            if (hrp4Packet.getTTL() >= 1 && hrp4Packet.getDstAddr() != myAddr) {
+            if ((hrp4Packet.getTTL() >= 1 && hrp4Packet.getDstAddr() != myAddr) || !Config.getInstance().smartRouting) {
                 int origin = Util.addressToInt(((VirtualLinkPacket) packet).getReceivedPacketAddress());
 
                 Map<Integer, Integer> forwardingTable = this.router.getForwardingTable(origin);
 
-                // TODO: Remove if-statement to do smart routing (0.o)
                  if ((forwardingTable.get(hrp4Packet.getDstAddr()) != null && forwardingTable.get(hrp4Packet.getDstAddr()) == myAddr) || hrp4Packet.getDstAddr() == 0) {
 
                     hrp4Packet.setTTL((byte) (hrp4Packet.getTTL() - 1));

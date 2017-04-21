@@ -20,6 +20,7 @@ public class Config {
     public int defaultRoutingEntryTTL;
     public byte defaultHRP4TTL;
     public String myAddress;
+    public boolean smartRouting;
 
     // TCP stuff
     public int segmentBufferSize;
@@ -45,6 +46,7 @@ public class Config {
         defaultRoutingEntryTTL = 3200;
         defaultHRP4TTL = 6;
         myAddress = "UNCONFIGURED";
+        smartRouting = true;
 
         // TCP stuff
         segmentBufferSize = 2048;
