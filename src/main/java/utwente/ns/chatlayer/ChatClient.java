@@ -230,6 +230,7 @@ public class ChatClient implements IReceiveListener, IChatController, IRequestHa
             log.log(Level.WARNING, "Message JSON unmarshal was null");
             throw new IllegalArgumentException();
         }
+        message.setSuccessful(true);
         this.onMessage(message);
     }
 

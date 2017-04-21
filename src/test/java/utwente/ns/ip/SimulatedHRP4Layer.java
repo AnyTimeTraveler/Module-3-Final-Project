@@ -47,7 +47,7 @@ public class SimulatedHRP4Layer implements IHRP4Layer {
         } else {
             if (RTP4Layer.DEBUG) System.out.print("? ");
         }
-        if (RTP4Layer.DEBUG) System.out.println("sent: " + rtp4Packet.toString());
+        if (RTP4Layer.DEBUG) System.out.println("successful: " + rtp4Packet.toString());
         receive(packet);
     }
 

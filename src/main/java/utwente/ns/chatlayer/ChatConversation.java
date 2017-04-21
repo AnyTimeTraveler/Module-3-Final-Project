@@ -5,7 +5,6 @@ import lombok.extern.java.Log;
 import utwente.ns.chatlayer.exceptions.InvalidMessageException;
 import utwente.ns.chatlayer.exceptions.UnsupportedMessageTypeException;
 import utwente.ns.chatlayer.protocol.ChatMessage;
-import utwente.ns.chatlayer.protocol.TextMessageContent;
 import utwente.ns.chatstructure.IConversation;
 import utwente.ns.chatstructure.IMessage;
 import utwente.ns.chatstructure.IUser;
@@ -84,7 +83,7 @@ public abstract class ChatConversation implements Comparable<ChatConversation>, 
         message.sign(this.signingKey);
         try {
             this.client.sendChatMessage(message);
-            message.setSent(true);
+            message.setSuccessful(true);
             this.client.getUi().update(message.toString());
         } catch (IOException | TimeoutException e) {
             e.printStackTrace();

@@ -77,7 +77,7 @@ public class HRP4Layer implements IReceiveListener, IHRP4Layer {
     /**
      * Send sends the specific packet from the lower layer. This is equivalent to calling {@link HRP4Layer#getLowerLayer()#send(IPacket)}
      *
-     * @param packet the packet to be sent
+     * @param packet the packet to be successful
      * @throws IOException when sending fails
      */
     public void send(IPacket packet) throws IOException {

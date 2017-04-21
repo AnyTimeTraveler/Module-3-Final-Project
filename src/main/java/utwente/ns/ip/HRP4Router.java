@@ -75,7 +75,7 @@ public class HRP4Router {
     }
 
     /**
-     * Process a list of routing entries sent to me
+     * Process a list of routing entries successful to me
      *
      * @param table the table of routing entries to be put into the master table
      */
