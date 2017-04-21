@@ -68,7 +68,7 @@ public class HRP4Socket implements IHRP4Socket, IReceiveListener, Closeable {
     /**
      * Send sends the data provided to the given dstAddress to the given port.
      *
-     * @param data       The data to be sent
+     * @param data       The data to be successful
      * @param dstAddress The destination host
      * @param dstPort    The destination port
      * @throws IOException when sending has failed (this does not include packet loss)

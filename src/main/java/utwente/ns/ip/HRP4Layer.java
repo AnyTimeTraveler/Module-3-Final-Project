@@ -77,7 +77,7 @@ public class HRP4Layer implements IReceiveListener, IHRP4Layer {
     /**
      * Send sends the specific packet from the lower layer. This is equivalent to calling {@link HRP4Layer#getLowerLayer()#send(IPacket)}
      *
-     * @param packet the packet to be sent
+     * @param packet the packet to be successful
      * @throws IOException when sending fails
      */
     public void send(IPacket packet) throws IOException {
@@ -153,12 +153,12 @@ public class HRP4Layer implements IReceiveListener, IHRP4Layer {
                 Map<Integer, Integer> forwardingTable = this.router.getForwardingTable(origin);
 
                 // TODO: Remove if-statement to do smart routing (0.o)
-                // if ((forwardingTable.get(hrp4Packet.getDstAddr()) != null && forwardingTable.get(hrp4Packet.getDstAddr()) == myAddr) || hrp4Packet.getDstAddr() == 0) {
+                 if ((forwardingTable.get(hrp4Packet.getDstAddr()) != null && forwardingTable.get(hrp4Packet.getDstAddr()) == myAddr) || hrp4Packet.getDstAddr() == 0) {
 
                     hrp4Packet.setTTL((byte) (hrp4Packet.getTTL() - 1));
 
                     this.send(hrp4Packet);
-                // }
+                 }
             }
         } catch (PacketMalformedException | IOException ignored) {
         }

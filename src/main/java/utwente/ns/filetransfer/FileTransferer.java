@@ -26,8 +26,8 @@ public class FileTransferer {
      * Send a file.
      *
      * @param gui     to track progress
-     * @param file    to be sent
-     * @param address to be sent to
+     * @param file    to be successful
+     * @param address to be successful to
      */
     public FileTransferer(UniversalCommunicator gui, File file, String address) {
         this.gui = gui;
@@ -75,7 +75,7 @@ public class FileTransferer {
                         // Retrying
                     }
                     connection.close();
-                    gui.addFileTransferLogMessage("File sent!");
+                    gui.addFileTransferLogMessage("File successful!");
                     gui.setProgress(100, 100);
                     fis.close();
                 } else {
