@@ -3,6 +3,7 @@ package utwente.ns.ip;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import utwente.ns.ByteSupplier;
 import utwente.ns.Util;
 import utwente.ns.config.Config;
 
@@ -18,15 +19,16 @@ import java.util.concurrent.ConcurrentHashMap;
  *         Created on 4/10/17
  */
 public class HRP4Router {
-    /**
-     * The default (uncorrected) TTL that shall be used as initialization for routing entries.
-     */
-    private static final byte DEFAULT_TTL = 100;
 
     /**
      * The value the TTL shall be multiplied with to get milliseconds of TTL for routing entries.
      */
-    private static final int TTL_MULTIPLIER = 32;
+    private static final int TTL_MULTIPLIER = 128;
+
+    /**
+     * The default (uncorrected) TTL that shall be used as initialization for routing entries.
+     */
+    private static final ByteSupplier DEFAULT_TTL = () -> ((byte) (Config.getInstance().defaultRoutingEntryTTL / TTL_MULTIPLIER));
 
     /**
      * The table containing all available point-point (single duplex) connections.
@@ -66,14 +68,14 @@ public class HRP4Router {
         int linkcost = 1;
 
         // Update cost to neighbour
-        processEntry(neighbour, myAddress, (byte) linkcost, DEFAULT_TTL);
+        processEntry(neighbour, myAddress, (byte) linkcost, DEFAULT_TTL.getAsByte());
 
         List<BCN4Packet.RoutingEntry> routingEntries = packet.getRoutingTable();
         processDataTable(routingEntries);
     }
 
     /**
-     * Process a list of routing entries sent to me
+     * Process a list of routing entries successful to me
      *
      * @param table the table of routing entries to be put into the master table
      */

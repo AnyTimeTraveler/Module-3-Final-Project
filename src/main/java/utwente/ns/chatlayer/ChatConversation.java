@@ -63,10 +63,13 @@ public abstract class ChatConversation implements Comparable<ChatConversation>, 
      */
     private void addMessage(ChatMessage message) {
         synchronized (this.messages) {
-            if (!this.messageIdSet.containsKey(message.getMessageId()))
+            if (!this.messageIdSet.containsKey(message.getMessageId())) {
                 this.messages.add(message);
-            else
+                this.messageIdSet.put(message.getMessageId(), 0);
+            }
+            else {
                 log.log(Level.WARNING, "Duplicate message ID \"" + message.getMessageId() + "\"for conversation detected; duplicate dropped");
+            }
         }
     }
 
@@ -80,7 +83,7 @@ public abstract class ChatConversation implements Comparable<ChatConversation>, 
         message.sign(this.signingKey);
         try {
             this.client.sendChatMessage(message);
-            message.setSent(true);
+            message.setSuccessful(true);
             this.client.getUi().update(message.toString());
         } catch (IOException | TimeoutException e) {
             e.printStackTrace();

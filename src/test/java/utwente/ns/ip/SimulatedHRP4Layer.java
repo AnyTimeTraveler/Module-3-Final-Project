@@ -4,6 +4,7 @@ import utwente.ns.IPacket;
 import utwente.ns.IReceiveListener;
 import utwente.ns.PacketMalformedException;
 import utwente.ns.Util;
+import utwente.ns.tcp.RTP4Layer;
 import utwente.ns.tcp.RTP4Packet;
 
 import java.io.IOException;
@@ -35,18 +36,18 @@ public class SimulatedHRP4Layer implements IHRP4Layer {
         } catch (PacketMalformedException e) {
             return;
         }
-        if (new Random().nextBoolean()) {
-            System.out.println(Thread.currentThread().getName() + "> " + "Dropped packet " + rtp4Packet);
+        if (new Random().nextInt(100) > 90) {
+            if (RTP4Layer.DEBUG) System.out.println(Thread.currentThread().getName() + "> " + "Dropped packet " + rtp4Packet);
             return;
         }
-        System.out.print(Thread.currentThread().getName() + "> ");
+        if (RTP4Layer.DEBUG) System.out.print(Thread.currentThread().getName() + "> ");
         if (packet instanceof HRP4Packet){
             HRP4Packet hrp4Packet = ((HRP4Packet) packet);
-            System.out.print(hrp4Packet.getSrcPort() + "->" + hrp4Packet.getDstPort() + " ");
+            if (RTP4Layer.DEBUG) System.out.print(hrp4Packet.getSrcPort() + "->" + hrp4Packet.getDstPort() + " ");
         } else {
-            System.out.print("? ");
+            if (RTP4Layer.DEBUG) System.out.print("? ");
         }
-        System.out.println("sent: " + rtp4Packet.toString());
+        if (RTP4Layer.DEBUG) System.out.println("successful: " + rtp4Packet.toString());
         receive(packet);
     }
 

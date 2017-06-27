@@ -78,8 +78,8 @@ public class Config {
         // no config file found
         if (instance == null) {
             instance = fromDefaults();
-            instance.toFile(CONFIGFILE);
-            throw new RuntimeException("Set values in config file according to your settings!");
+//            instance.toFile(CONFIGFILE);
+//            throw new RuntimeException("Set values in config file according to your settings!");
         }
     }
 

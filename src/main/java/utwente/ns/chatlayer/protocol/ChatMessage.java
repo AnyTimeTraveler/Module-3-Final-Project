@@ -36,7 +36,7 @@ public class ChatMessage implements IMessage {
     private transient long receiveTime;
     @Getter
     @Setter
-    private transient boolean sent = false;
+    private transient boolean successful = false;
     @Getter
     private String type;
     @Getter
@@ -139,7 +139,7 @@ public class ChatMessage implements IMessage {
     @Override
     public String getMessage() {
         if (this.content instanceof TextMessageContent) {
-            return ((TextMessageContent) this.content).text;
+            return this.isSuccessful() ? ((TextMessageContent) this.content).text : "[FAILED] " + ((TextMessageContent) this.content).text;
         }
         return null;
     }
