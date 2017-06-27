@@ -19,6 +19,7 @@ import javax.swing.text.DefaultCaret;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -111,6 +112,25 @@ public class UniversalCommunicator implements IUserInterface {
             if (selectedConversation != null)
                 chatHistoryTextArea.setText(Arrays.stream(selectedConversation.getChatHistory()).map(message -> ((chatClient.getUserById(message.getSender())) != null ? chatClient.getUserById(message.getSender()).getName() : "ERROR") + " : " + message.getMessage()).collect(Collectors.joining("\n")));
         });
+//        createGroupButton.addActionListener(e -> {
+//            Thread t = new Thread(() -> {
+//                LinkedBlockingQueue<List<IUser>> selectionQueue = new LinkedBlockingQueue<>();
+//                new Thread(() -> new UserListDialogue(chatClient.getConnectedUsers(), true, selectionQueue)).start();
+//                List<IUser> selection = null;
+//                try {
+//                    selection = selectionQueue.poll(1, TimeUnit.MINUTES);
+//                } catch (InterruptedException e1) {
+//                    e1.printStackTrace();
+//                }
+//                if (selection != null && !selection.isEmpty()) {
+//                    String name = (String) JOptionPane.showInputDialog(null, "Please enter a name for the group: ", "Group Name", JOptionPane.QUESTION_MESSAGE, null, null, "Unnamed Group");
+//                    if (name != null)
+//                        chatClient.addConversation(name, selection.toArray(new IUser[selection.size()]));
+//                }
+//            });
+//            t.setName("Dialogue");
+//            t.start();
+//        });
         messageTextField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -180,10 +200,9 @@ public class UniversalCommunicator implements IUserInterface {
             }
         }
         settingsList.setListData(new Vector<>(settings.keySet()));
+
         settingsList.addListSelectionListener(e -> {
-//            System.out.print("Type: ");
             Field setting = settings.get(settingsList.getSelectedValue());
-//            System.out.println(setting.getType().toString().toLowerCase());
             switch (setting.getType().toString().toLowerCase()) {
                 case "class java.lang.string":
                 case "int":
@@ -227,6 +246,7 @@ public class UniversalCommunicator implements IUserInterface {
         tabbedPane.addChangeListener(e -> saveConfigIfNeeded());
         settingsCheckBox.addChangeListener(e -> saveConfigIfNeeded());
         settingsTextField.addKeyListener(new KeyAdapter() {
+
             @Override
             public void keyTyped(KeyEvent e) {
                 saveConfigIfNeeded();
@@ -247,6 +267,7 @@ public class UniversalCommunicator implements IUserInterface {
         try {
             Field setting = settings.get(settingsList.getSelectedValue());
             if (setting == null) {
+
                 return;
             }
             boolean isRestartRequired = setting.getAnnotationsByType(RequiresRestart.class).length != 0;
@@ -262,25 +283,22 @@ public class UniversalCommunicator implements IUserInterface {
                     switch (setting.getType().toString().toLowerCase()) {
                         case "class java.lang.string":
                             setting.set(Config.getInstance(), settingsTextField.getText());
-                            if (isRestartRequired) {
-                                restartNotice.setVisible(true);
-                            }
                             break;
                         case "int":
                             setting.setInt(Config.getInstance(), Integer.parseInt(settingsTextField.getText()));
-                            if (isRestartRequired) {
-                                restartNotice.setVisible(true);
-                            }
                             break;
                         case "byte":
                             setting.setByte(Config.getInstance(), Byte.parseByte(settingsTextField.getText()));
-                            if (isRestartRequired) {
-                                restartNotice.setVisible(true);
-                            }
                             break;
+						case "long":
+							setting.setLong(Config.getInstance(), Long.parseLong(settingsTextField.getText()));
+							break;
                         default:
                             System.err.println("Type not defined!");
                     }
+					if (isRestartRequired) {
+						restartNotice.setVisible(true);
+					}
                 }
             }
         } catch (IllegalAccessException e1) {
